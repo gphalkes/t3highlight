@@ -5,6 +5,14 @@ DESIGN GOALS:
 	highlighted.
 
 TODO:
+Library:
+- Prevent infinte loops caused by start and end matching the empty string, or
+	other patterns that do not cause progression
+- Change pattern matching code to step through all the characters using
+	PCRE_ANCHORED
+- Use the correct order for end vs. %pattern
+- Use pcre_study to optimize pattern (also allows requesting minsize)
+- Defining and referencing other patterns + include mechanism
 - File regexes should be in a separate file, such that they can be read without
 	reading all the separate language definitions files. That may give a problem
 	with user defined definitions.
@@ -13,29 +21,17 @@ TODO:
 	which we use instead of reading the files themselves (see also above). This
 	works for the standard installed files, but not for the files the user
 	may create.
-- Having a C api would be nice, and the most important features of C++ we are
-	using now are exceptions. And for those we need to do some try/catch
-	internally anyway to allow proper cleanup. Thus an implementation in C only
-	is possible. Other things we use from C++: vector.
-- We need to somehow have to map style names to integers. However, what the
-	styles are is beyond the scope of the highlighting itself. Thus we should
-	be provided a callback, or a predefined data structure, such that we can
-	search for strings.
 - Support and detect Emacs language identifiers (-*- <name> -*- or something)
 	and vi/vim modelines
-- Include directives
+- UTF-8 mode
+
+t3highlight-source:
+- come up with a better name (t3highlight would be OK, if it were not for the
+	annoying clash with the include dir symlink)
+- allow style definitions
+- add html/latex/etc escaping of inputs (i.e. sed scripts or something like it)
 
 
-PROPOSED API:
-
-typedef struct t3_highlight_t t3_highlight_t;
-typedef struct t3_highlight_match_t t3_highlight_match_t;
-
-
-t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(const char *str), void *map_style_data);
-t3_bool t3_highlight_match(t3_hightlight_t *highlight, const char *str, size_t size, t3_highlight_match_t *match);
-
-
-t3_highlight_match_t *t3_highlight_new_match(void);
-void t3_highlight_reset_match(t3_highlight_match_t *match);
-void t3_highlight_next_line(t3_highlight_match_t *match);
+Generic:
+- define a list of default style names to use
+- convert nano/GNU source-highlight/other highlighting patterns if possible

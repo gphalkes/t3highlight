@@ -23,13 +23,14 @@ struct style_def_t {
 	const char *tag;
 	const char *code;
 } styles[] = {
-	{ "normal", "\033[0m" },
-	{ "keyword", "\033[0;34;1m" },
-	{ "string", "\033[0;35m" },
-	{ "string-escape", "\033[0;35;1m" },
-	{ "comment", "\033[0;32m" },
-	{ "number", "\033[0;36m" },
-	{ "misc", "\033[0;33m" },
+	{ "normal", "" },
+	{ "keyword", "\033[34;1m" },
+	{ "string", "\033[35m" },
+	{ "string-escape", "\033[35;1m" },
+	{ "comment", "\033[32m" },
+	{ "number", "\033[36m" },
+	{ "misc", "\033[33m" },
+	{ "comment-keyword", "\033[32;1m" },
 	{ NULL, NULL }
 };
 
@@ -109,10 +110,12 @@ int main(int argc, char *argv[]) {
 			if (begin != match_result.start) {
 				fputs(styles[match_result.begin_attribute].code, stdout);
 				printf("%.*s", (int) (match_result.start - begin), line + begin);
+				fputs("\033[0m", stdout);
 			}
 			if (match_result.start != match_result.end) {
 				fputs(styles[match_result.match_attribute].code, stdout);
 				printf("%.*s", (int) (match_result.end - match_result.start), line + match_result.start);
+				fputs("\033[0m", stdout);
 			}
 			begin = match_result.end;
 		}
