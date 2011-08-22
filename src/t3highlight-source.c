@@ -36,7 +36,7 @@ struct style_def_t {
 
 int map_style(struct style_def_t *styles, const char *name) {
 	int i;
-	for (i = 1; styles[i].tag != NULL; i++) {
+	for (i = 0; styles[i].tag != NULL; i++) {
 		if (strcmp(styles[i].tag, name) == 0)
 			return i;
 	}
@@ -110,12 +110,14 @@ int main(int argc, char *argv[]) {
 			if (begin != match_result.start) {
 				fputs(styles[match_result.begin_attribute].code, stdout);
 				printf("%.*s", (int) (match_result.start - begin), line + begin);
-				fputs("\033[0m", stdout);
+				if (match_result.begin_attribute != 0)
+					fputs("\033[0m", stdout);
 			}
 			if (match_result.start != match_result.end) {
 				fputs(styles[match_result.match_attribute].code, stdout);
 				printf("%.*s", (int) (match_result.end - match_result.start), line + match_result.start);
-				fputs("\033[0m", stdout);
+				if (match_result.match_attribute != 0)
+					fputs("\033[0m", stdout);
 			}
 			begin = match_result.end;
 		}
