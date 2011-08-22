@@ -39,6 +39,5 @@ t3highlight-source: | libt3highlight.la
 links:
 	@[ -L t3highlight ] || ln -s . t3highlight
 	@[ -L t3config ] || ln -s ../../config/src t3config
-	@[ -L t3window ] || ln -s ../../window/src t3window
 
 .PHONY: links
