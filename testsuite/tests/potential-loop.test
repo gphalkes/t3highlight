@@ -1,0 +1,41 @@
+name = "Test"
+
+%pattern {
+	start = "(?=a)|b"
+	end = "(?=a)|b"
+	%pattern {
+		regex = "c"
+	}
+	style = "keyword"
+	delim-style = "comment"
+}
+%pattern {
+	start = "(?=a)|b"
+	end = "(?=a)|b"
+	%pattern {
+		regex = "c"
+	}
+	style = "string"
+	delim-style = "misc"
+}
+
+%pattern {
+	start = "(?=a)|b"
+	end = "(?=a)|b"
+	%pattern {
+		regex = "c"
+	}
+	style = "string"
+	delim-style = "misc"
+}
+
+#TEST
+acca
+bccb
+==
+acca
+<misc>b</misc><string>cc</string><misc>a</misc>
+==
+
+#TEST
+foo

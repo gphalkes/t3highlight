@@ -1,12 +1,18 @@
 syntax: glob
+src/valgrind.log
 src/.deps
 src/.libs
 src/.objects
-src/t3highlight-source
 src/libt3highlight.la
-
 src/t3config
 src/t3highlight
 
+src.util/.deps
+src.util/.objects
+src.util/t3highlight
+
 src/highlight_api.h
 src/highlight_errors.h
+
+testsuite/work
+testsuite/testlog*

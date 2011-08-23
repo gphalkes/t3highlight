@@ -11,26 +11,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SOURCES.libt3highlight.la := highlight.c
+SOURCES.t3highlight := t3highlight.c
+LDFLAGS.t3highlight := -L../src/.libs
+LDLIBS.t3highlight := -lt3highlight
 
-LDLIBS.libt3highlight.la += -lt3config
-LDFLAGS.libt3highlight.la += -Lt3config/.libs
-LDFLAGS.libt3highlight.la += `pkg-config --libs libpcre`
-
-LTTARGETS := libt3highlight.la
+TARGETS := t3highlight
 #================================================#
 # NO RULES SHOULD BE DEFINED BEFORE THIS INCLUDE #
 #================================================#
 include ../../makesys/rules.mk
-#================================================#
-T3NAME := highlight
-include ../../t3shared/rules.mk
 
-CXXFLAGS += -I.
-CXXFLAGS += `pkg-config --cflags libpcre`
+CFLAGS += -I. -I../src
 
-links:
-	@[ -L t3highlight ] || ln -s . t3highlight
-	@[ -L t3config ] || ln -s ../../config/src t3config
+t3highlight: | lib
+
+lib:
+	@$(MAKE) -q -C ../src libt3highlight.la || $(MAKE) -C ../src libt3highlight.la
 
 .PHONY: links
