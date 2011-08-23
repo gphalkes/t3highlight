@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SOURCES.t3highlight := t3highlight.c
+SOURCES.t3highlight := t3highlight.c escapes.c
 LDFLAGS.t3highlight := -L../src/.libs
 LDLIBS.t3highlight := -lt3highlight
 

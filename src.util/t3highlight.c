@@ -20,30 +20,25 @@
 #include <t3config/config.h>
 #include <t3highlight/highlight.h>
 
-struct style_def_t {
+#include "optionMacros.h"
+#include "t3highlight.h"
+
+typedef struct {
 	const char *tag;
 	const char *start;
 	const char *end;
-} styles[] = {
+} style_def_t;
+
+static style_def_t *styles;
+static style_def_t default_styles[] = {
 	{ "normal", "", "" },
-	{ "keyword", "\033[34;1m", "\033[0m" },
-	{ "string", "\033[35m", "\033[0m" },
-	{ "string-escape", "\033[35;1m", "\033[0m" },
-	{ "comment", "\033[32m", "\033[0m" },
-	{ "number", "\033[36m", "\033[0m" },
-	{ "misc", "\033[33m", "\033[0m" },
-	{ "comment-keyword", "\033[32;1m", "\033[0m" },
 	{ NULL, NULL, NULL }
 };
 
-int map_style(struct style_def_t *styles, const char *name) {
-	int i;
-	for (i = 0; styles[i].tag != NULL; i++) {
-		if (strcmp(styles[i].tag, name) == 0)
-			return i;
-	}
-	return 0;
-}
+static int option_verbose;
+static const char *option_language;
+static const char *option_style;
+static const char *option_input;
 
 /** Alert the user of a fatal error and quit.
     @param fmt The format string for the message. See fprintf(3) for details.
@@ -58,46 +53,119 @@ void fatal(const char *fmt, ...) {
 	exit(EXIT_FAILURE);
 }
 
-int main(int argc, char *argv[]) {
-	FILE *pattern_file;
-	t3_config_t *pattern_config;
-	t3_config_error_t config_error;
-	int error;
-	t3_highlight_t *pattern;
-	int c;
+static PARSE_FUNCTION(parse_args)
+	OPTIONS
+		OPTION('v', "verbose", NO_ARG)
+			option_verbose = 1;
+		END_OPTION
+		OPTION('l', "language", REQUIRED_ARG)
+			//FIXME: do proper search for language file
+			if (option_language != NULL)
+				fatal("Error: only one language option allowed\n");
+			option_language = optArg;
+		END_OPTION
+		OPTION('s', "style", REQUIRED_ARG)
+			//FIXME: do proper search for style file
+			if (option_style != NULL)
+				fatal("Error: only one style option allowed\n");
+			option_style = optArg;
+		END_OPTION
+		DOUBLE_DASH
+			NO_MORE_OPTIONS;
+		END_OPTION
+	NO_OPTION
+		//FIXME: handle more than one option
+		if (option_input != NULL)
+			fatal("Multiple inputs not implemented yet\n");
+		option_input = optcurrent;
+	END_OPTIONS
+END_FUNCTION
 
-	//FIXME: make this proper
-	while ((c = getopt(argc, argv, "h")) >= 0) {
-		switch (c) {
-			default:
-				exit(EXIT_FAILURE);
-			case 'h':
-				printf("Usage: t3highlight <pattern file> <source file>\n");
-				exit(EXIT_SUCCESS);
-		}
+
+static int map_style(style_def_t *styles, const char *name) {
+	int i;
+	for (i = 0; styles[i].tag != NULL; i++) {
+		if (strcmp(styles[i].tag, name) == 0)
+			return i;
+	}
+	return 0;
+}
+
+static t3_highlight_t *load_highlight(const char *name) {
+	FILE *highlight_file;
+	t3_config_t *highlight_config;
+	t3_config_error_t config_error;
+	t3_highlight_t *highlight;
+	int error;
+
+	if ((highlight_file = fopen(name, "rb")) == NULL)
+		fatal("Can't open '%s': %s\n", name, strerror(errno));
+
+	if ((highlight_config = t3_config_read_file(highlight_file, &config_error, NULL)) == NULL)
+		fatal("Error reading highlighting patterns: %s @ %d\n", t3_config_strerror(config_error.error), config_error.line_number);
+
+	highlight = t3_highlight_new(highlight_config, (int (*)(void *, const char *)) map_style, styles, &error);
+
+	fclose(highlight_file);
+	t3_config_delete(highlight_config);
+	return highlight;
+}
+
+static const char *expand_string(const char *str, t3_bool expand_escapes) {
+	char *result;
+	if (str == NULL)
+		return "";
+
+	result = strdup(str);
+	if (expand_escapes)
+		parse_escapes(result);
+	return result;
+}
+
+static style_def_t *load_style(const char *name) {
+	FILE *style_file;
+	t3_config_t *style_config, *styles, *expand_escapes_conf;
+	t3_config_error_t config_error;
+	style_def_t *result;
+	int count;
+	t3_bool expand_escapes = t3_false;
+
+	if ((style_file = fopen(name, "rb")) == NULL)
+		fatal("Can't open '%s': %s\n", name, strerror(errno));
+
+	if ((style_config = t3_config_read_file(style_file, &config_error, NULL)) == NULL)
+		fatal("Error reading style file: %s @ %d\n", t3_config_strerror(config_error.error), config_error.line_number);
+
+	//FIXME: use libt3config validation when available
+	if ((styles = t3_config_get(style_config, "styles")) == NULL || t3_config_get_type(styles) != T3_CONFIG_SECTION)
+		fatal("Invalid style definition\n");
+	styles = t3_config_get(styles, NULL);
+
+	if ((expand_escapes_conf = t3_config_get(style_config, "expand-escapes")) != NULL) {
+		if (t3_config_get_type(expand_escapes_conf) != T3_CONFIG_BOOL)
+			fatal("Invalid style definition\n");
+		expand_escapes = t3_config_get_bool(expand_escapes_conf);
 	}
 
-	if (argc - optind != 2)
-		fatal("Need pattern and source file\n");
+	for (count = 0; styles != NULL; count++, styles = t3_config_get_next(styles)) {}
+	if ((result = malloc(sizeof(style_def_t) * count)) == NULL)
+		fatal("Out of memory\n");
+	styles = t3_config_get(t3_config_get(style_config, "styles"), NULL);
+	for (count = 0; styles != NULL; count++, styles = t3_config_get_next(styles)) {
+		result[count].tag = t3_config_get_name(styles);
+		result[count].start = expand_string(t3_config_get_string(t3_config_get(styles, "start")), expand_escapes);
+		result[count].end = expand_string(t3_config_get_string(t3_config_get(styles, "end")), expand_escapes);
+	}
+	return result;
+}
 
-
-	if ((pattern_file = fopen(argv[optind], "rb")) == NULL)
-		fatal("Can't open '%s': %m\n", argv[optind]);
-
-	if ((pattern_config = t3_config_read_file(pattern_file, &config_error, NULL)) == NULL)
-		fatal("Error reading patterns: %s @ %d\n", t3_config_strerror(config_error.error), config_error.line_number);
-
-	pattern = t3_highlight_new(pattern_config, (int (*)(void *, const char *)) map_style, styles, &error);
-
-	fclose(pattern_file);
-	t3_config_delete(pattern_config);
-
-	//FIXME: move to begin or make the following a separate function
+static void highlight_file(const char *name, t3_highlight_t *highlight) {
  	FILE *input;
 	char *line = NULL;
 	size_t n;
 	ssize_t chars_read;
 	size_t begin;
+
 	t3_highlight_match_t *match = t3_highlight_new_match();
 	t3_bool match_result;
 
@@ -105,8 +173,8 @@ int main(int argc, char *argv[]) {
 	if (match == NULL)
 		fatal("Out of memory\n");
 
-	if ((input = fopen(argv[optind + 1], "rb")) == NULL)
-		fatal("Can't open '%s': %s\n", argv[optind + 1], strerror(errno));
+	if ((input = fopen(name, "rb")) == NULL)
+		fatal("Can't open '%s': %s\n", name, strerror(errno));
 
 	while ((chars_read = getline(&line, &n, input)) > 0) {
 		if (line[chars_read - 1] == '\n')
@@ -115,7 +183,7 @@ int main(int argc, char *argv[]) {
 		t3_highlight_next_line(match);
 		begin = 0;
 		do {
-			match_result = t3_highlight_match(pattern, line, chars_read, match);
+			match_result = t3_highlight_match(highlight, line, chars_read, match);
 			size_t start = t3_highlight_get_start(match), end = t3_highlight_get_end(match);
 			if (begin != start) {
 				fputs(styles[t3_highlight_get_begin_attr(match)].start, stdout);
@@ -133,8 +201,28 @@ int main(int argc, char *argv[]) {
 	}
 	t3_highlight_free_match(match);
 	fclose(input);
+	free(line);
+}
 
-	t3_highlight_free(pattern);
+int main(int argc, char *argv[]) {
+	t3_highlight_t *highlight;
+	//FIXME: setlocale etc. for gettext
+
+	parse_args(argc, argv);
+
+	if (option_style == NULL)
+		styles = default_styles;
+	else
+		styles = load_style(option_style);
+
+	if (option_language == NULL)
+		fatal("Language auto-detection not implemented yet\n");
+	else
+		highlight = load_highlight(option_language);
+
+	highlight_file(option_input, highlight);
+
+	t3_highlight_free(highlight);
 	return EXIT_SUCCESS;
 
 }

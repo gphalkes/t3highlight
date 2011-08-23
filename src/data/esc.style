@@ -1,0 +1,36 @@
+expand-escapes = yes
+
+styles {
+	normal {
+		start = ""
+		end = ""
+	}
+	keyword {
+		start = "\033[34;1m"
+		end = "\033[0m"
+	}
+	string {
+		start = "\033[35m"
+		end = "\033[0m"
+	}
+	string-escape {
+		start = "\033[35;1m"
+		end = "\033[0m"
+	}
+	comment {
+		start = "\033[32m"
+		end = "\033[0m"
+	}
+	number {
+		start = "\033[36m"
+		end = "\033[0m"
+	}
+	misc {
+		start = "\033[33m"
+		end = "\033[0m"
+	}
+	comment-keyword {
+		start = "\033[32;1m"
+		end = "\033[0m"
+	}
+}
