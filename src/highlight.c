@@ -263,6 +263,7 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 
 	result->start = result->end + best_position;
 	result->end += best_position_end;
+	result->forbidden_state = result->end == result->start ? result->state : -1;
 	result->state = state->patterns.data[best].next_state;
 	result->match_attribute = state->patterns.data[best].attribute_idx;
 	return t3_true;
