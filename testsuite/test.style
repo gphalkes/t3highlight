@@ -1,0 +1,26 @@
+styles {
+	keyword {
+		start = '<keyword>'
+		end = '</keyword>'
+	}
+	string {
+		start = '<string>'
+		end = '/<string>'
+	}
+	string-escape {
+		start = '<string-escape>'
+		end = '</string-escape>'
+	}
+	comment {
+		start = '<comment>'
+		end = '</comment>'
+	}
+	comment-keyword {
+		start = '<comment-keyword>'
+		end = '</comment-keyword>'
+	}
+	misc {
+		start = '<misc>'
+		end = '</misc>'
+	}
+}

@@ -147,11 +147,16 @@ static style_def_t *load_style(const char *name) {
 		expand_escapes = t3_config_get_bool(expand_escapes_conf);
 	}
 
+	//FIXME: implement special handling of "normal" style (must be style 0)
 	for (count = 0; styles != NULL; count++, styles = t3_config_get_next(styles)) {}
+	count++;
 	if ((result = malloc(sizeof(style_def_t) * count)) == NULL)
 		fatal("Out of memory\n");
+	result[0].tag = "normal";
+	result[0].start = "";
+	result[0].end = "";
 	styles = t3_config_get(t3_config_get(style_config, "styles"), NULL);
-	for (count = 0; styles != NULL; count++, styles = t3_config_get_next(styles)) {
+	for (count = 1; styles != NULL; count++, styles = t3_config_get_next(styles)) {
 		result[count].tag = t3_config_get_name(styles);
 		result[count].start = expand_string(t3_config_get_string(t3_config_get(styles, "start")), expand_escapes);
 		result[count].end = expand_string(t3_config_get_string(t3_config_get(styles, "end")), expand_escapes);

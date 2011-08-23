@@ -34,8 +34,5 @@ acca
 bccb
 ==
 acca
-<misc>b</misc><string>cc</string><misc>a</misc>
+<comment>b</comment><keyword>c</keyword><keyword>c</keyword><comment>b</comment>
 ==
-
-#TEST
-foo
