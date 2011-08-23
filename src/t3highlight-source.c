@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 	size_t n;
 	ssize_t chars_read;
 	size_t begin;
-	t3_highlight_match_t match_result = T3_HIGHLIGH_MATCH_INITIALIZER;
+	t3_highlight_match_t match_result = T3_HIGHLIGHT_MATCH_INITIALIZER;
 
 	if ((input = fopen(argv[optind + 1], "rb")) == NULL)
 		fatal("Can't open '%s': %m\n", argv[optind + 1]);

@@ -220,7 +220,7 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 	free(highlight);
 }
 
-t3_bool t3_highlight_match(t3_highlight_t *highlight, const char *line, size_t size, t3_highlight_match_t *result) {
+t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, size_t size, t3_highlight_match_t *result) {
 	state_t *state = &highlight->states.data[result->state];
 	size_t best = (size_t) -1;
 	int best_position = INT_MAX;
@@ -250,3 +250,8 @@ t3_bool t3_highlight_match(t3_highlight_t *highlight, const char *line, size_t s
 	return t3_true;
 }
 
+void t3_highlight_reset(t3_highlight_match_t *match, int state) {
+	static const t3_highlight_match_t empty = T3_HIGHLIGHT_MATCH_INITIALIZER;
+	*match = empty;
+	match->state = state;
+}
