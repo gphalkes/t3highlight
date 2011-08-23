@@ -230,53 +230,45 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 
 t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, size_t size, t3_highlight_match_t *result) {
 	state_t *state = &highlight->states.data[result->state];
-	size_t best = (size_t) -1;
-	int best_position = INT_MAX;
-	int best_position_end;
-	int options = result->end == 0 ? 0 : PCRE_NOTBOL;
+	int options = PCRE_ANCHORED;
 	int ovector[30];
-	size_t i;
+	size_t i, j;
 
-	for (i = 0; i < state->patterns.used; i++) {
-		if (pcre_exec(state->patterns.data[i].regex, NULL, line + result->end, size - result->end, 0, options, ovector, 30) >= 0) {
-			/* Skip this match if it has zero size at position 0, and changes the state to
-			   a state that we came from, or stays in the current state. */
-			/*FIXME: if we use the PCRE_ANCHORED stuff we can avoid some of this check by
-				adding PCRE_NOTEMPTY_ATSTART for non-delim patterns. */
-			if (ovector[0] == 0 && ovector[1] == 0) {
-				if (state->patterns.data[i].next_state == result->state)
-					continue;
-				if (state->patterns.data[i].next_state <= result->forbidden_state &&
-						state->patterns.data[i].next_state > result->state)
-					continue;
-			}
-			if (ovector[0] < best_position) {
-				best_position = ovector[0];
-				best_position_end = ovector[1];
-				best = i;
-			}
-		}
-	}
+	if (result->end != 0)
+		options |= PCRE_NOTBOL;
 
 	result->begin_attribute = highlight->states.data[result->state].attribute_idx;
-	if (best == (size_t) -1) {
-		result->start = size;
-		result->end = size;
-		return t3_false;
+	for (i = result->end; i <= size; i++) {
+		for (j = 0; j < state->patterns.used; j++) {
+			int local_options = options;
+
+			if (state->patterns.data[j].next_state == result->state ||
+					(state->patterns.data[j].next_state <= result->forbidden_state &&
+					state->patterns.data[j].next_state > result->state))
+				local_options |= PCRE_NOTEMPTY_ATSTART;
+
+			if (pcre_exec(state->patterns.data[j].regex, NULL, line + i, size - i, 0, local_options, ovector, 30) >= 0) {
+				result->start = i + ovector[0];
+				result->end = i + ovector[1];
+				/* Forbidden state is only set when we matched an empty end pattern. We recognize
+				   those by checking the match start and end, and by the fact that the next
+				   state is smaller than the current state (parent states are always before
+				   child states in the state vector). */
+				result->forbidden_state = result->start == result->end &&
+					state->patterns.data[j].next_state < result->state ? result->state : -1;
+				result->state = state->patterns.data[j].next_state;
+				result->match_attribute = state->patterns.data[j].attribute_idx;
+				return t3_true;
+			}
+		}
+		options |= PCRE_NOTBOL;
 	}
 
-	result->start = result->end + best_position;
-	result->end += best_position_end;
-	/* Forbidden state is only set when we matched an empty end pattern. We recognize
-	   those by checking the match start and end, and by the fact that the next
-	   state is smaller than the current state (parent states are always before
-	   child states in the state vector). */
-	result->forbidden_state = result->start == result->end &&
-		state->patterns.data[best].next_state < result->state ? result->state : -1;
-	result->state = state->patterns.data[best].next_state;
-	result->match_attribute = state->patterns.data[best].attribute_idx;
-	return t3_true;
+	result->start = size;
+	result->end = size;
+	return t3_false;
 }
+
 
 void t3_highlight_reset(t3_highlight_match_t *match, int state) {
 	static const t3_highlight_match_t empty = { 0, 0, 0, -1, 0, 0 };
