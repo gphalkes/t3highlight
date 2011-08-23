@@ -61,7 +61,7 @@ struct t3_highlight_t {
 struct t3_highlight_match_t {
 	size_t start,
 		end;
-	int state,
+	int state, forbidden_state,
 		begin_attribute,
 		match_attribute;
 };
@@ -239,6 +239,13 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 
 	for (i = 0; i < state->patterns.used; i++) {
 		if (pcre_exec(state->patterns.data[i].regex, NULL, line + result->end, size - result->end, 0, options, ovector, 30) >= 0) {
+			/* Skip this match if it has zero size at position 0, and changes the state to
+			   a state that we came from, or stays in the current state. */
+			/*FIXME: if we use the PCRE_ANCHORED stuff we can avoid some of this check by
+				adding PCRE_NOTEMPTY_ATSTART for non-delim patterns. */
+			if (ovector[0] == 0 && ovector[1] == 0 && (state->patterns.data[i].next_state == result->forbidden_state ||
+					state->patterns.data[i].next_state == result->state))
+				continue;
 			if (ovector[0] < best_position) {
 				best_position = ovector[0];
 				best_position_end = ovector[1];
@@ -262,7 +269,7 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 }
 
 void t3_highlight_reset(t3_highlight_match_t *match, int state) {
-	static const t3_highlight_match_t empty = T3_HIGHLIGHT_MATCH_INITIALIZER;
+	static const t3_highlight_match_t empty = { 0, 0, 0, -1, 0, 0 };
 	*match = empty;
 	match->state = state;
 }
@@ -293,5 +300,6 @@ int t3_highlight_get_match_attr(t3_highlight_match_t *match) {
 
 int t3_highlight_next_line(t3_highlight_match_t *match) {
 	match->end = 0;
+	match->forbidden_state = -1;
 	return match->state;
 }

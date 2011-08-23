@@ -34,8 +34,6 @@ extern "C" {
 typedef struct t3_highlight_t t3_highlight_t;
 typedef struct t3_highlight_match_t t3_highlight_match_t;
 
-#define T3_HIGHLIGHT_MATCH_INITIALIZER { 0, 0, 0, 0, 0 }
-
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_new(t3_config_t *syntax,
 	int (*map_style)(void *, const char *), void *map_style_data, int *error);
 T3_HIGHLIGHT_API t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *str, size_t size, t3_highlight_match_t *match);

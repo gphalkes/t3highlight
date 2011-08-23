@@ -6,8 +6,6 @@ DESIGN GOALS:
 
 TODO:
 Library:
-- Prevent infinte loops caused by start and end matching the empty string, or
-	other patterns that do not cause progression
 - Change pattern matching code to step through all the characters using
 	PCRE_ANCHORED
 - Use the correct order for end vs. %pattern
