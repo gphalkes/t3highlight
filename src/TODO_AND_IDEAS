@@ -6,10 +6,6 @@ DESIGN GOALS:
 
 TODO:
 Library:
-- Change pattern matching code to step through all the characters using
-	PCRE_ANCHORED
-- Use the correct order for end vs. %pattern
-- Use pcre_study to optimize pattern (also allows requesting minsize)
 - Defining and referencing other patterns + include mechanism
 - File regexes should be in a separate file, such that they can be read without
 	reading all the separate language definitions files. That may give a problem
@@ -19,9 +15,12 @@ Library:
 	which we use instead of reading the files themselves (see also above). This
 	works for the standard installed files, but not for the files the user
 	may create.
-- Support and detect Emacs language identifiers (-*- <name> -*- or something)
-	and vi/vim modelines
 - UTF-8 mode
+- Add an interface for language detection
+	- Support and detect Emacs language identifiers (-*- <name> -*- or something)
+		and vi/vim modelines (only first and last 5 lines)
+	- Do we wish to support language switching?
+
 
 t3highlight-source:
 - come up with a better name (t3highlight would be OK, if it were not for the

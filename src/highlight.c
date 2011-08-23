@@ -44,6 +44,7 @@ t3_bool vector_reserve(vector_base_t *vector, size_t elsize) {
 
 typedef struct {
 	pcre *regex;
+	pcre_extra *extra;
 	int next_state,
 		attribute_idx;
 } pattern_t;
@@ -145,6 +146,7 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 	t3_config_t *regex, *style;
 	pattern_t action;
 	int style_attr_idx;
+	const char *study_error;
 
 	for (patterns = t3_config_get(patterns, NULL); patterns != NULL; patterns = t3_config_get_next(patterns)) {
 		if ((style = t3_config_get(patterns, "style")) == NULL) {
@@ -160,6 +162,7 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 				RETURN_ERROR(T3_ERR_INVALID_FORMAT);
 			if ((action.regex = compile_pattern(regex, error)) == NULL)
 				return t3_false;
+			action.extra = pcre_study(action.regex, 0, &study_error);
 
 			action.attribute_idx = style_attr_idx;
 			action.next_state = idx;
@@ -178,29 +181,44 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 
 			if ((action.regex = compile_pattern(regex, NULL)) == NULL)
 				return t3_false;
+			action.extra = pcre_study(action.regex, 0, &study_error);
 
-			if ((sub_patterns = t3_config_get(patterns, "pattern")) != NULL)
+			if ((sub_patterns = t3_config_get(patterns, "pattern")) != NULL) {
 				if (!t3_config_is_list(sub_patterns))
 					RETURN_ERROR(T3_ERR_INVALID_FORMAT);
 
-			action.next_state = context->highlight->states.used;
-			if (!VECTOR_RESERVE(context->highlight->states))
-				RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
-			VECTOR_LAST(context->highlight->states) = null_state;
-			VECTOR_LAST(context->highlight->states).attribute_idx = style_attr_idx;
-			if (!init_state(context, sub_patterns, action.next_state, error))
-				return t3_false;
+				action.next_state = context->highlight->states.used;
+				if (!VECTOR_RESERVE(context->highlight->states))
+					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+				VECTOR_LAST(context->highlight->states) = null_state;
+				VECTOR_LAST(context->highlight->states).attribute_idx = style_attr_idx;
+				if (!init_state(context, sub_patterns, action.next_state, error))
+					return t3_false;
+			}
 
 			if ((regex = t3_config_get(patterns, "end")) != NULL) {
 				pattern_t end_action;
 				end_action.next_state = idx;
 				if ((end_action.regex = compile_pattern(regex, error)) == NULL)
 					return t3_false;
+				end_action.extra = pcre_study(action.regex, 0, &study_error);
 
 				end_action.attribute_idx = action.attribute_idx;
-				VECTOR_RESERVE(VECTOR_LAST(context->highlight->states).patterns);
-				//FIXME use push front if end is defined before first %pattern
-				VECTOR_LAST(VECTOR_LAST(context->highlight->states).patterns) = end_action;
+				if (!VECTOR_RESERVE(VECTOR_LAST(context->highlight->states).patterns))
+					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+
+				for ( ; regex != NULL; regex = t3_config_get_next(regex))
+					if (strcmp(t3_config_get_name(regex), "pattern") == 0)
+						break;
+
+				if (regex == NULL && VECTOR_LAST(context->highlight->states).patterns.used > 0) {
+					VECTOR_LAST(VECTOR_LAST(context->highlight->states).patterns) = end_action;
+				} else {
+					memmove(VECTOR_LAST(context->highlight->states).patterns.data + 1,
+						VECTOR_LAST(context->highlight->states).patterns.data,
+						VECTOR_LAST(context->highlight->states).patterns.used * sizeof(pattern_t));
+					VECTOR_LAST(context->highlight->states).patterns.data[0] = end_action;
+				}
 			}
 		}
 		if (!VECTOR_RESERVE(context->highlight->states.data[idx].patterns))
@@ -214,6 +232,7 @@ return_error:
 
 static void free_pattern(pattern_t *pattern) {
 	pcre_free(pattern->regex);
+	pcre_free(pattern->extra);
 }
 
 static void free_state(state_t *state) {
@@ -247,7 +266,9 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 					state->patterns.data[j].next_state > result->state))
 				local_options |= PCRE_NOTEMPTY_ATSTART;
 
-			if (pcre_exec(state->patterns.data[j].regex, NULL, line + i, size - i, 0, local_options, ovector, 30) >= 0) {
+			if (pcre_exec(state->patterns.data[j].regex, state->patterns.data[j].extra, line + i, size - i,
+					0, local_options, ovector, 30) >= 0)
+			{
 				result->start = i + ovector[0];
 				result->end = i + ovector[1];
 				/* Forbidden state is only set when we matched an empty end pattern. We recognize
