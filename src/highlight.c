@@ -58,6 +58,14 @@ struct t3_highlight_t {
 	VECTOR(state_t, states);
 };
 
+struct t3_highlight_match_t {
+	size_t start,
+		end;
+	int state,
+		begin_attribute,
+		match_attribute;
+};
+
 #define RETURN_ERROR(x) do { if (error != NULL) *error = (x); goto return_error; } while (0)
 
 static const state_t null_state = { { NULL, 0, 0 }, 0 };
@@ -240,8 +248,11 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 	}
 
 	result->begin_attribute = highlight->states.data[result->state].attribute_idx;
-	if (best == (size_t) -1)
+	if (best == (size_t) -1) {
+		result->start = size;
+		result->end = size;
 		return t3_false;
+	}
 
 	result->start = result->end + best_position;
 	result->end += best_position_end;
@@ -254,4 +265,33 @@ void t3_highlight_reset(t3_highlight_match_t *match, int state) {
 	static const t3_highlight_match_t empty = T3_HIGHLIGHT_MATCH_INITIALIZER;
 	*match = empty;
 	match->state = state;
+}
+
+t3_highlight_match_t *t3_highlight_new_match(void) {
+	return calloc(1, sizeof(t3_highlight_match_t));
+}
+
+void t3_highlight_free_match(t3_highlight_match_t *match) {
+	free(match);
+}
+
+size_t t3_highlight_get_start(t3_highlight_match_t *match) {
+	return match->start;
+}
+
+size_t t3_highlight_get_end(t3_highlight_match_t *match) {
+	return match->end;
+}
+
+int t3_highlight_get_begin_attr(t3_highlight_match_t *match) {
+	return match->begin_attribute;
+}
+
+int t3_highlight_get_match_attr(t3_highlight_match_t *match) {
+	return match->match_attribute;
+}
+
+int t3_highlight_next_line(t3_highlight_match_t *match) {
+	match->end = 0;
+	return match->state;
 }

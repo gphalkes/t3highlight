@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <errno.h>
 #include <unistd.h>
 #include <t3config/config.h>
 #include <t3highlight/highlight.h>
@@ -90,44 +91,48 @@ int main(int argc, char *argv[]) {
 	fclose(pattern_file);
 	t3_config_delete(pattern_config);
 
+	//FIXME: move to begin or make the following a separate function
  	FILE *input;
 	char *line = NULL;
 	size_t n;
 	ssize_t chars_read;
 	size_t begin;
-	t3_highlight_match_t match_result = T3_HIGHLIGHT_MATCH_INITIALIZER;
+	t3_highlight_match_t *match = t3_highlight_new_match();
+	t3_bool match_result;
+
+	//FIXME: use proper error message
+	if (match == NULL)
+		fatal("Out of memory\n");
 
 	if ((input = fopen(argv[optind + 1], "rb")) == NULL)
-		fatal("Can't open '%s': %m\n", argv[optind + 1]);
+		fatal("Can't open '%s': %s\n", argv[optind + 1], strerror(errno));
 
 	while ((chars_read = getline(&line, &n, input)) > 0) {
 		if (line[chars_read - 1] == '\n')
 			chars_read--;
 
-		match_result.end = 0;
-		begin = match_result.end;
-		while (t3_highlight_match(pattern, line, chars_read, &match_result)) {
-			if (begin != match_result.start) {
-				fputs(styles[match_result.begin_attribute].code, stdout);
-				printf("%.*s", (int) (match_result.start - begin), line + begin);
-				if (match_result.begin_attribute != 0)
+		t3_highlight_next_line(match);
+		begin = 0;
+		do {
+			match_result = t3_highlight_match(pattern, line, chars_read, match);
+			size_t start = t3_highlight_get_start(match), end = t3_highlight_get_end(match);
+			if (begin != start) {
+				fputs(styles[t3_highlight_get_begin_attr(match)].code, stdout);
+				printf("%.*s", (int) (start - begin), line + begin);
+				if (t3_highlight_get_begin_attr(match) != 0)
 					fputs("\033[0m", stdout);
 			}
-			if (match_result.start != match_result.end) {
-				fputs(styles[match_result.match_attribute].code, stdout);
-				printf("%.*s", (int) (match_result.end - match_result.start), line + match_result.start);
-				if (match_result.match_attribute != 0)
+			if (start != end) {
+				fputs(styles[t3_highlight_get_match_attr(match)].code, stdout);
+				printf("%.*s", (int) (end - start), line + start);
+				if (t3_highlight_get_match_attr(match) != 0)
 					fputs("\033[0m", stdout);
 			}
-			begin = match_result.end;
-		}
-		if (begin != (size_t) chars_read) {
-			fputs(styles[match_result.begin_attribute].code, stdout);
-			printf("%.*s", (int) (chars_read - begin), line + begin);
-		}
+			begin = end;
+		} while (match_result);
 		putchar('\n');
 	}
-
+	t3_highlight_free_match(match);
 	fclose(input);
 
 	t3_highlight_free(pattern);

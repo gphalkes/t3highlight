@@ -32,13 +32,7 @@ extern "C" {
 
 
 typedef struct t3_highlight_t t3_highlight_t;
-typedef struct {
-	size_t start,
-		end;
-	int state,
-		begin_attribute,
-		match_attribute;
-} t3_highlight_match_t;
+typedef struct t3_highlight_match_t t3_highlight_match_t;
 
 #define T3_HIGHLIGHT_MATCH_INITIALIZER { 0, 0, 0, 0, 0 }
 
@@ -48,6 +42,13 @@ T3_HIGHLIGHT_API t3_bool t3_highlight_match(const t3_highlight_t *highlight, con
 T3_HIGHLIGHT_API void t3_highlight_free(t3_highlight_t *highlight);
 
 T3_HIGHLIGHT_API void t3_highlight_reset(t3_highlight_match_t *match, int state);
+T3_HIGHLIGHT_API t3_highlight_match_t *t3_highlight_new_match(void);
+T3_HIGHLIGHT_API void t3_highlight_free_match(t3_highlight_match_t *match);
+T3_HIGHLIGHT_API size_t t3_highlight_get_start(t3_highlight_match_t *match);
+T3_HIGHLIGHT_API size_t t3_highlight_get_end(t3_highlight_match_t *match);
+T3_HIGHLIGHT_API int t3_highlight_get_begin_attr(t3_highlight_match_t *match);
+T3_HIGHLIGHT_API int t3_highlight_get_match_attr(t3_highlight_match_t *match);
+T3_HIGHLIGHT_API int t3_highlight_next_line(t3_highlight_match_t *match);
 
 #ifdef __cplusplus
 } /* extern "C" */
