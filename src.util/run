@@ -1,0 +1,4 @@
+#!/bin/bash
+
+DIR="`dirname \"$0\"`"
+LD_LIBRARY_PATH="$DIR/../src/.libs:$DIR/../src/t3config/.libs" "$DIR/t3highlight" "$@"

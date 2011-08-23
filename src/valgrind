@@ -1,5 +1,0 @@
-#!/bin/bash
-
-DIR="`dirname \"$0\"`"
-LD_LIBRARY_PATH="$DIR/.libs:$DIR/t3config/.libs" valgrind --tool=memcheck --leak-check=full \
-	--show-reachable=yes --track-origins=yes --log-file=valgrind.log "$DIR/t3highlight-source" "$@"

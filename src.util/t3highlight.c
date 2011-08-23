@@ -22,17 +22,18 @@
 
 struct style_def_t {
 	const char *tag;
-	const char *code;
+	const char *start;
+	const char *end;
 } styles[] = {
-	{ "normal", "" },
-	{ "keyword", "\033[34;1m" },
-	{ "string", "\033[35m" },
-	{ "string-escape", "\033[35;1m" },
-	{ "comment", "\033[32m" },
-	{ "number", "\033[36m" },
-	{ "misc", "\033[33m" },
-	{ "comment-keyword", "\033[32;1m" },
-	{ NULL, NULL }
+	{ "normal", "", "" },
+	{ "keyword", "\033[34;1m", "\033[0m" },
+	{ "string", "\033[35m", "\033[0m" },
+	{ "string-escape", "\033[35;1m", "\033[0m" },
+	{ "comment", "\033[32m", "\033[0m" },
+	{ "number", "\033[36m", "\033[0m" },
+	{ "misc", "\033[33m", "\033[0m" },
+	{ "comment-keyword", "\033[32;1m", "\033[0m" },
+	{ NULL, NULL, NULL }
 };
 
 int map_style(struct style_def_t *styles, const char *name) {
@@ -117,16 +118,14 @@ int main(int argc, char *argv[]) {
 			match_result = t3_highlight_match(pattern, line, chars_read, match);
 			size_t start = t3_highlight_get_start(match), end = t3_highlight_get_end(match);
 			if (begin != start) {
-				fputs(styles[t3_highlight_get_begin_attr(match)].code, stdout);
+				fputs(styles[t3_highlight_get_begin_attr(match)].start, stdout);
 				printf("%.*s", (int) (start - begin), line + begin);
-				if (t3_highlight_get_begin_attr(match) != 0)
-					fputs("\033[0m", stdout);
+				fputs(styles[t3_highlight_get_begin_attr(match)].end, stdout);
 			}
 			if (start != end) {
-				fputs(styles[t3_highlight_get_match_attr(match)].code, stdout);
+				fputs(styles[t3_highlight_get_match_attr(match)].start, stdout);
 				printf("%.*s", (int) (end - start), line + start);
-				if (t3_highlight_get_match_attr(match) != 0)
-					fputs("\033[0m", stdout);
+				fputs(styles[t3_highlight_get_match_attr(match)].end, stdout);
 			}
 			begin = end;
 		} while (match_result);

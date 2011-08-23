@@ -1,5 +1,4 @@
 syntax: glob
-src/valgrind.log
 src/.deps
 src/.libs
 src/.objects
@@ -10,6 +9,7 @@ src/t3highlight
 src.util/.deps
 src.util/.objects
 src.util/t3highlight
+src.util/valgrind.log
 
 src/highlight_api.h
 src/highlight_errors.h
