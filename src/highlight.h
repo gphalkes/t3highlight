@@ -47,6 +47,7 @@ T3_HIGHLIGHT_API size_t t3_highlight_get_end(t3_highlight_match_t *match);
 T3_HIGHLIGHT_API int t3_highlight_get_begin_attr(t3_highlight_match_t *match);
 T3_HIGHLIGHT_API int t3_highlight_get_match_attr(t3_highlight_match_t *match);
 T3_HIGHLIGHT_API int t3_highlight_next_line(t3_highlight_match_t *match);
+T3_HIGHLIGHT_API const char *t3_highlight_strerror(int error);
 
 #ifdef __cplusplus
 } /* extern "C" */

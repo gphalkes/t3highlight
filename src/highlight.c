@@ -16,31 +16,15 @@
 #include <pcre.h>
 
 #include "highlight.h"
+#include "highlight_errors.h"
+#include "vector.h"
 
-typedef struct {
-	void *data;
-	size_t allocated,
-		used;
-} vector_base_t;
-
-#define VECTOR(type, name) struct { type *data; size_t allocated, used; } name
-#define VECTOR_INIT(name) do { (name).data = NULL; (name).allocated = 0; (name).used = 0; } while (0)
-#define VECTOR_ITERATE(name, func) do { size_t _i; for (_i = 0; _i < (name).used; _i++) func(&(name).data[_i]); } while (0)
-#define VECTOR_RESERVE(name) vector_reserve((vector_base_t *) &name, sizeof((name).data[0]))
-#define VECTOR_LAST(name) (name).data[(name).used - 1]
-
-t3_bool vector_reserve(vector_base_t *vector, size_t elsize) {
-	if (vector->allocated <= vector->used) {
-		size_t allocate = vector->allocated == 0 ? 8 : vector->allocated * 2;
-		void *data = realloc(vector->data, allocate * elsize);
-		if (data == NULL)
-			return t3_false;
-		vector->data = data;
-		vector->allocated = allocate;
-	}
-	vector->used++;
-	return t3_true;
-}
+#ifdef USE_GETTEXT
+#include <libintl.h>
+#define _(x) dgettext("LIBT3", (x))
+#else
+#define _(x) (x)
+#endif
 
 typedef struct {
 	pcre *regex;
@@ -71,6 +55,10 @@ struct t3_highlight_match_t {
 
 static const state_t null_state = { { NULL, 0, 0 }, 0 };
 
+static const char syntax_schema[] = {
+#include "syntax.c"
+};
+
 typedef struct {
 	int (*map_style)(void *, const char *);
 	void *map_style_data;
@@ -82,10 +70,26 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 static void free_state(state_t *state);
 
 t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, const char *), void *map_style_data, int *error) {
-	t3_highlight_t *result;
+	t3_highlight_t *result = NULL;
+	t3_config_schema_t *schema = NULL;
 	t3_config_t *patterns;
+	t3_config_error_t local_error;
 	pattern_context_t context;
 	const char *name;
+
+
+	if ((schema = t3_config_read_schema_buffer(syntax_schema, sizeof(syntax_schema), &local_error, NULL)) == NULL) {
+		if (error != NULL)
+			*error = local_error.error != T3_ERR_OUT_OF_MEMORY ? T3_ERR_INTERNAL : local_error.error;
+		return NULL;
+	}
+
+	if (!t3_config_validate(syntax, schema, NULL))
+		RETURN_ERROR(T3_ERR_INVALID_FORMAT);
+
+	t3_config_delete_schema(schema);
+	schema = NULL;
+
 
 	if (map_style == NULL)
 		RETURN_ERROR(T3_ERR_BAD_ARG);
@@ -95,16 +99,11 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	result->name = NULL;
 	VECTOR_INIT(result->states);
 
-	//FIXME: when validation is implemented in libt3config, use that!
 
 	name = t3_config_get_string(t3_config_get(syntax, "name"));
-	if (name == NULL)
-		RETURN_ERROR(T3_ERR_INVALID_FORMAT);
 	result->name = strdup(name);
 
 	patterns = t3_config_get(syntax, "pattern");
-	if (!t3_config_is_list(patterns))
-		RETURN_ERROR(T3_ERR_INVALID_FORMAT);
 
 	if (!VECTOR_RESERVE(result->states))
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
@@ -118,10 +117,13 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	return result;
 
 return_error:
-	VECTOR_ITERATE(result->states, free_state);
-	free(result->states.data);
-	free(result->name);
-	free(result);
+	t3_config_delete_schema(schema);
+	if (result != NULL) {
+		VECTOR_ITERATE(result->states, free_state);
+		free(result->states.data);
+		free(result->name);
+		free(result);
+	}
 	return NULL;
 }
 
@@ -158,8 +160,6 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 		}
 
 		if ((regex = t3_config_get(patterns, "regex")) != NULL) {
-			if (t3_config_get(patterns, "start") != NULL || t3_config_get(patterns, "end") != NULL)
-				RETURN_ERROR(T3_ERR_INVALID_FORMAT);
 			if ((action.regex = compile_pattern(regex, error)) == NULL)
 				return t3_false;
 			action.extra = pcre_study(action.regex, 0, &study_error);
@@ -168,8 +168,6 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 			action.next_state = idx;
 		} else if ((regex = t3_config_get(patterns, "start")) != NULL) {
 			t3_config_t *sub_patterns;
-			if (t3_config_get(patterns, "regex") != NULL)
-				RETURN_ERROR(T3_ERR_INVALID_FORMAT);
 
 			if ((style = t3_config_get(patterns, "delim-style")) == NULL) {
 				action.attribute_idx = style_attr_idx;
@@ -184,9 +182,6 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 			action.extra = pcre_study(action.regex, 0, &study_error);
 
 			if ((sub_patterns = t3_config_get(patterns, "pattern")) != NULL) {
-				if (!t3_config_is_list(sub_patterns))
-					RETURN_ERROR(T3_ERR_INVALID_FORMAT);
-
 				action.next_state = context->highlight->states.used;
 				if (!VECTOR_RESERVE(context->highlight->states))
 					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
@@ -325,4 +320,15 @@ int t3_highlight_next_line(t3_highlight_match_t *match) {
 	match->end = 0;
 	match->forbidden_state = -1;
 	return match->state;
+}
+
+const char *t3_highlight_strerror(int error) {
+	switch (error) {
+		default:
+			return t3_highlight_strerror_base(error);
+		case T3_ERR_INVALID_FORMAT:
+			return _("invalid file format");
+		case T3_ERR_INVALID_REGEX:
+			return _("invalid regular expression");
+	}
 }

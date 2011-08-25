@@ -73,6 +73,8 @@ static PARSE_FUNCTION(parse_args)
 		DOUBLE_DASH
 			NO_MORE_OPTIONS;
 		END_OPTION
+
+		fatal("No such option " OPTFMT "\n", OPTPRARG);
 	NO_OPTION
 		//FIXME: handle more than one option
 		if (option_input != NULL)
@@ -104,7 +106,8 @@ static t3_highlight_t *load_highlight(const char *name) {
 	if ((highlight_config = t3_config_read_file(highlight_file, &config_error, NULL)) == NULL)
 		fatal("Error reading highlighting patterns: %s @ %d\n", t3_config_strerror(config_error.error), config_error.line_number);
 
-	highlight = t3_highlight_new(highlight_config, (int (*)(void *, const char *)) map_style, styles, &error);
+	if ((highlight = t3_highlight_new(highlight_config, (int (*)(void *, const char *)) map_style, styles, &error)) == NULL)
+		fatal("Error loading highlighting patterns: %s @ %d\n", t3_highlight_strerror(error));
 
 	fclose(highlight_file);
 	t3_config_delete(highlight_config);

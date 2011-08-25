@@ -22,12 +22,9 @@ Library:
 	- Do we wish to support language switching?
 
 
-t3highlight-source:
-- come up with a better name (t3highlight would be OK, if it were not for the
-	annoying clash with the include dir symlink)
-- allow style definitions
+t3highlight:
 - add html/latex/etc escaping of inputs (i.e. sed scripts or something like it)
-
+- merge consecutive sections using the same attribute?
 
 Generic:
 - define a list of default style names to use

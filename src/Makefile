@@ -11,11 +11,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SOURCES.libt3highlight.la := highlight.c
+SOURCES.libt3highlight.la := highlight.c vector.c highlight_shared.c
 
 LDLIBS.libt3highlight.la += -lt3config
 LDFLAGS.libt3highlight.la += -Lt3config/.libs
 LDFLAGS.libt3highlight.la += `pkg-config --libs libpcre`
+CFLAGS.highlight += -I.objects
 
 LTTARGETS := libt3highlight.la
 #================================================#
@@ -26,8 +27,11 @@ include ../../makesys/rules.mk
 T3NAME := highlight
 include ../../t3shared/rules.mk
 
-CXXFLAGS += -I.
-CXXFLAGS += `pkg-config --cflags libpcre`
+
+.objects/%.c: %.schema
+	$(_VERBOSE_GEN) sed -r '/^#/d;s/#.*//' $< | xxd -i > $@
+
+highlight.c: .objects/syntax.c
 
 links:
 	@[ -L t3highlight ] || ln -s . t3highlight
