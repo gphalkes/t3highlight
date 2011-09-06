@@ -36,11 +36,15 @@ types {
 			delim-style {
 				type = "string"
 			}
+			use {
+				type = "string"
+				%constraint = "/define/[%]"
+			}
 		}
-		%constraint = "regex ^ start"
+		%constraint = "#(regex, start, use) = 1"
 		%constraint = "start ^ !end"
-		%constraint = "!(pattern & !start)"
-		%constraint = "!(delim-style & !start)"
+		%constraint = "start | !pattern"
+		%constraint = "start | !delim-style"
 	}
 }
 
@@ -50,6 +54,10 @@ allowed-keys {
 	}
 	pattern {
 		type = "list"
+		item-type = "pattern"
+	}
+	define {
+		type = "section"
 		item-type = "pattern"
 	}
 }

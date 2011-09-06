@@ -29,7 +29,8 @@ include ../../t3shared/rules.mk
 
 
 .objects/%.bytes: %.schema
-	$(_VERBOSE_GEN) sed -r '/^#/d;s/#.*//' $< | xxd -i > $@
+	@ [ -d .objects ] || mkdir .objects
+	$(_VERBOSE_GEN) sed -r '/^[[:space:]]*#/d' $< | xxd -i > $@
 
 highlight.c: .objects/syntax.bytes
 

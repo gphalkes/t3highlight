@@ -107,7 +107,7 @@ static t3_highlight_t *load_highlight(const char *name) {
 		fatal("Error reading highlighting patterns: %s @ %d\n", t3_config_strerror(config_error.error), config_error.line_number);
 
 	if ((highlight = t3_highlight_new(highlight_config, (int (*)(void *, const char *)) map_style, styles, &error)) == NULL)
-		fatal("Error loading highlighting patterns: %s @ %d\n", t3_highlight_strerror(error));
+		fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
 
 	fclose(highlight_file);
 	t3_config_delete(highlight_config);
