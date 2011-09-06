@@ -1,4 +1,5 @@
 syntax: glob
+src/highlight_shared.c
 src/.deps
 src/.libs
 src/.objects

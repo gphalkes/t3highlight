@@ -56,7 +56,7 @@ struct t3_highlight_match_t {
 static const state_t null_state = { { NULL, 0, 0 }, 0 };
 
 static const char syntax_schema[] = {
-#include "syntax.c"
+#include "syntax.bytes"
 };
 
 typedef struct {
@@ -84,7 +84,7 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 		return NULL;
 	}
 
-	if (!t3_config_validate(syntax, schema, NULL))
+	if (!t3_config_validate(syntax, schema, NULL, NULL))
 		RETURN_ERROR(T3_ERR_INVALID_FORMAT);
 
 	t3_config_delete_schema(schema);

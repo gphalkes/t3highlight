@@ -28,10 +28,10 @@ T3NAME := highlight
 include ../../t3shared/rules.mk
 
 
-.objects/%.c: %.schema
+.objects/%.bytes: %.schema
 	$(_VERBOSE_GEN) sed -r '/^#/d;s/#.*//' $< | xxd -i > $@
 
-highlight.c: .objects/syntax.c
+highlight.c: .objects/syntax.bytes
 
 links:
 	@[ -L t3highlight ] || ln -s . t3highlight
