@@ -44,7 +44,7 @@ types {
 		%constraint = "#(regex, start, use) = 1"
 		%constraint = "start ^ !end"
 		%constraint = "start | !pattern"
-		%constraint = "start | !delim-style"
+		%constraint = "start | use | !delim-style"
 	}
 }
 
