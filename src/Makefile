@@ -29,8 +29,8 @@ include ../../t3shared/rules.mk
 
 
 .objects/%.bytes: %.schema
-	@ [ -d .objects ] || mkdir .objects
-	$(_VERBOSE_GEN) sed -r 's/^[[:space:]]+//;/^#/d;/^$$/d' $< | xxd -i > $@
+	$(GENOBJDIR)
+	$(_VERBOSE_GEN) t3config/data2bytes -s -- $< > $@
 
 highlight.c: .objects/syntax.bytes
 
