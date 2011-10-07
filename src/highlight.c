@@ -154,14 +154,11 @@ return_error:
 }
 
 static pcre *compile_pattern(t3_config_t *pattern, int *error) {
-	const char *regex_str;
 	const char *error_message;
 	int error_offset;
-
 	pcre *regex;
-	if ((regex_str = t3_config_get_string(pattern)) == NULL || *regex_str == 0)
-		RETURN_ERROR(T3_ERR_INVALID_FORMAT);
-	if ((regex = pcre_compile(regex_str, 0, &error_message, &error_offset, NULL)) == NULL)
+
+	if ((regex = pcre_compile(t3_config_get_string(pattern), 0, &error_message, &error_offset, NULL)) == NULL)
 		RETURN_ERROR(T3_ERR_INVALID_REGEX);
 
 	return regex;
@@ -224,25 +221,23 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 
 				if ((end_action.regex = compile_pattern(regex, error)) == NULL)
 					return t3_false;
-				end_action.extra = pcre_study(action.regex, 0, &study_error);
+				end_action.extra = pcre_study(end_action.regex, 0, &study_error);
 
 				end_action.attribute_idx = action.attribute_idx;
-				if (!VECTOR_RESERVE(VECTOR_LAST(context->highlight->states).patterns))
+				if (!VECTOR_RESERVE(context->highlight->states.data[action.next_state].patterns))
 					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 
 				/* Find the pattern entry, starting after the end entry. If it does not exist,
 				   the list of patterns was specified first. */
-				for ( ; regex != NULL; regex = t3_config_get_next(regex))
-					if (strcmp(t3_config_get_name(regex), "pattern") == 0)
-						break;
+				for ( ; regex != NULL && strcmp(t3_config_get_name(regex), "pattern") != 0; regex = t3_config_get_next(regex)) {}
 
-				if (regex == NULL && VECTOR_LAST(context->highlight->states).patterns.used > 0) {
-					VECTOR_LAST(VECTOR_LAST(context->highlight->states).patterns) = end_action;
+				if (regex == NULL && context->highlight->states.data[action.next_state].patterns.used > 0) {
+					VECTOR_LAST(context->highlight->states.data[action.next_state].patterns) = end_action;
 				} else {
-					memmove(VECTOR_LAST(context->highlight->states).patterns.data + 1,
-						VECTOR_LAST(context->highlight->states).patterns.data,
-						VECTOR_LAST(context->highlight->states).patterns.used * sizeof(pattern_t));
-					VECTOR_LAST(context->highlight->states).patterns.data[0] = end_action;
+					memmove(context->highlight->states.data[action.next_state].patterns.data + 1,
+						context->highlight->states.data[action.next_state].patterns.data,
+						(context->highlight->states.data[action.next_state].patterns.used - 1) * sizeof(pattern_t));
+					context->highlight->states.data[action.next_state].patterns.data[0] = end_action;
 				}
 			}
 		} else if ((use = t3_config_get(patterns, "use")) != NULL) {
@@ -300,9 +295,9 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 		for (j = 0; j < state->patterns.used; j++) {
 			int local_options = options;
 
-			if (state->patterns.data[j].next_state == result->state ||
+			if (i == result->end && (state->patterns.data[j].next_state == result->state ||
 					(state->patterns.data[j].next_state <= result->forbidden_state &&
-					state->patterns.data[j].next_state > result->state))
+					state->patterns.data[j].next_state > result->state)))
 				local_options |= PCRE_NOTEMPTY_ATSTART;
 
 			if (pcre_exec(state->patterns.data[j].regex, state->patterns.data[j].extra, line + i, size - i,
@@ -337,7 +332,11 @@ void t3_highlight_reset(t3_highlight_match_t *match, int state) {
 }
 
 t3_highlight_match_t *t3_highlight_new_match(void) {
-	return calloc(1, sizeof(t3_highlight_match_t));
+	t3_highlight_match_t *result = malloc(sizeof(t3_highlight_match_t));
+	if (result == NULL)
+		return NULL;
+	t3_highlight_reset(result, 0);
+	return result;
 }
 
 void t3_highlight_free_match(t3_highlight_match_t *match) {
