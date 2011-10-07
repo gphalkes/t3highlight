@@ -32,7 +32,7 @@ format = 1
 %pattern {
 	start = '"'
 	%pattern {
-		regex = '\\.'
+		regex = '\\(x[0-9a-fA-F]+|[0-7]{1,3}|.)'
 		style = "string-escape"
 	}
 	end = '"|(?<!\\)$'
