@@ -39,7 +39,6 @@ typedef struct {
 } state_t;
 
 struct t3_highlight_t {
-	char *name;
 	VECTOR(state_t, states);
 };
 
@@ -69,14 +68,47 @@ typedef struct {
 static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int idx, int *error);
 static void free_state(state_t *state);
 
+t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, const char *), void *map_style_data, int *error) {
+	t3_config_opts_t opts;
+	const char *path[] = { DATADIR, NULL };
+	t3_config_t *config;
+	t3_config_error_t config_error;
+	t3_highlight_t *result;
+	FILE *file;
+
+	/* FIXME: do we want to add a path from the environment? */
+	/* FIXME: allow use of name without extension to allow lookup from config file. */
+
+	if ((file = t3_config_open_from_path(path, name, 0)) == NULL) {
+		if (error != NULL)
+			*error = T3_ERR_ERRNO;
+		return NULL;
+	}
+
+	opts.flags = T3_CONFIG_INCLUDE_DFLT;
+	opts.include_callback.dflt.path = path;
+	opts.include_callback.dflt.flags = 0;
+
+	config = t3_config_read_file(file, &config_error, &opts);
+	fclose(file);
+	if (config == NULL) {
+		if (error != NULL)
+			*error = config_error.error;
+		return NULL;
+	}
+
+	result = t3_highlight_new(config, map_style, map_style_data, error);
+	t3_config_delete(config);
+
+	return result;
+}
+
 t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, const char *), void *map_style_data, int *error) {
 	t3_highlight_t *result = NULL;
 	t3_config_schema_t *schema = NULL;
 	t3_config_t *patterns;
 	t3_config_error_t local_error;
 	pattern_context_t context;
-	const char *name;
-
 
 	if ((schema = t3_config_read_schema_buffer(syntax_schema, sizeof(syntax_schema), &local_error, NULL)) == NULL) {
 		if (error != NULL)
@@ -96,12 +128,7 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 
 	if ((result = malloc(sizeof(t3_highlight_t))) == NULL)
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
-	result->name = NULL;
 	VECTOR_INIT(result->states);
-
-
-	name = t3_config_get_string(t3_config_get(syntax, "name"));
-	result->name = strdup(name);
 
 	patterns = t3_config_get(syntax, "pattern");
 
@@ -121,7 +148,6 @@ return_error:
 	if (result != NULL) {
 		VECTOR_ITERATE(result->states, free_state);
 		free(result->states.data);
-		free(result->name);
 		free(result);
 	}
 	return NULL;
@@ -144,20 +170,20 @@ return_error:
 	return NULL;
 }
 
+static t3_bool match_name(const t3_config_t *config, void *data) {
+	return strcmp(t3_config_get_string(t3_config_get(config, "name")), data) == 0;
+}
+
 static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int idx, int *error) {
-	t3_config_t *regex, *style;
+	t3_config_t *regex, *style, *use;
 	pattern_t action;
 	int style_attr_idx;
 	const char *study_error;
 
 	for (patterns = t3_config_get(patterns, NULL); patterns != NULL; patterns = t3_config_get_next(patterns)) {
-		if ((style = t3_config_get(patterns, "style")) == NULL) {
-			style_attr_idx = action.attribute_idx = context->highlight->states.data[idx].attribute_idx;
-		} else {
-			if (t3_config_get_type(style) != T3_CONFIG_STRING)
-				RETURN_ERROR(T3_ERR_INVALID_FORMAT);
-			style_attr_idx = context->map_style(context->map_style_data, t3_config_get_string(style));
-		}
+		style_attr_idx = (style = t3_config_get(patterns, "style")) == NULL ?
+			context->highlight->states.data[idx].attribute_idx :
+			context->map_style(context->map_style_data, t3_config_get_string(style));
 
 		if ((regex = t3_config_get(patterns, "regex")) != NULL) {
 			if ((action.regex = compile_pattern(regex, error)) == NULL)
@@ -169,31 +195,33 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 		} else if ((regex = t3_config_get(patterns, "start")) != NULL) {
 			t3_config_t *sub_patterns;
 
-			if ((style = t3_config_get(patterns, "delim-style")) == NULL) {
-				action.attribute_idx = style_attr_idx;
-			} else {
-				if (t3_config_get_type(style) != T3_CONFIG_STRING)
-					RETURN_ERROR(T3_ERR_INVALID_FORMAT);
-				action.attribute_idx = context->map_style(context->map_style_data, t3_config_get_string(style));
-			}
+			action.attribute_idx = (style = t3_config_get(patterns, "delim-style")) == NULL ?
+				style_attr_idx : context->map_style(context->map_style_data, t3_config_get_string(style));
 
 			if ((action.regex = compile_pattern(regex, NULL)) == NULL)
 				return t3_false;
 			action.extra = pcre_study(action.regex, 0, &study_error);
 
+			/* Create new state to which start will switch. */
+			action.next_state = context->highlight->states.used;
+			if (!VECTOR_RESERVE(context->highlight->states))
+				RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+			VECTOR_LAST(context->highlight->states) = null_state;
+			VECTOR_LAST(context->highlight->states).attribute_idx = style_attr_idx;
+
+			/* Add sub-patterns to the new state, if they are specified. */
 			if ((sub_patterns = t3_config_get(patterns, "pattern")) != NULL) {
-				action.next_state = context->highlight->states.used;
-				if (!VECTOR_RESERVE(context->highlight->states))
-					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
-				VECTOR_LAST(context->highlight->states) = null_state;
-				VECTOR_LAST(context->highlight->states).attribute_idx = style_attr_idx;
 				if (!init_state(context, sub_patterns, action.next_state, error))
 					return t3_false;
 			}
 
+			/* If the pattern specifies an end regex, create an extra action for that and paste that
+			   to in the list of sub-patterns. Depending on whether end is specified before or after
+			   the pattern list, it will be pre- or appended. */
 			if ((regex = t3_config_get(patterns, "end")) != NULL) {
 				pattern_t end_action;
 				end_action.next_state = idx;
+
 				if ((end_action.regex = compile_pattern(regex, error)) == NULL)
 					return t3_false;
 				end_action.extra = pcre_study(action.regex, 0, &study_error);
@@ -202,6 +230,8 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 				if (!VECTOR_RESERVE(VECTOR_LAST(context->highlight->states).patterns))
 					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 
+				/* Find the pattern entry, starting after the end entry. If it does not exist,
+				   the list of patterns was specified first. */
 				for ( ; regex != NULL; regex = t3_config_get_next(regex))
 					if (strcmp(t3_config_get_name(regex), "pattern") == 0)
 						break;
@@ -215,12 +245,27 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 					VECTOR_LAST(context->highlight->states).patterns.data[0] = end_action;
 				}
 			}
+		} else if ((use = t3_config_get(patterns, "use")) != NULL) {
+			t3_config_t *definition = t3_config_find(t3_config_get(context->syntax, "define"),
+				match_name, (char *) t3_config_get_string(use), NULL);
+
+			if (definition == NULL)
+				RETURN_ERROR(T3_ERR_INVALID_FORMAT);
+
+			if (!init_state(context, t3_config_get(definition, "pattern"), idx, error))
+				return t3_false;
+
+			/* We do not fill in action, so we should just skip to the next entry in the list. */
+			continue;
+		} else {
+			RETURN_ERROR(T3_ERR_INTERNAL);
 		}
 		if (!VECTOR_RESERVE(context->highlight->states.data[idx].patterns))
 			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 		VECTOR_LAST(context->highlight->states.data[idx].patterns) = action;
 	}
 	return t3_true;
+
 return_error:
 	return t3_false;
 }
@@ -238,7 +283,6 @@ static void free_state(state_t *state) {
 void t3_highlight_free(t3_highlight_t *highlight) {
 	VECTOR_ITERATE(highlight->states, free_state);
 	free(highlight->states.data);
-	free(highlight->name);
 	free(highlight);
 }
 
@@ -325,6 +369,8 @@ int t3_highlight_next_line(t3_highlight_match_t *match) {
 const char *t3_highlight_strerror(int error) {
 	switch (error) {
 		default:
+			if (error >= -80)
+				return t3_config_strerror(error);
 			return t3_highlight_strerror_base(error);
 		case T3_ERR_INVALID_FORMAT:
 			return _("invalid file format");

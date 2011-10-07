@@ -1,4 +1,4 @@
-name = "Test"
+format = 1
 
 %pattern {
 	start = "(?=a)|b"
@@ -18,7 +18,6 @@ name = "Test"
 	style = "string"
 	delim-style = "misc"
 }
-
 %pattern {
 	start = "(?=a)|b"
 	end = "(?=a)|b"

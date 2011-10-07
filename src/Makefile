@@ -16,7 +16,7 @@ SOURCES.libt3highlight.la := highlight.c vector.c highlight_shared.c
 LDLIBS.libt3highlight.la += -lt3config
 LDFLAGS.libt3highlight.la += -Lt3config/.libs
 LDFLAGS.libt3highlight.la += `pkg-config --libs libpcre`
-CFLAGS.highlight += -I.objects
+CFLAGS.highlight += -I.objects -DDATADIR='"$(CURDIR)/data"'
 
 LTTARGETS := libt3highlight.la
 #================================================#
@@ -25,7 +25,7 @@ LTTARGETS := libt3highlight.la
 include ../../makesys/rules.mk
 #================================================#
 T3NAME := highlight
-include ../../t3shared/rules.mk
+include ../../shared/rules.mk
 
 
 .objects/%.bytes: %.schema

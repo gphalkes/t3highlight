@@ -1,6 +1,8 @@
 #name = "C"
 #file-regex = "\.c$"
 
+format = 1
+
 %pattern {
 	regex = '\b(?:char|short|int|long|unsigned|float|double|' +
 		'void|struct|class|while|if|else|switch|case|default|' +
@@ -44,7 +46,7 @@
 	style = "number"
 }
 %pattern {
-	start = '^[[:space:]]*#(?:include|define|if(?:n?def)?|endif|else|elif)\b'
+	start = '^[[:space:]]*#(?:include|define|if(?:n?def)?|endif|else|elif|pragma)\b'
 	end = '(?<!\\)$'
 	delim-style = "misc"
 }

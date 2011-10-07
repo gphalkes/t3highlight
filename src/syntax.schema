@@ -38,27 +38,41 @@ types {
 			}
 			use {
 				type = "string"
-				%constraint = "/define/[%]"
 			}
 		}
 		%constraint = "#(regex, start, use) = 1"
 		%constraint = "start ^ !end"
 		%constraint = "start | !pattern"
-		%constraint = "start | use | !delim-style"
+		%constraint = "start | regex | !style"
+		%constraint = "start | !delim-style"
+	}
+	definition {
+		type = "section"
+		allowed-keys {
+			name {
+				type = "string"
+			}
+			pattern {
+				type = "list"
+				item-type = "pattern"
+			}
+		}
+		%constraint = "name & pattern"
 	}
 }
 
 allowed-keys {
-	name {
-		type = "string"
+	format {
+		type = "int"
+		%constraint = "% = 1"
 	}
 	pattern {
 		type = "list"
 		item-type = "pattern"
 	}
 	define {
-		type = "section"
-		item-type = "pattern"
+		type = "list"
+		item-type = "definition"
 	}
 }
-%constraint = "name & pattern"
+%constraint = "pattern & format"

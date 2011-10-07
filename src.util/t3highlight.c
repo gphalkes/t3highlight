@@ -70,6 +70,13 @@ static PARSE_FUNCTION(parse_args)
 				fatal("Error: only one style option allowed\n");
 			option_style = optArg;
 		END_OPTION
+		OPTION('h', "help", NO_ARG)
+			printf("Usage: t3highlight [<options>] [<file>]\n"
+				"  -l<lang>,--language=<lang>      Highlight using language <lang>\n"
+				"  -s<style>,--style=<style>       Output using style <style>\n"
+				"  -v,--verbose                    Enable verbose output mode\n"
+			);
+		END_OPTION
 		DOUBLE_DASH
 			NO_MORE_OPTIONS;
 		END_OPTION
@@ -94,23 +101,12 @@ static int map_style(style_def_t *styles, const char *name) {
 }
 
 static t3_highlight_t *load_highlight(const char *name) {
-	FILE *highlight_file;
-	t3_config_t *highlight_config;
-	t3_config_error_t config_error;
 	t3_highlight_t *highlight;
 	int error;
 
-	if ((highlight_file = fopen(name, "rb")) == NULL)
-		fatal("Can't open '%s': %s\n", name, strerror(errno));
-
-	if ((highlight_config = t3_config_read_file(highlight_file, &config_error, NULL)) == NULL)
-		fatal("Error reading highlighting patterns: %s @ %d\n", t3_config_strerror(config_error.error), config_error.line_number);
-
-	if ((highlight = t3_highlight_new(highlight_config, (int (*)(void *, const char *)) map_style, styles, &error)) == NULL)
+	if ((highlight = t3_highlight_load(name, (int (*)(void *, const char *)) map_style, styles, &error)) == NULL)
 		fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
 
-	fclose(highlight_file);
-	t3_config_delete(highlight_config);
 	return highlight;
 }
 
