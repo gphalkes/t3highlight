@@ -153,18 +153,16 @@ return_error:
 	return NULL;
 }
 
-static pcre *compile_pattern(t3_config_t *pattern, int *error) {
+static t3_bool compile_pattern(t3_config_t *pattern, pattern_t *action) {
 	const char *error_message;
 	int error_offset;
-	pcre *regex;
+	const char *study_error;
 
-	if ((regex = pcre_compile(t3_config_get_string(pattern), 0, &error_message, &error_offset, NULL)) == NULL)
-		RETURN_ERROR(T3_ERR_INVALID_REGEX);
+	if ((action->regex = pcre_compile(t3_config_get_string(pattern), 0, &error_message, &error_offset, NULL)) == NULL)
+		return t3_false;
+	action->extra = pcre_study(action->regex, 0, &study_error);
 
-	return regex;
-
-return_error:
-	return NULL;
+	return t3_true;
 }
 
 static t3_bool match_name(const t3_config_t *config, void *data) {
@@ -175,7 +173,6 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 	t3_config_t *regex, *style, *use;
 	pattern_t action;
 	int style_attr_idx;
-	const char *study_error;
 
 	for (patterns = t3_config_get(patterns, NULL); patterns != NULL; patterns = t3_config_get_next(patterns)) {
 		style_attr_idx = (style = t3_config_get(patterns, "style")) == NULL ?
@@ -183,9 +180,8 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 			context->map_style(context->map_style_data, t3_config_get_string(style));
 
 		if ((regex = t3_config_get(patterns, "regex")) != NULL) {
-			if ((action.regex = compile_pattern(regex, error)) == NULL)
-				return t3_false;
-			action.extra = pcre_study(action.regex, 0, &study_error);
+			if (!compile_pattern(regex, &action))
+				RETURN_ERROR(T3_ERR_INVALID_REGEX);
 
 			action.attribute_idx = style_attr_idx;
 			action.next_state = idx;
@@ -195,9 +191,8 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 			action.attribute_idx = (style = t3_config_get(patterns, "delim-style")) == NULL ?
 				style_attr_idx : context->map_style(context->map_style_data, t3_config_get_string(style));
 
-			if ((action.regex = compile_pattern(regex, NULL)) == NULL)
-				return t3_false;
-			action.extra = pcre_study(action.regex, 0, &study_error);
+			if (!compile_pattern(regex, &action))
+				RETURN_ERROR(T3_ERR_INVALID_REGEX);
 
 			/* Create new state to which start will switch. */
 			action.next_state = context->highlight->states.used;
@@ -219,9 +214,8 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 				pattern_t end_action;
 				end_action.next_state = idx;
 
-				if ((end_action.regex = compile_pattern(regex, error)) == NULL)
-					return t3_false;
-				end_action.extra = pcre_study(end_action.regex, 0, &study_error);
+				if (!compile_pattern(regex, &end_action))
+					RETURN_ERROR(T3_ERR_INVALID_REGEX);
 
 				end_action.attribute_idx = action.attribute_idx;
 				if (!VECTOR_RESERVE(context->highlight->states.data[action.next_state].patterns))
