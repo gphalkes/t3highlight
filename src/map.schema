@@ -1,0 +1,27 @@
+types {
+	mapping {
+		type = "section"
+		allowed-keys {
+			name {
+				type = "string"
+			}
+			name-pattern {
+				type = "string"
+			}
+			file-regex {
+				type = "string"
+			}
+			lang-file {
+				type = "string"
+			}
+		}
+		%constraints = "name & lang-file"
+	}
+}
+
+allowed-keys {
+	lang {
+		type = "list"
+		item-type = "mapping"
+	}
+}

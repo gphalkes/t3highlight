@@ -32,7 +32,7 @@ include ../../shared/rules.mk
 	$(GENOBJDIR)
 	$(_VERBOSE_GEN) t3config/data2bytes -s -- $< > $@
 
-highlight.c: .objects/syntax.bytes
+highlight.c: .objects/syntax.bytes .objects/map.bytes
 
 links:
 	@[ -L t3highlight ] || ln -s . t3highlight

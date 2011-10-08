@@ -58,6 +58,10 @@ static const char syntax_schema[] = {
 #include "syntax.bytes"
 };
 
+static const char map_schema[] = {
+#include "map.bytes"
+};
+
 typedef struct {
 	int (*map_style)(void *, const char *);
 	void *map_style_data;
@@ -67,6 +71,35 @@ typedef struct {
 
 static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int idx, int *error);
 static void free_state(state_t *state);
+
+t3_config_t *t3_highlight_load_map(int *error) {
+	t3_config_schema_t *schema = NULL;
+	t3_config_error_t local_error;
+	t3_config_t *map;
+	FILE *file;
+
+	/* FIXME: should we retrieve a list from elsewhere as well? User's home dir? */
+	if ((file = fopen(DATADIR "lang.map", "r")) == NULL)
+		RETURN_ERROR(T3_ERR_ERRNO);
+
+	map = t3_config_read_file(file, &local_error, NULL);
+	fclose(file);
+	if (map == NULL)
+		RETURN_ERROR(local_error.error);
+
+	if ((schema = t3_config_read_schema_buffer(map_schema, sizeof(map_schema), &local_error, NULL)) == NULL) {
+		t3_config_delete(map);
+		RETURN_ERROR(local_error.error != T3_ERR_OUT_OF_MEMORY ? T3_ERR_INTERNAL : local_error.error);
+	}
+
+	if (!t3_config_validate(map, schema, NULL, NULL))
+		RETURN_ERROR(T3_ERR_INVALID_FORMAT);
+
+	return map;
+
+return_error:
+	return NULL;
+}
 
 t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, const char *), void *map_style_data, int *error) {
 	t3_config_opts_t opts;
@@ -78,6 +111,7 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 
 	/* FIXME: do we want to add a path from the environment? */
 	/* FIXME: allow use of name without extension to allow lookup from config file. */
+	/* FIXME: open lang.map, and try to see if "name" is a language name instead of a file. */
 
 	if ((file = t3_config_open_from_path(path, name, 0)) == NULL) {
 		if (error != NULL)
@@ -303,7 +337,7 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 			if (state->patterns.data[j].next_state == result->state ||
 					(i == result->end &&
 					state->patterns.data[j].next_state > result->state &&
-					state->patterns.data[j].next_state <= result->forbidden_state)))
+					state->patterns.data[j].next_state <= result->forbidden_state))
 				local_options |= PCRE_NOTEMPTY_ATSTART;
 
 			if (pcre_exec(state->patterns.data[j].regex, state->patterns.data[j].extra, line + i, size - i,

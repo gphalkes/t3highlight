@@ -1,0 +1,20 @@
+%lang {
+	name = "C++"
+	name-pattern = "(?i)(?:c\+\+|cpp)"
+	# We treat .h files as if they are C++ files, because many C++ header files
+	# use the .h suffix. There is little harm in treating a C file as a C++ file.
+	file-regex = ".\.(?:cpp|C|cxx|cc|hpp|hxx|H|h)"
+	lang-file = "cpp.lang"
+}
+%lang {
+	name = "C"
+	name-pattern = "(?i)c"
+	file-regex = '.\.[ch]$'
+	lang-file = "c.lang"
+}
+%lang {
+	name = "XHTML"
+	name-pattern = "(?i)xhtml"
+	file-regex = "(?i).\.xhtml$"
+	lang-file = "xhtml.lang"
+}
