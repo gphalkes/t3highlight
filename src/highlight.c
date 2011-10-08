@@ -276,6 +276,8 @@ static void free_state(state_t *state) {
 }
 
 void t3_highlight_free(t3_highlight_t *highlight) {
+	if (highlight == NULL)
+		return;
 	VECTOR_ITERATE(highlight->states, free_state);
 	free(highlight->states.data);
 	free(highlight);

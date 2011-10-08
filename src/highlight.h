@@ -38,17 +38,20 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load(const char *name,
 	int (*map_style)(void *, const char *), void *map_style_data, int *error);
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_new(t3_config_t *syntax,
 	int (*map_style)(void *, const char *), void *map_style_data, int *error);
-T3_HIGHLIGHT_API t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *str, size_t size, t3_highlight_match_t *match);
 T3_HIGHLIGHT_API void t3_highlight_free(t3_highlight_t *highlight);
 
-T3_HIGHLIGHT_API void t3_highlight_reset(t3_highlight_match_t *match, int state);
+T3_HIGHLIGHT_API t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *str, size_t size, t3_highlight_match_t *match);
+
 T3_HIGHLIGHT_API t3_highlight_match_t *t3_highlight_new_match(void);
 T3_HIGHLIGHT_API void t3_highlight_free_match(t3_highlight_match_t *match);
+T3_HIGHLIGHT_API void t3_highlight_reset(t3_highlight_match_t *match, int state);
+
 T3_HIGHLIGHT_API size_t t3_highlight_get_start(t3_highlight_match_t *match);
 T3_HIGHLIGHT_API size_t t3_highlight_get_end(t3_highlight_match_t *match);
 T3_HIGHLIGHT_API int t3_highlight_get_begin_attr(t3_highlight_match_t *match);
 T3_HIGHLIGHT_API int t3_highlight_get_match_attr(t3_highlight_match_t *match);
 T3_HIGHLIGHT_API int t3_highlight_next_line(t3_highlight_match_t *match);
+
 T3_HIGHLIGHT_API const char *t3_highlight_strerror(int error);
 
 #ifdef __cplusplus
