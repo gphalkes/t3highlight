@@ -291,9 +291,19 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 		for (j = 0; j < state->patterns.used; j++) {
 			int local_options = options;
 
-			if (i == result->end && (state->patterns.data[j].next_state == result->state ||
-					(state->patterns.data[j].next_state <= result->forbidden_state &&
-					state->patterns.data[j].next_state > result->state)))
+			/* For items that do not change state, we do not want an empty match
+			   ever (makes no progress). For state changing items, the rules are
+			   more complex. Empty matches are allowed except when immediately
+			   after the previous match and both of the following conditions are met:
+			   - the item we match is a "start" item (next state > current state)
+			   - taking the state transistion enters a state smaller than or
+			     equal to the forbidden state (set below when we encounter an
+			     empty match for an end pattern)
+			*/
+			if (state->patterns.data[j].next_state == result->state ||
+					(i == result->end &&
+					state->patterns.data[j].next_state > result->state &&
+					state->patterns.data[j].next_state <= result->forbidden_state)))
 				local_options |= PCRE_NOTEMPTY_ATSTART;
 
 			if (pcre_exec(state->patterns.data[j].regex, state->patterns.data[j].extra, line + i, size - i,
@@ -304,7 +314,9 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 				/* Forbidden state is only set when we matched an empty end pattern. We recognize
 				   those by checking the match start and end, and by the fact that the next
 				   state is smaller than the current state (parent states are always before
-				   child states in the state vector). */
+				   child states in the state vector). The forbidden state then is the state
+				   we are leaving, such that if we next match an empty start pattern it must
+				   go into a higher numbered state. This ensures we will always make progress. */
 				result->forbidden_state = result->start == result->end &&
 					state->patterns.data[j].next_state < result->state ? result->state : -1;
 				result->state = state->patterns.data[j].next_state;
