@@ -34,6 +34,14 @@ extern "C" {
 typedef struct t3_highlight_t t3_highlight_t;
 typedef struct t3_highlight_match_t t3_highlight_match_t;
 
+typedef struct {
+	const char *name;
+	const char *lang_file;
+} t3_highlight_lang_t;
+
+T3_HIGHLIGHT_API t3_highlight_lang_t *t3_highlight_list(int *error);
+T3_HIGHLIGHT_API void t3_highlight_free_list(t3_highlight_lang_t *list);
+
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load(const char *name,
 	int (*map_style)(void *, const char *), void *map_style_data, int *error);
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_new(t3_config_t *syntax,

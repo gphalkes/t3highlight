@@ -72,14 +72,14 @@ typedef struct {
 static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int idx, int *error);
 static void free_state(state_t *state);
 
-t3_config_t *t3_highlight_load_map(int *error) {
+static t3_config_t *load_map(int *error) {
 	t3_config_schema_t *schema = NULL;
 	t3_config_error_t local_error;
 	t3_config_t *map;
 	FILE *file;
 
 	/* FIXME: should we retrieve a list from elsewhere as well? User's home dir? */
-	if ((file = fopen(DATADIR "lang.map", "r")) == NULL)
+	if ((file = fopen(DATADIR "/" "lang.map", "r")) == NULL)
 		RETURN_ERROR(T3_ERR_ERRNO);
 
 	map = t3_config_read_file(file, &local_error, NULL);
@@ -92,8 +92,10 @@ t3_config_t *t3_highlight_load_map(int *error) {
 		RETURN_ERROR(local_error.error != T3_ERR_OUT_OF_MEMORY ? T3_ERR_INTERNAL : local_error.error);
 	}
 
-	if (!t3_config_validate(map, schema, NULL, NULL))
+	if (!t3_config_validate(map, schema, NULL, 0))
 		RETURN_ERROR(T3_ERR_INVALID_FORMAT);
+
+	/* FIXME: check that the name-pattern (if it exists) matches the name. If not, there is a problem. */
 
 	return map;
 
@@ -101,6 +103,95 @@ return_error:
 	return NULL;
 }
 
+t3_highlight_lang_t *t3_highlight_list(int *error) {
+	t3_config_t *map, *lang, *ptr;
+	t3_highlight_lang_t *retval = NULL;
+	int count;
+
+	if ((map = load_map(error)) == NULL)
+		return NULL;
+
+	lang = t3_config_get(map, "lang");
+	for (count = 0, ptr = t3_config_get(lang, NULL); ptr != NULL; count++, ptr = t3_config_get_next(ptr)) {}
+
+	if ((retval = malloc((count + 1) * sizeof(t3_highlight_lang_t))) == NULL)
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+
+	for (count = 0, ptr = t3_config_get(lang, NULL); ptr != NULL; count++, ptr = t3_config_get_next(ptr)) {
+		retval[count].name = t3_config_take_string(t3_config_get(ptr, "name"));
+		retval[count].lang_file = t3_config_take_string(t3_config_get(ptr, "lang-file"));
+	}
+	retval[count].name = NULL;
+	retval[count].lang_file = NULL;
+	return retval;
+
+return_error:
+	free(retval);
+	t3_config_delete(map);
+	return NULL;
+}
+
+void t3_highlight_free_list(t3_highlight_lang_t *list) {
+	int i;
+
+	if (list == NULL)
+		return;
+
+	for (i = 0; list[i].name != NULL; i++) {
+		free((char *) list[i].name);
+		free((char *) list[i].lang_file);
+	}
+
+	free(list);
+}
+
+static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, int (*map_style)(void *, const char *),
+		void *map_style_data, int *error)
+{
+	t3_config_t *map, *ptr;
+	pcre *pcre;
+	int ovector[30];
+	const char *file_name;
+
+	if ((map = load_map(error)) == NULL)
+		return NULL;
+
+	file_name = strrchr(name, '/'); /* FIXME: use platform dependent dir separators */
+	if (file_name == NULL)
+		file_name = name;
+
+	for (ptr = t3_config_get(t3_config_get(map, "lang"), NULL); ptr != NULL; ptr = t3_config_get_next(ptr)) {
+		const char *error_message;
+		int error_offset;
+		t3_config_t *file_regex = t3_config_get(ptr, regex_name);
+		if (file_regex == NULL)
+			continue;
+
+		if ((pcre = pcre_compile(t3_config_get_string(file_regex), 0, &error_message, &error_offset, NULL)) == NULL)
+			continue;
+
+		if (pcre_exec(pcre, NULL, file_name, strlen(file_name), 0, 0, ovector, sizeof(ovector) / sizeof(ovector[0])) < 0)
+			continue;
+
+		return t3_highlight_load(t3_config_get_string(t3_config_get(ptr, "lang-file")), map_style, map_style_data, error);
+	}
+	return NULL;
+}
+
+t3_highlight_t *t3_highlight_load_by_filename(const char *name, int (*map_style)(void *, const char *),
+		void *map_style_data, int *error)
+{
+	return load_by_xname("file-regex", name, map_style, map_style_data, error);
+}
+
+t3_highlight_t *t3_highlight_load_by_langname(const char *name, int (*map_style)(void *, const char *),
+		void *map_style_data, int *error)
+{
+	return load_by_xname("name-regex", name, map_style, map_style_data, error);
+}
+
+/* FIXME: this now uses open_from_path, but do we always want that? Perhaps we should
+   simply use open if the name contains a dir separator. */
 t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, const char *), void *map_style_data, int *error) {
 	t3_config_opts_t opts;
 	const char *path[] = { DATADIR, NULL };
@@ -110,8 +201,6 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 	FILE *file;
 
 	/* FIXME: do we want to add a path from the environment? */
-	/* FIXME: allow use of name without extension to allow lookup from config file. */
-	/* FIXME: open lang.map, and try to see if "name" is a language name instead of a file. */
 
 	if ((file = t3_config_open_from_path(path, name, 0)) == NULL) {
 		if (error != NULL)
@@ -150,7 +239,7 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 		return NULL;
 	}
 
-	if (!t3_config_validate(syntax, schema, NULL, NULL))
+	if (!t3_config_validate(syntax, schema, NULL, 0))
 		RETURN_ERROR(T3_ERR_INVALID_FORMAT);
 
 	t3_config_delete_schema(schema);
@@ -195,7 +284,6 @@ static t3_bool compile_pattern(t3_config_t *pattern, pattern_t *action) {
 	if ((action->regex = pcre_compile(t3_config_get_string(pattern), 0, &error_message, &error_offset, NULL)) == NULL)
 		return t3_false;
 	action->extra = pcre_study(action->regex, 0, &study_error);
-
 	return t3_true;
 }
 
@@ -311,6 +399,11 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 	free(highlight);
 }
 
+/* FIXME: the current setup doesn't allow for backward assertions. It is unclear
+	how this should be fixed though, because we need to match from a specific
+	point as well, which would at least disallow backward assertions after a
+	previous match. Hmmm....
+*/
 t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, size_t size, t3_highlight_match_t *result) {
 	state_t *state = &highlight->states.data[result->state];
 	int options = PCRE_ANCHORED;
@@ -341,7 +434,7 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 				local_options |= PCRE_NOTEMPTY_ATSTART;
 
 			if (pcre_exec(state->patterns.data[j].regex, state->patterns.data[j].extra, line + i, size - i,
-					0, local_options, ovector, 30) >= 0)
+					0, local_options, ovector, sizeof(ovector) / sizeof(ovector[0])) >= 0)
 			{
 				result->start = i + ovector[0];
 				result->end = i + ovector[1];

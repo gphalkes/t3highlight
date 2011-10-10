@@ -64,6 +64,23 @@ static PARSE_FUNCTION(parse_args)
 				fatal("Error: only one language option allowed\n");
 			option_language = optArg;
 		END_OPTION
+		OPTION('L', "list", NO_ARG)
+			int i, error;
+			t3_highlight_lang_t *list = t3_highlight_list(&error);
+
+			if (list == NULL)
+				fatal("Error retrieving listing: %s\n", t3_highlight_strerror(error));
+
+			printf("Available languages:\n");
+			for (i = 0; list[i].name != NULL; i++)
+				printf("  %s\n", list[i].name);
+
+			t3_highlight_free_list(list);
+
+			printf("\nAvaliable styles:\n");
+			printf("  FIXME: list styles\n");
+			exit(EXIT_SUCCESS);
+		END_OPTION
 		OPTION('s', "style", REQUIRED_ARG)
 			//FIXME: do proper search for style file
 			if (option_style != NULL)
@@ -73,6 +90,7 @@ static PARSE_FUNCTION(parse_args)
 		OPTION('h', "help", NO_ARG)
 			printf("Usage: t3highlight [<options>] [<file>]\n"
 				"  -l<lang>,--language=<lang>      Highlight using language <lang>\n"
+				"  -L,--list                       List available languages and styles\n"
 				"  -s<style>,--style=<style>       Output using style <style>\n"
 				"  -v,--verbose                    Enable verbose output mode\n"
 			);

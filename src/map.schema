@@ -1,3 +1,18 @@
+# Copyright (C) 2011 G.P. Halkes
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3, as
+# published by the Free Software Foundation.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Schema for highlighting-file meta information for libt3highlight
+
 types {
 	mapping {
 		type = "section"
@@ -5,7 +20,7 @@ types {
 			name {
 				type = "string"
 			}
-			name-pattern {
+			name-regex {
 				type = "string"
 			}
 			file-regex {
@@ -15,13 +30,18 @@ types {
 				type = "string"
 			}
 		}
-		%constraints = "name & lang-file"
+		%constraint = "name & lang-file"
 	}
 }
 
 allowed-keys {
+	format {
+		type = "int"
+		%constraint = "% = 1"
+	}
 	lang {
 		type = "list"
 		item-type = "mapping"
 	}
 }
+%constraint = "format & lang"
