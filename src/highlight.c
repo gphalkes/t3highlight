@@ -399,24 +399,15 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 	free(highlight);
 }
 
-/* FIXME: the current setup doesn't allow for backward assertions. It is unclear
-	how this should be fixed though, because we need to match from a specific
-	point as well, which would at least disallow backward assertions after a
-	previous match. Hmmm....
-*/
 t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, size_t size, t3_highlight_match_t *result) {
 	state_t *state = &highlight->states.data[result->state];
-	int options = PCRE_ANCHORED;
 	int ovector[30];
 	size_t i, j;
-
-	if (result->end != 0)
-		options |= PCRE_NOTBOL;
 
 	result->begin_attribute = highlight->states.data[result->state].attribute_idx;
 	for (i = result->end; i <= size; i++) {
 		for (j = 0; j < state->patterns.used; j++) {
-			int local_options = options;
+			int options = PCRE_ANCHORED;
 
 			/* For items that do not change state, we do not want an empty match
 			   ever (makes no progress). For state changing items, the rules are
@@ -431,13 +422,13 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 					(i == result->end &&
 					state->patterns.data[j].next_state > result->state &&
 					state->patterns.data[j].next_state <= result->forbidden_state))
-				local_options |= PCRE_NOTEMPTY_ATSTART;
+				options |= PCRE_NOTEMPTY_ATSTART;
 
-			if (pcre_exec(state->patterns.data[j].regex, state->patterns.data[j].extra, line + i, size - i,
-					0, local_options, ovector, sizeof(ovector) / sizeof(ovector[0])) >= 0)
+			if (pcre_exec(state->patterns.data[j].regex, state->patterns.data[j].extra, line, size,
+					i, options, ovector, sizeof(ovector) / sizeof(ovector[0])) >= 0)
 			{
-				result->start = i + ovector[0];
-				result->end = i + ovector[1];
+				result->start = ovector[0];
+				result->end = ovector[1];
 				/* Forbidden state is only set when we matched an empty end pattern. We recognize
 				   those by checking the match start and end, and by the fact that the next
 				   state is smaller than the current state (parent states are always before
@@ -451,7 +442,6 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 				return t3_true;
 			}
 		}
-		options |= PCRE_NOTBOL;
 	}
 
 	result->start = size;

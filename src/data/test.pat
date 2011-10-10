@@ -55,10 +55,7 @@ format = 1
 }
 
 %pattern {
-	regex = "[a-zA-Z_][a-zA-Z0-9_]*"
-}
-%pattern {
-	regex = "0[xX][\da-fA-F]+|\d+(?:\.\d+)?(?:e[-+]?\d+)?"
+	regex = "(?<![a-zA-Z_])(?:0[xX][\da-fA-F]+|\d+(?:\.\d+)?(?:e[-+]?\d+)?)"
 	style = "number"
 }
 %pattern {
