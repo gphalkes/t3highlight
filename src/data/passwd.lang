@@ -1,0 +1,72 @@
+format = 1
+
+%pattern {
+	# Username
+	regex = '^[^\s:]+'
+	style = "keyword"
+}
+%pattern {
+	start = ':'
+	%pattern {
+		# Password
+		regex = '(?<=:)\w+'
+		style = "string"
+	}
+	%pattern {
+		start = ':'
+		%pattern {
+			# User ID
+			regex = '(?<=:)\d+'
+			style = "number"
+		}
+		%pattern {
+			start = ':'
+			%pattern {
+				# Group ID
+				regex = '(?<=:)\d+'
+				style = "number"
+			}
+			%pattern {
+				start = ':'
+				%pattern {
+					# Comment (GECOS)
+					regex = '[^:]+'
+					style = "comment"
+				}
+				%pattern {
+					start = ':'
+					%pattern {
+						# Home directory
+						regex = '[^:]+'
+						style = "variable"
+					}
+					%pattern {
+						start = ':'
+						%pattern {
+							# Command interpreter
+							regex = '[^:]+'
+							style = "misc"
+						}
+						%pattern {
+							start = ':'
+							end = '$'
+							style = "error"
+						}
+						end = '$'
+						style = "normal"
+					}
+					end = '$'
+					style = "normal"
+				}
+				end = '$'
+				style = "normal"
+			}
+			end = '$'
+			style = "normal"
+		}
+		end = '$'
+		style = "normal"
+	}
+	end = '$'
+	style = "normal"
+}

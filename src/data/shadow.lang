@@ -1,0 +1,88 @@
+format = 1
+
+%pattern {
+	# Username
+	regex = '^[^\s:]+'
+	style = "keyword"
+}
+%pattern {
+	start = ':'
+	%pattern {
+		# Password
+		regex = '[^:]+'
+		style = "string"
+	}
+	%pattern {
+		start = ':'
+		%pattern {
+			# Date of last password change
+			regex = '(?<=:)\d+'
+			style = "number"
+		}
+		%pattern {
+			start = ':'
+			%pattern {
+				# Minimum password age
+				regex = '(?<=:)\d+'
+				style = "misc"
+			}
+			%pattern {
+				start = ':'
+				%pattern {
+					# Maximum password age
+					regex = '(?<=:)\d+'
+					style = "misc"
+				}
+				%pattern {
+					start = ':'
+					%pattern {
+						# Password warning period
+						regex = '(?<=:)\d+'
+						style = "comment"
+					}
+					%pattern {
+						start = ':'
+						%pattern {
+							# Password inactivity period
+							regex = '(?<=:)\d+'
+							style = "comment"
+						}
+						%pattern {
+							start = ':'
+							%pattern {
+								# Account expiration date
+								regex = '(?<=:)\d+'
+								style = "variable"
+							}
+							%pattern {
+								start = ':'
+								# Reserved
+								%pattern {
+									start = ':'
+									end = '$'
+									style = "error"
+								}
+								end = '$'
+								style = "normal"
+							}
+							end = '$'
+							style = "normal"
+						}
+						end = '$'
+						style = "normal"
+					}
+					end = '$'
+					style = "normal"
+				}
+				end = '$'
+				style = "normal"
+			}
+			end = '$'
+			style = "normal"
+		}
+		end = '$'
+		style = "normal"
+	}
+	end = '$'
+	style = "normal"
+}

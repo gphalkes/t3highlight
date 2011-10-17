@@ -1,0 +1,42 @@
+format = 1
+
+%pattern {
+	# Groupname
+	regex = '^[^\s:]+'
+	style = "keyword"
+}
+%pattern {
+	start = ':'
+	%pattern {
+		# Password
+		regex = '(?<=:)\w+'
+		style = "string"
+	}
+	%pattern {
+		start = ':'
+		%pattern {
+			# Group ID
+			regex = '(?<=:)\d+'
+			style = "number"
+		}
+		%pattern {
+			start = ':'
+			%pattern {
+				# User list
+				regex = '[^:,]+'
+				style = "misc"
+			}
+			%pattern {
+				start = ':'
+				end = '$'
+				style = "error"
+			}
+			end = '$'
+			style = "normal"
+		}
+		end = '$'
+		style = "normal"
+	}
+	end = '$'
+	style = "normal"
+}

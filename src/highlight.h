@@ -42,6 +42,8 @@ extern "C" {
 #define T3_ERR_INVALID_FORMAT (-96)
 /** Error code: invalid regular expression used in syntax highlighting file. */
 #define T3_ERR_INVALID_REGEX (-95)
+/** Error code: could not determine appropriate highlighting patterns. */
+#define T3_ERR_NO_SYNTAX (-94)
 /*@}*/
 
 

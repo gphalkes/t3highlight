@@ -134,20 +134,20 @@ static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, i
 
 	}
 	t3_config_delete(map);
-	if (error != NULL) {
-		errno = ENOENT;
-		*error = T3_ERR_ERRNO;
-	}
+	if (error != NULL)
+		*error = T3_ERR_NO_SYNTAX;
 	return NULL;
 }
 
 t3_highlight_t *t3_highlight_load_by_filename(const char *name, int (*map_style)(void *, const char *),
 		void *map_style_data, int *error)
 {
+#if 0
 	const char *file_name = strrchr(name, '/'); /* FIXME: use platform dependent dir separators */
 	if (file_name == NULL)
 		file_name = name;
-	return load_by_xname("file-regex", file_name, map_style, map_style_data, error);
+#endif
+	return load_by_xname("file-regex", name, map_style, map_style_data, error);
 }
 
 t3_highlight_t *t3_highlight_load_by_langname(const char *name, int (*map_style)(void *, const char *),

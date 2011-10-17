@@ -51,4 +51,8 @@ styles {
 		start = "\033[31m"
 		end = "\033[0m"
 	}
+	error {
+		start = "\033[31;1m"
+		end = "\033[0m"
+	}
 }

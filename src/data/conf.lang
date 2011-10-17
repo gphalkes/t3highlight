@@ -1,0 +1,35 @@
+format = 1
+
+# The #-style comments are frequently used
+%pattern {
+	start = '#'
+	end = '$'
+	style = "comment"
+}
+
+# Ini style comments
+%pattern {
+	start = "^\s*;"
+	end = "$"
+	style = "comment"
+}
+
+# Ini style headings
+%pattern {
+	regex = "^\s*\[[^]]+\]"
+	style = "keyword"
+}
+
+# Generic C-style strings
+%pattern {
+	start = '"'
+	%pattern { regex = '\.' }
+	end = '"|(?<!\\)$'
+	style = "string"
+}
+%pattern {
+	start = "'"
+	%pattern { regex = '\.' }
+	end = "'|(?<!\\)$"
+	style = "string"
+}

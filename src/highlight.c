@@ -392,6 +392,8 @@ const char *t3_highlight_strerror(int error) {
 			return _("invalid file format");
 		case T3_ERR_INVALID_REGEX:
 			return _("invalid regular expression");
+		case T3_ERR_NO_SYNTAX:
+			return _("could not locate appropriate highlighting patterns");
 	}
 }
 

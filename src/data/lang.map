@@ -5,36 +5,60 @@ format = 1
 	name-regex = "^(?i)(?:c\+\+|cpp)$"
 	# We treat .h files as if they are C++ files, because many C++ header files
 	# use the .h suffix. There is little harm in treating a C file as a C++ file.
-	file-regex = ".\.(?:cpp|C|cxx|cc|hpp|hxx|H|h)"
+	file-regex = "\.(?:cpp|C|cxx|cc|hpp|hxx|H|h)$"
 	lang-file = "cpp.lang"
 }
 %lang {
 	name = "C"
 	name-regex = "^(?i)c$"
-	file-regex = '.\.[ch]$'
+	file-regex = '\.[ch]$'
 	lang-file = "c.lang"
 }
 %lang {
 	name = "LLgen"
 	name-regex = "^(?i)ll(?:next)?gen$"
-	file-regex = ".\.g$"
+	file-regex = "\.g$"
 	lang-file = "llgen.lang"
 }
 %lang {
 	name = "Java"
 	name-regex = "^(?i)java$"
-	file-regex = "(?i).\.java$"
+	file-regex = "(?i)\.java$"
 	lang-file = "java.lang"
 }
 %lang {
 	name = "Shell"
 	name-regex = "^(?i)(?:ba)?sh$"
-	file-regex = "(?i).\.sh$"
+	file-regex = "(?i)\.sh$"
 	lang-file = "sh.lang"
 }
 %lang {
 	name = "T3 Highlight Language Definition"
 	name-regex = "^(?i)lang$"
-	file-regex = ".\.lang$"
+	file-regex = "\.lang$"
 	lang-file = "lang.lang"
+}
+%lang {
+	name = "Password file"
+	name-regex = "^(?i)passwd$"
+	file-regex = "^/etc/passwd(?:[^/]+)?$"
+	lang-file = "passwd.lang"
+}
+%lang {
+	name = "Group file"
+	name-regex = "^(?i)group$"
+	file-regex = "^/etc/group(?:[^/]+)?$"
+	lang-file = "group.lang"
+}
+%lang {
+	name = "Shadow file"
+	name-regex = "^(?i)shadow$"
+	file-regex = "^/etc/shadow(?:[^/]+)?$"
+	lang-file = "shadow.lang"
+}
+%lang {
+	name = "Configuration file"
+	name-regex = "(?i)conf(?:ig)?"
+	file-regex = "(?:^/etc/|\.(?:conf|ini)$)"
+	lang-file = "conf.lang"
 }
