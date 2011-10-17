@@ -472,14 +472,14 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 			   ever (makes no progress). For state changing items, the rules are
 			   more complex. Empty matches are allowed except when immediately
 			   after the previous match and both of the following conditions are met:
-			   - the item we match is a "start" item (next state > current state)
+			   - the item we match is a "start" item (next state >= current state)
 			   - taking the state transistion enters a state smaller than or
 			     equal to the forbidden state (set below when we encounter an
 			     empty match for an end pattern)
 			*/
 			if (state->patterns.data[j].next_state == NO_CHANGE ||
 					(i == result->end &&
-					state->patterns.data[j].next_state > current_pattern_state &&
+					state->patterns.data[j].next_state >= current_pattern_state &&
 					state->patterns.data[j].next_state <= result->forbidden_state))
 				options |= PCRE_NOTEMPTY_ATSTART;
 
@@ -490,12 +490,11 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 				result->end = ovector[1];
 				/* Forbidden state is only set when we matched an empty end pattern. We recognize
 				   those by checking the match start and end, and by the fact that the next
-				   state is smaller than the current state (parent states are always before
-				   child states in the state vector). The forbidden state then is the state
+				   state is EXIT_STATE. The forbidden state then is the state
 				   we are leaving, such that if we next match an empty start pattern it must
 				   go into a higher numbered state. This ensures we will always make progress. */
 				result->forbidden_state = result->start == result->end &&
-					state->patterns.data[j].next_state < EXIT_STATE ? current_pattern_state : -1;
+					state->patterns.data[j].next_state == EXIT_STATE ? current_pattern_state : -1;
 				result->state = find_state(highlight, result->state, state->patterns.data[j].next_state);
 				result->match_attribute = state->patterns.data[j].attribute_idx;
 				return t3_true;

@@ -1,3 +1,5 @@
+format = 1
+
 styles {
 	keyword {
 		start = '<keyword>'

@@ -41,7 +41,7 @@ for i in test[0-9][0-9] ; do
 
 	csplit $i -z -s '/^==/' {*} 2>/dev/null
 	sed -i '/^==/d' xx*
-	LD_LIBRARY_PATH=../../src/.libs:../../src/t3config/.libs ../../src.util/t3highlight -s $PWD/../test.style -l $PWD/pattern xx00 > out
+	LD_LIBRARY_PATH=../../src/.libs:../../src/t3config/.libs ../../src.util/t3highlight -s $PWD/../test.style --language-file=$PWD/pattern xx00 > out
 	if ! diff -u xx01 out ; then
 		let failed++
 	fi

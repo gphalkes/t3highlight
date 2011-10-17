@@ -39,6 +39,9 @@ static int option_verbose;
 static const char *option_language;
 static const char *option_style;
 static const char *option_input;
+#ifdef DEBUG
+static const char *option_language_file;
+#endif
 
 /** Alert the user of a fatal error and quit.
     @param fmt The format string for the message. See fprintf(3) for details.
@@ -70,11 +73,17 @@ static PARSE_FUNCTION(parse_args)
 			option_verbose = 1;
 		END_OPTION
 		OPTION('l', "language", REQUIRED_ARG)
-			//FIXME: do proper search for language file
 			if (option_language != NULL)
 				fatal("Error: only one language option allowed\n");
 			option_language = optArg;
 		END_OPTION
+#ifdef DEBUG
+		LONG_OPTION("language-file", REQUIRED_ARG)
+			if (option_language_file != NULL || option_language != NULL)
+				fatal("Error: only one language option allowed\n");
+			option_language_file = optArg;
+		END_OPTION
+#endif
 		OPTION('L', "list", NO_ARG)
 			int i, error;
 			t3_highlight_lang_t *list = t3_highlight_list(&error);
@@ -93,7 +102,6 @@ static PARSE_FUNCTION(parse_args)
 			exit(EXIT_SUCCESS);
 		END_OPTION
 		OPTION('s', "style", REQUIRED_ARG)
-			//FIXME: do proper search for style file
 			if (option_style != NULL)
 				fatal("Error: only one style option allowed\n");
 			option_style = optArg;
@@ -264,6 +272,11 @@ int main(int argc, char *argv[]) {
 
 	if (option_language == NULL && option_input == NULL) {
 		fatal("-l/--language required for reading from standard input\n");
+#ifdef DEBUG
+	} else if (option_language_file != NULL) {
+		if ((highlight = t3_highlight_load(option_language_file, map_style, styles, &error)) == NULL)
+			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
+#endif
 	} else if (option_language != NULL) {
 		if ((highlight = t3_highlight_load_by_langname(option_language, map_style, styles, &error)) == NULL)
 			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
