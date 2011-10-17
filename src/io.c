@@ -166,7 +166,7 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 	t3_highlight_t *result;
 	FILE *file;
 
-	/* FIXME: do we want to add a path from the environment? */
+	/* FIXME: do we want to add a path from the environment? User home directory? */
 
 	if ((file = t3_config_open_from_path(path, name, 0)) == NULL) {
 		if (error != NULL)

@@ -15,8 +15,20 @@ format = 1
 	lang-file = "c.lang"
 }
 %lang {
-	name = "XHTML"
-	name-regex = "^(?i)xhtml$"
-	file-regex = "(?i).\.xhtml$"
-	lang-file = "xhtml.lang"
+	name = "LLgen"
+	name-regex = "^(?i)ll(?:next)?gen$"
+	file-regex = ".\.g$"
+	lang-file = "llgen.lang"
+}
+%lang {
+	name = "Java"
+	name-regex = "^(?i)java$"
+	file-regex = "(?i).\.java$"
+	lang-file = "java.lang"
+}
+%lang {
+	name = "Shell"
+	name-regex = "^(?i)(?:ba)?sh$"
+	file-regex = "(?i).\.sh$"
+	lang-file = "sh.lang"
 }

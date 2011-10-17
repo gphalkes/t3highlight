@@ -1,0 +1,57 @@
+format = 1
+
+%pattern {
+	start = '#'
+	end = '$'
+	style = "comment"
+}
+%pattern {
+	start = "'"
+	end = "'"
+	style = "string"
+}
+%pattern {
+	start = '"'
+	%pattern { regex = '\\[$`"]' }
+	end = '"'
+	style = "string"
+}
+
+
+%pattern {
+	regex = '\$(?:[-@*#?$!0-9]|[_a-zA-Z][_a-zA-Z]*)'
+	style = "variable"
+}
+%pattern {
+	start = '\$\{'
+	%pattern {
+		regex = '\\.'
+	}
+	end = '\}'
+	style = "variable"
+	nested = yes
+}
+
+%pattern {
+	start = '`'
+	end = '`'
+	style = "misc"
+}
+%pattern {
+	start = '\$\('
+	end = '\)'
+	style = "misc"
+	nested = yes
+}
+
+
+%pattern {
+	regex = '(?<![-\w])(?:if|then|else|elif|fi|done|do|case|esac|while|until|for|in|' +
+		'break|continue|eval|exec|exit|export|readonly|return|set|shift|' +
+		'times|trap|unset|source|alias|bg|bind|break|builtin|caller|cd|' +
+		'command|compgen|complete|compopt|declare|typeset|dirs|disown|echo|' +
+		'enable|fc|fg|getopts|hash|help|history|jobs|kill|let|local|logout|' +
+		'mapfile|readarray|popd|printf|pushd|pwd|read|shopt|suspend|test|' +
+		'type|ulimit|umask|unalias|wait)\b'
+	style = "keyword"
+}

@@ -222,6 +222,7 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 			if (t3_config_get_bool(t3_config_get(patterns, "nested")))
 				add_delim_pattern(context, t3_config_get(patterns, "start"), action.next_state, &action, error);
 		} else if ((use = t3_config_get(patterns, "use")) != NULL) {
+			#warning FIXME: prevent recursive "use" definitions!
 			t3_config_t *definition = t3_config_find(t3_config_get(context->syntax, "define"),
 				match_name, (char *) t3_config_get_string(use), NULL);
 

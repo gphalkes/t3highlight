@@ -1,0 +1,48 @@
+format = 1
+
+%include = "def/cpp.lang"
+
+%pattern {
+	start = '/\*'
+	end = '\*/'
+	style = "comment"
+}
+%pattern {
+	start = '//'
+	end = '$'
+}
+%pattern {
+	regex = "'(?:\\[^']+|.)'"
+	style = "string"
+}
+%pattern {
+	start = '"'
+	%pattern { use = "string-escape" }
+	end = '"'
+	style = "string"
+}
+
+%pattern {
+	start = '\('
+	%pattern { use = "c++" }
+	end = '\)'
+	nested = yes
+}
+
+%pattern {
+	regex = '(?:%\w+)'
+	style = 'keyword'
+}
+%pattern {
+	regex = '(?:\b[0-9]+\b|\*|\+|\?|\.\.[.?])'
+	style = "keyword"
+}
+
+%pattern {
+	start = '{'
+	end = '}'
+	%pattern {
+		use = "c++"
+	}
+	nested = yes
+}

@@ -47,4 +47,8 @@ styles {
 		start = "\033[32;1m"
 		end = "\033[0m"
 	}
+	variable {
+		start = "\033[43m"
+		end = "\033[0m"
+	}
 }
