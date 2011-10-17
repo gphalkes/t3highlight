@@ -20,10 +20,3 @@ format = 1
 	file-regex = "(?i).\.xhtml$"
 	lang-file = "xhtml.lang"
 }
-
-# For debugging purposes ONLY
-%lang {
-	name = "Test"
-	name-regex = "^(?i)test$"
-	lang-file = "test.lang"
-}
