@@ -27,10 +27,13 @@
 #define _(x) (x)
 #endif
 
+#define NO_CHANGE (-1)
+#define EXIT_STATE (-2)
+
 typedef struct {
 	pcre *regex;
 	pcre_extra *extra;
-	int next_state,
+	int next_state, /* Values: NO_CHANGE, EXIT_STATE or a value >= 0. */
 		attribute_idx;
 } pattern_t;
 
@@ -39,8 +42,14 @@ typedef struct {
 	int attribute_idx;
 } state_t;
 
+typedef struct {
+	int parent;
+	int pattern;
+} state_mapping_t;
+
 struct t3_highlight_t {
 	VECTOR(state_t, states);
+	VECTOR(state_mapping_t, mapping);
 };
 
 struct t3_highlight_match_t {
@@ -266,6 +275,9 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	if ((result = malloc(sizeof(t3_highlight_t))) == NULL)
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 	VECTOR_INIT(result->states);
+	VECTOR_INIT(result->mapping);
+	if (!VECTOR_RESERVE(result->mapping))
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 
 	patterns = t3_config_get(syntax, "pattern");
 
@@ -285,6 +297,7 @@ return_error:
 	if (result != NULL) {
 		VECTOR_ITERATE(result->states, free_state);
 		free(result->states.data);
+		free(result->mapping.data);
 		free(result);
 	}
 	return NULL;
@@ -294,7 +307,7 @@ static t3_bool compile_pattern(t3_config_t *pattern, pattern_t *action) {
 	const char *error_message;
 	int error_offset;
 	const char *study_error;
-
+//FIXME: currently all failures will result in T3_ERR_INVALID_REGEX, but some may be due to T3_ERR_OUT_OF_MEMORY
 	if ((action->regex = pcre_compile(t3_config_get_string(pattern), 0, &error_message, &error_offset, NULL)) == NULL)
 		return t3_false;
 	action->extra = pcre_study(action->regex, 0, &study_error);
@@ -303,6 +316,34 @@ static t3_bool compile_pattern(t3_config_t *pattern, pattern_t *action) {
 
 static t3_bool match_name(const t3_config_t *config, void *data) {
 	return strcmp(t3_config_get_string(t3_config_get(config, "name")), data) == 0;
+}
+
+static t3_bool add_delim_pattern(pattern_context_t *context, t3_config_t *regex, int next_state, const pattern_t *action, int *error) {
+	pattern_t nest_action;
+	nest_action.next_state = next_state;
+
+	if (!compile_pattern(regex, &nest_action))
+		RETURN_ERROR(T3_ERR_INVALID_REGEX);
+
+	nest_action.attribute_idx = action->attribute_idx;
+	if (!VECTOR_RESERVE(context->highlight->states.data[action->next_state].patterns))
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+
+	/* Find the pattern entry, starting after the end entry. If it does not exist,
+	   the list of patterns was specified first. */
+	for ( ; regex != NULL && strcmp(t3_config_get_name(regex), "pattern") != 0; regex = t3_config_get_next(regex)) {}
+
+	if (regex == NULL && context->highlight->states.data[action->next_state].patterns.used > 0) {
+		VECTOR_LAST(context->highlight->states.data[action->next_state].patterns) = nest_action;
+	} else {
+		memmove(context->highlight->states.data[action->next_state].patterns.data + 1,
+			context->highlight->states.data[action->next_state].patterns.data,
+			(context->highlight->states.data[action->next_state].patterns.used - 1) * sizeof(pattern_t));
+		context->highlight->states.data[action->next_state].patterns.data[0] = nest_action;
+	}
+	return t3_true;
+return_error:
+	return t3_false;
 }
 
 static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int idx, int *error) {
@@ -320,7 +361,7 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 				RETURN_ERROR(T3_ERR_INVALID_REGEX);
 
 			action.attribute_idx = style_attr_idx;
-			action.next_state = idx;
+			action.next_state = NO_CHANGE;
 		} else if ((regex = t3_config_get(patterns, "start")) != NULL) {
 			t3_config_t *sub_patterns;
 
@@ -346,30 +387,11 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 			/* If the pattern specifies an end regex, create an extra action for that and paste that
 			   to in the list of sub-patterns. Depending on whether end is specified before or after
 			   the pattern list, it will be pre- or appended. */
-			if ((regex = t3_config_get(patterns, "end")) != NULL) {
-				pattern_t end_action;
-				end_action.next_state = idx;
+			if ((regex = t3_config_get(patterns, "end")) != NULL)
+				add_delim_pattern(context, regex, EXIT_STATE, &action, error);
 
-				if (!compile_pattern(regex, &end_action))
-					RETURN_ERROR(T3_ERR_INVALID_REGEX);
-
-				end_action.attribute_idx = action.attribute_idx;
-				if (!VECTOR_RESERVE(context->highlight->states.data[action.next_state].patterns))
-					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
-
-				/* Find the pattern entry, starting after the end entry. If it does not exist,
-				   the list of patterns was specified first. */
-				for ( ; regex != NULL && strcmp(t3_config_get_name(regex), "pattern") != 0; regex = t3_config_get_next(regex)) {}
-
-				if (regex == NULL && context->highlight->states.data[action.next_state].patterns.used > 0) {
-					VECTOR_LAST(context->highlight->states.data[action.next_state].patterns) = end_action;
-				} else {
-					memmove(context->highlight->states.data[action.next_state].patterns.data + 1,
-						context->highlight->states.data[action.next_state].patterns.data,
-						(context->highlight->states.data[action.next_state].patterns.used - 1) * sizeof(pattern_t));
-					context->highlight->states.data[action.next_state].patterns.data[0] = end_action;
-				}
-			}
+			if (t3_config_get_bool(t3_config_get(patterns, "nested")))
+				add_delim_pattern(context, t3_config_get(patterns, "start"), action.next_state, &action, error);
 		} else if ((use = t3_config_get(patterns, "use")) != NULL) {
 			t3_config_t *definition = t3_config_find(t3_config_get(context->syntax, "define"),
 				match_name, (char *) t3_config_get_string(use), NULL);
@@ -410,15 +432,38 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 		return;
 	VECTOR_ITERATE(highlight->states, free_state);
 	free(highlight->states.data);
+	free(highlight->mapping.data);
 	free(highlight);
 }
 
+static int find_state(const t3_highlight_t *highlight, int current, int pattern) {
+	size_t i;
+
+	if (pattern == EXIT_STATE)
+		return highlight->mapping.data[current].parent;
+	if (pattern == NO_CHANGE)
+		return current;
+
+	/* Check if the state is already mapped. */
+	for (i = current + 1; i < highlight->mapping.used; i++) {
+		if (highlight->mapping.data[i].parent == current && highlight->mapping.data[i].pattern == pattern)
+			return i;
+	}
+
+	if (!VECTOR_RESERVE(highlight->mapping))
+		return 0;
+	VECTOR_LAST(highlight->mapping).parent = current;
+	VECTOR_LAST(highlight->mapping).pattern = pattern;
+	return highlight->mapping.used - 1;
+}
+
 t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, size_t size, t3_highlight_match_t *result) {
-	state_t *state = &highlight->states.data[result->state];
+	int current_pattern_state = highlight->mapping.data[result->state].pattern;
+	state_t *state = &highlight->states.data[current_pattern_state];
 	int ovector[30];
 	size_t i, j;
 
-	result->begin_attribute = highlight->states.data[result->state].attribute_idx;
+	result->begin_attribute = state->attribute_idx;
 	for (i = result->end; i <= size; i++) {
 		for (j = 0; j < state->patterns.used; j++) {
 			int options = PCRE_ANCHORED;
@@ -432,9 +477,9 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 			     equal to the forbidden state (set below when we encounter an
 			     empty match for an end pattern)
 			*/
-			if (state->patterns.data[j].next_state == result->state ||
+			if (state->patterns.data[j].next_state == NO_CHANGE ||
 					(i == result->end &&
-					state->patterns.data[j].next_state > result->state &&
+					state->patterns.data[j].next_state > current_pattern_state &&
 					state->patterns.data[j].next_state <= result->forbidden_state))
 				options |= PCRE_NOTEMPTY_ATSTART;
 
@@ -450,8 +495,8 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 				   we are leaving, such that if we next match an empty start pattern it must
 				   go into a higher numbered state. This ensures we will always make progress. */
 				result->forbidden_state = result->start == result->end &&
-					state->patterns.data[j].next_state < result->state ? result->state : -1;
-				result->state = state->patterns.data[j].next_state;
+					state->patterns.data[j].next_state < EXIT_STATE ? current_pattern_state : -1;
+				result->state = find_state(highlight, result->state, state->patterns.data[j].next_state);
 				result->match_attribute = state->patterns.data[j].attribute_idx;
 				return t3_true;
 			}

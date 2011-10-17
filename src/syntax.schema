@@ -39,12 +39,16 @@ types {
 			use {
 				type = "string"
 			}
+			nested {
+				type = "bool"
+			}
 		}
 		%constraint = "#(regex, start, use) = 1"
 		%constraint = "start ^ !end"
 		%constraint = "start | !pattern"
 		%constraint = "start | regex | !style"
 		%constraint = "start | !delim-style"
+		%constraint = "!(use & nested)"
 	}
 	definition {
 		type = "section"
