@@ -14,6 +14,7 @@
 SOURCES.t3highlight := t3highlight.c escapes.c
 LDFLAGS.t3highlight := -L../src/.libs
 LDLIBS.t3highlight := -lt3highlight
+CFLAGS.t3highlight += -I.objects -DDATADIR='"$(CURDIR)/data"'
 
 TARGETS := t3highlight
 #================================================#
@@ -21,9 +22,15 @@ TARGETS := t3highlight
 #================================================#
 include ../../makesys/rules.mk
 
-CFLAGS += -I. -I../src
+CFLAGS += -I. -I../src -I.objects
 
 t3highlight: | lib
+
+.objects/%.bytes: %.schema
+	$(GENOBJDIR)
+	$(_VERBOSE_GEN) ../src/t3config/data2bytes -s -- $< > $@
+
+.objects/t3highlight.o: .objects/style.bytes
 
 lib:
 	@$(MAKE) -q -C ../src libt3highlight.la || $(MAKE) -C ../src libt3highlight.la

@@ -24,15 +24,15 @@
 #include "t3highlight.h"
 
 typedef struct {
-	const char *tag;
-	const char *start;
-	const char *end;
+	char *tag;
+	char *start;
+	char *end;
 } style_def_t;
 
 static style_def_t *styles;
-static style_def_t default_styles[] = {
-	{ "normal", "", "" },
-	{ NULL, NULL, NULL }
+
+static const char style_schema[] = {
+#include "style.bytes"
 };
 
 static int option_verbose;
@@ -51,6 +51,17 @@ void fatal(const char *fmt, ...) {
 	vfprintf(stderr, fmt, args);
 	va_end(args);
 	exit(EXIT_FAILURE);
+}
+
+/** Duplicate a string but exit on allocation failure */
+char *safe_strdup(const char *str) {
+	char *result;
+	size_t len = strlen(str) + 1;
+
+	if ((result = malloc(len)) == NULL)
+		fatal("Out of memory\n");
+	memcpy(result, str, len);
+	return result;
 }
 
 static PARSE_FUNCTION(parse_args)
@@ -109,8 +120,10 @@ static PARSE_FUNCTION(parse_args)
 END_FUNCTION
 
 
-static int map_style(style_def_t *styles, const char *name) {
+static int map_style(void *_styles, const char *name) {
+	style_def_t *styles = _styles;
 	int i;
+
 	for (i = 0; styles[i].tag != NULL; i++) {
 		if (strcmp(styles[i].tag, name) == 0)
 			return i;
@@ -118,22 +131,12 @@ static int map_style(style_def_t *styles, const char *name) {
 	return 0;
 }
 
-static t3_highlight_t *load_highlight(const char *name) {
-	t3_highlight_t *highlight;
-	int error;
-
-	if ((highlight = t3_highlight_load(name, (int (*)(void *, const char *)) map_style, styles, &error)) == NULL)
-		fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
-
-	return highlight;
-}
-
-static const char *expand_string(const char *str, t3_bool expand_escapes) {
+static char *expand_string(const char *str, t3_bool expand_escapes) {
 	char *result;
 	if (str == NULL)
-		return "";
+		return safe_strdup("");
 
-	result = strdup(str);
+	result = safe_strdup(str);
 	if (expand_escapes)
 		parse_escapes(result);
 	return result;
@@ -141,43 +144,59 @@ static const char *expand_string(const char *str, t3_bool expand_escapes) {
 
 static style_def_t *load_style(const char *name) {
 	FILE *style_file;
-	t3_config_t *style_config, *styles, *expand_escapes_conf;
+	t3_config_t *style_config, *styles, *ptr;
+	t3_config_schema_t *schema;
 	t3_config_error_t config_error;
-	style_def_t *result;
-	int count;
-	t3_bool expand_escapes = t3_false;
 
-	if ((style_file = fopen(name, "rb")) == NULL)
+	t3_bool expand_escapes = t3_false;
+	style_def_t *result;
+	const char *path[] = { DATADIR, NULL };
+	int count;
+
+	//FIXME: search in appropriate dirs (DATADIR and environment/user home)
+	if ((style_file = t3_config_open_from_path(path, name, 0)) == NULL)
 		fatal("Can't open '%s': %s\n", name, strerror(errno));
 
 	if ((style_config = t3_config_read_file(style_file, &config_error, NULL)) == NULL)
-		fatal("Error reading style file: %s @ %d\n", t3_config_strerror(config_error.error), config_error.line_number);
+		fatal("Error reading style file: %d: %s\n", config_error.line_number, t3_config_strerror(config_error.error));
+	fclose(style_file);
 
-	//FIXME: use libt3config validation when available
-	if ((styles = t3_config_get(style_config, "styles")) == NULL || t3_config_get_type(styles) != T3_CONFIG_SECTION)
-		fatal("Invalid style definition\n");
-	styles = t3_config_get(styles, NULL);
-
-	if ((expand_escapes_conf = t3_config_get(style_config, "expand-escapes")) != NULL) {
-		if (t3_config_get_type(expand_escapes_conf) != T3_CONFIG_BOOL)
-			fatal("Invalid style definition\n");
-		expand_escapes = t3_config_get_bool(expand_escapes_conf);
+	if ((schema = t3_config_read_schema_buffer(style_schema, sizeof(style_schema), &config_error, NULL)) == NULL) {
+		if (config_error.error != T3_ERR_OUT_OF_MEMORY)
+			config_error.error = T3_ERR_INTERNAL;
+		fatal("Error reading style file: %s\n", t3_config_strerror(config_error.error));
 	}
+
+	if (!t3_config_validate(style_config, schema, &config_error, T3_CONFIG_VERBOSE_ERROR)) {
+		//FIXME: print more information on what is wrong
+		fatal("Error reading style file: %s\n", "invalid format");
+	}
+	t3_config_delete_schema(schema);
+
+	expand_escapes = t3_config_get_bool(t3_config_get(style_config, "expand-escapes"));
+	styles = t3_config_get(t3_config_get(style_config, "styles"), NULL);
 
 	//FIXME: implement special handling of "normal" style (must be style 0)
-	for (count = 0; styles != NULL; count++, styles = t3_config_get_next(styles)) {}
-	count++;
+	for (count = 0, ptr = styles; ptr != NULL; count++, ptr = t3_config_get_next(ptr)) {}
+
+	count += 2;
+
 	if ((result = malloc(sizeof(style_def_t) * count)) == NULL)
 		fatal("Out of memory\n");
-	result[0].tag = "normal";
-	result[0].start = "";
-	result[0].end = "";
-	styles = t3_config_get(t3_config_get(style_config, "styles"), NULL);
-	for (count = 1; styles != NULL; count++, styles = t3_config_get_next(styles)) {
-		result[count].tag = t3_config_get_name(styles);
-		result[count].start = expand_string(t3_config_get_string(t3_config_get(styles, "start")), expand_escapes);
-		result[count].end = expand_string(t3_config_get_string(t3_config_get(styles, "end")), expand_escapes);
+
+	result[0].tag = safe_strdup("normal");
+	result[0].start = safe_strdup("");
+	result[0].end = safe_strdup("");
+
+	for (count = 1, ptr = styles; ptr != NULL; count++, ptr = t3_config_get_next(ptr)) {
+		result[count].tag = safe_strdup(t3_config_get_name(ptr));
+		result[count].start = expand_string(t3_config_get_string(t3_config_get(ptr, "start")), expand_escapes);
+		result[count].end = expand_string(t3_config_get_string(t3_config_get(ptr, "end")), expand_escapes);
 	}
+	result[count].tag = NULL;
+
+	t3_config_delete(style_config);
+
 	return result;
 }
 
@@ -195,7 +214,9 @@ static void highlight_file(const char *name, t3_highlight_t *highlight) {
 	if (match == NULL)
 		fatal("Out of memory\n");
 
-	if ((input = fopen(name, "rb")) == NULL)
+	if (name == NULL)
+		input = stdin;
+	else if ((input = fopen(name, "rb")) == NULL)
 		fatal("Can't open '%s': %s\n", name, strerror(errno));
 
 	while ((chars_read = getline(&line, &n, input)) > 0) {
@@ -228,23 +249,38 @@ static void highlight_file(const char *name, t3_highlight_t *highlight) {
 
 int main(int argc, char *argv[]) {
 	t3_highlight_t *highlight;
+	int error, i;
 	//FIXME: setlocale etc. for gettext
 
 	parse_args(argc, argv);
 
 	if (option_style == NULL)
-		styles = default_styles;
+		styles = load_style("esc.style");
 	else
 		styles = load_style(option_style);
 
-	if (option_language == NULL)
-		fatal("Language auto-detection not implemented yet\n");
-	else
-		highlight = load_highlight(option_language);
+	if (strcmp(option_input, "-") == 0)
+		option_input = NULL;
+
+	if (option_language == NULL && option_input == NULL) {
+		fatal("-l/--language required for reading from standard input\n");
+	} else if (option_language != NULL) {
+		if ((highlight = t3_highlight_load_by_langname(option_language, map_style, styles, &error)) == NULL)
+			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
+	} else {
+		if ((highlight = t3_highlight_load_by_filename(option_input, map_style, styles, &error)) == NULL)
+			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
+	}
 
 	highlight_file(option_input, highlight);
 
+	for (i = 0; styles[i].tag != NULL; i++) {
+		free(styles[i].tag);
+		free(styles[i].start);
+		free(styles[i].end);
+	}
+	free(styles);
+
 	t3_highlight_free(highlight);
 	return EXIT_SUCCESS;
-
 }

@@ -6,21 +6,12 @@ DESIGN GOALS:
 
 TODO:
 Library:
-- Defining and referencing other patterns + include mechanism
-- File regexes should be in a separate file, such that they can be read without
-	reading all the separate language definitions files. That may give a problem
-	with user defined definitions.
-- How can we list the names of the different language definitions without
-	reading all of them? I guess we should have a file with meta information,
-	which we use instead of reading the files themselves (see also above). This
-	works for the standard installed files, but not for the files the user
-	may create.
 - UTF-8 mode
 - Add an interface for language detection
 	- Support and detect Emacs language identifiers (-*- <name> -*- or something)
 		and vi/vim modelines (only first and last 5 lines)
 	- Do we wish to support language switching?
-
+- Nested highlighting (see nested.txt)
 
 t3highlight:
 - add html/latex/etc escaping of inputs (i.e. sed scripts or something like it)

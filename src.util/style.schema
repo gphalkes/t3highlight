@@ -26,9 +26,39 @@ types {
 		}
 		%constraint = "start & end"
 	}
+	translation {
+		type = "section"
+		allowed-keys {
+			string {
+				type = "string"
+			}
+			regex {
+				type = "string"
+			}
+			replace {
+				type = "string"
+			}
+		}
+		%constraint = "string ^ regex"
+		%constraint = "replace"
+	}
+	doc-def {
+		type = "section"
+		allowed-keys {
+			header {
+				type = "string"
+			}
+			footer {
+				type = "string"
+			}
+		}
+	}
 }
 
 allowed-keys {
+	format {
+		type = "int"
+	}
 	expand-escapes {
 		type = "bool"
 	}
@@ -36,5 +66,16 @@ allowed-keys {
 		type = "section"
 		item-type = "style"
 	}
+	translate {
+		type = "list"
+		item-type = "translation"
+	}
+	document {
+		type = "doc-def"
+	}
+	raw {
+		type = "doc-def"
+	}
 }
+%constraint = "format = 1"
 %constraint = "styles"

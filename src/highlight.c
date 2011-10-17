@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pcre.h>
+#include <errno.h>
 
 #include "highlight.h"
 #include "highlight_errors.h"
@@ -94,12 +95,14 @@ static t3_config_t *load_map(int *error) {
 
 	if (!t3_config_validate(map, schema, NULL, 0))
 		RETURN_ERROR(T3_ERR_INVALID_FORMAT);
+	t3_config_delete_schema(schema);
 
 	/* FIXME: check that the name-pattern (if it exists) matches the name. If not, there is a problem. */
 
 	return map;
 
 return_error:
+	t3_config_delete_schema(schema);
 	return NULL;
 }
 
@@ -121,6 +124,7 @@ t3_highlight_lang_t *t3_highlight_list(int *error) {
 		retval[count].name = t3_config_take_string(t3_config_get(ptr, "name"));
 		retval[count].lang_file = t3_config_take_string(t3_config_get(ptr, "lang-file"));
 	}
+
 	retval[count].name = NULL;
 	retval[count].lang_file = NULL;
 	return retval;
@@ -151,29 +155,36 @@ static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, i
 	t3_config_t *map, *ptr;
 	pcre *pcre;
 	int ovector[30];
-	const char *file_name;
 
 	if ((map = load_map(error)) == NULL)
 		return NULL;
 
-	file_name = strrchr(name, '/'); /* FIXME: use platform dependent dir separators */
-	if (file_name == NULL)
-		file_name = name;
-
 	for (ptr = t3_config_get(t3_config_get(map, "lang"), NULL); ptr != NULL; ptr = t3_config_get_next(ptr)) {
 		const char *error_message;
 		int error_offset;
-		t3_config_t *file_regex = t3_config_get(ptr, regex_name);
-		if (file_regex == NULL)
+		int pcre_result;
+		t3_config_t *regex;
+
+		if ((regex = t3_config_get(ptr, regex_name)) == NULL)
 			continue;
 
-		if ((pcre = pcre_compile(t3_config_get_string(file_regex), 0, &error_message, &error_offset, NULL)) == NULL)
+		if ((pcre = pcre_compile(t3_config_get_string(regex), 0, &error_message, &error_offset, NULL)) == NULL)
 			continue;
 
-		if (pcre_exec(pcre, NULL, file_name, strlen(file_name), 0, 0, ovector, sizeof(ovector) / sizeof(ovector[0])) < 0)
-			continue;
+		pcre_result = pcre_exec(pcre, NULL, name, strlen(name), 0, 0, ovector, sizeof(ovector) / sizeof(ovector[0]));
+		pcre_free(pcre);
+		if (pcre_result >= 0) {
+			t3_highlight_t *result = t3_highlight_load(t3_config_get_string(t3_config_get(ptr, "lang-file")),
+				map_style, map_style_data, error);
+			t3_config_delete(map);
+			return result;
+		}
 
-		return t3_highlight_load(t3_config_get_string(t3_config_get(ptr, "lang-file")), map_style, map_style_data, error);
+	}
+	t3_config_delete(map);
+	if (error != NULL) {
+		errno = ENOENT;
+		*error = T3_ERR_ERRNO;
 	}
 	return NULL;
 }
@@ -181,7 +192,10 @@ static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, i
 t3_highlight_t *t3_highlight_load_by_filename(const char *name, int (*map_style)(void *, const char *),
 		void *map_style_data, int *error)
 {
-	return load_by_xname("file-regex", name, map_style, map_style_data, error);
+	const char *file_name = strrchr(name, '/'); /* FIXME: use platform dependent dir separators */
+	if (file_name == NULL)
+		file_name = name;
+	return load_by_xname("file-regex", file_name, map_style, map_style_data, error);
 }
 
 t3_highlight_t *t3_highlight_load_by_langname(const char *name, int (*map_style)(void *, const char *),
@@ -484,6 +498,10 @@ int t3_highlight_get_match_attr(t3_highlight_match_t *match) {
 	return match->match_attribute;
 }
 
+int t3_highlight_get_state(t3_highlight_match_t *match) {
+	return match->state;
+}
+
 int t3_highlight_next_line(t3_highlight_match_t *match) {
 	match->end = 0;
 	match->forbidden_state = -1;
@@ -501,4 +519,8 @@ const char *t3_highlight_strerror(int error) {
 		case T3_ERR_INVALID_REGEX:
 			return _("invalid regular expression");
 	}
+}
+
+long t3_highlight_get_version(void) {
+	return T3_HIGHLIGHT_VERSION;
 }
