@@ -25,4 +25,8 @@ styles {
 		start = '<misc>'
 		end = '</misc>'
 	}
+	number {
+		start = '<number>'
+		end = '</number>'
+	}
 }

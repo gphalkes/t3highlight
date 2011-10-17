@@ -1,0 +1,51 @@
+format = 1
+
+%pattern {
+	start = "\/\*"
+	end = "\*\/"
+	nested = yes
+	style = "comment"
+	delim-style = "comment-keyword"
+}
+%pattern {
+	start = "{"
+	%pattern {
+		start = "\("
+		%pattern {
+			regex = "\bbar\b"
+			style = "string"
+		}
+		style = "number"
+		end = "\)"
+		nested = yes
+	}
+	%pattern {
+		regex = "\bfoo\b"
+		style = "keyword"
+	}
+	end = "}"
+	style = "misc"
+	nested = yes
+}
+
+#TEST
+/* comment style */
+regular style
+
+/* comment /* comment */ comment */ regular
+/* comment /* comment */ comment */ regular
+/*/* comment /* comment */ comment */*/ regular
+
+{ foo { foo ( bar ( foo bar ) bar ) bar } foo } regular
+/* comment /* comment */ comment */ regular
+==
+<comment-keyword>/*</comment-keyword><comment> comment style </comment><comment-keyword>*/</comment-keyword>
+regular style
+
+<comment-keyword>/*</comment-keyword><comment> comment </comment><comment-keyword>/*</comment-keyword><comment> comment </comment><comment-keyword>*/</comment-keyword><comment> comment </comment><comment-keyword>*/</comment-keyword> regular
+<comment-keyword>/*</comment-keyword><comment> comment </comment><comment-keyword>/*</comment-keyword><comment> comment </comment><comment-keyword>*/</comment-keyword><comment> comment </comment><comment-keyword>*/</comment-keyword> regular
+<comment-keyword>/*</comment-keyword><comment-keyword>/*</comment-keyword><comment> comment </comment><comment-keyword>/*</comment-keyword><comment> comment </comment><comment-keyword>*/</comment-keyword><comment> comment </comment><comment-keyword>*/</comment-keyword><comment-keyword>*/</comment-keyword> regular
+
+<misc>{</misc><misc> </misc><keyword>foo</keyword><misc> </misc><misc>{</misc><misc> </misc><keyword>foo</keyword><misc> </misc><number>(</number><number> </number><string>bar/<string><number> </number><number>(</number><number> foo </number><string>bar/<string><number> </number><number>)</number><number> </number><string>bar/<string><number> </number><number>)</number><misc> bar </misc><misc>}</misc><misc> </misc><keyword>foo</keyword><misc> </misc><misc>}</misc> regular
+<comment-keyword>/*</comment-keyword><comment> comment </comment><comment-keyword>/*</comment-keyword><comment> comment </comment><comment-keyword>*/</comment-keyword><comment> comment </comment><comment-keyword>*/</comment-keyword> regular
+==
