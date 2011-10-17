@@ -32,3 +32,9 @@ format = 1
 	file-regex = "(?i).\.sh$"
 	lang-file = "sh.lang"
 }
+%lang {
+	name = "T3 Highlight Language Definition"
+	name-regex = "^(?i)lang$"
+	file-regex = ".\.lang$"
+	lang-file = "lang.lang"
+}

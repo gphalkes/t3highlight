@@ -1,0 +1,28 @@
+format = 1
+
+%pattern {
+	start = '#'
+	end = '$'
+	style = "comment"
+}
+%pattern {
+	regex = '(?<!\w)(?:%include|%pattern|%define|start|end|regex|use|style|' +
+		'delim-style|nested|true|false|yes|no|format)'
+	style = "keyword"
+}
+%pattern {
+	start = '"'
+	%pattern {
+		regex = '""'
+	}
+	end = '"|(?<!\\)$'
+	style = "string"
+}
+%pattern {
+	start = "'"
+	%pattern {
+		regex = "''"
+	}
+	end = "'|(?<!\\)$"
+	style = "string"
+}

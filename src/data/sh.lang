@@ -37,6 +37,7 @@ format = 1
 	end = '`'
 	style = "misc"
 }
+#FIXME: this is quite broken, because there may be strings and other things inside
 %pattern {
 	start = '\$\('
 	end = '\)'
