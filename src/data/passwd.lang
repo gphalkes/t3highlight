@@ -20,7 +20,7 @@ format = 1
 		regex = '(?<=:)[^:\s]+'
 		style = "string"
 	}
-	%pattern { use = "non-matching }
+	%pattern { use = "non-matching" }
 	%pattern {
 		start = ':'
 		%pattern {
@@ -28,7 +28,7 @@ format = 1
 			regex = '(?<=:)\d+'
 			style = "number"
 		}
-		%pattern { use = "non-matching }
+		%pattern { use = "non-matching" }
 		%pattern {
 			start = ':'
 			%pattern {
@@ -36,7 +36,7 @@ format = 1
 				regex = '(?<=:)\d+'
 				style = "number"
 			}
-			%pattern { use = "non-matching }
+			%pattern { use = "non-matching" }
 			%pattern {
 				start = ':'
 				%pattern {
