@@ -1,0 +1,29 @@
+%define {
+	name = "hash-comment"
+	%pattern {
+		start = '#'
+		end = '$'
+		style = "comment"
+	}
+}
+
+# Generic C-style strings
+%define {
+	# Double quoted string, with C-style escape
+	name = "dqs-w/ce"
+	%pattern {
+		start = '"'
+		end = '"|(?:\G|[^\\])\K$'
+		style = "string"
+	}
+}
+
+%define {
+	# Double quoted string, with C-style escape
+	name = "sqs-w/ce"
+	%pattern {
+		start = "'"
+		end = "'|(?:\G|[^\\])\K$"
+		style = "string"
+	}
+}
