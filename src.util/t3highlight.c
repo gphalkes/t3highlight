@@ -213,7 +213,6 @@ static void highlight_file(const char *name, t3_highlight_t *highlight) {
 	char *line = NULL;
 	size_t n;
 	ssize_t chars_read;
-	size_t begin;
 
 	t3_highlight_match_t *match = t3_highlight_new_match();
 	t3_bool match_result;
@@ -232,21 +231,21 @@ static void highlight_file(const char *name, t3_highlight_t *highlight) {
 			chars_read--;
 
 		t3_highlight_next_line(match);
-		begin = 0;
 		do {
 			match_result = t3_highlight_match(highlight, line, chars_read, match);
-			size_t start = t3_highlight_get_start(match), end = t3_highlight_get_end(match);
-			if (begin != start) {
+			size_t start = t3_highlight_get_start(match),
+				match_start = t3_highlight_get_match_start(match),
+				end = t3_highlight_get_end(match);
+			if (start != match_start) {
 				fputs(styles[t3_highlight_get_begin_attr(match)].start, stdout);
-				printf("%.*s", (int) (start - begin), line + begin);
+				printf("%.*s", (int) (match_start - start), line + start);
 				fputs(styles[t3_highlight_get_begin_attr(match)].end, stdout);
 			}
-			if (start != end) {
+			if (match_start != end) {
 				fputs(styles[t3_highlight_get_match_attr(match)].start, stdout);
-				printf("%.*s", (int) (end - start), line + start);
+				printf("%.*s", (int) (end - match_start), line + match_start);
 				fputs(styles[t3_highlight_get_match_attr(match)].end, stdout);
 			}
-			begin = end;
 		} while (match_result);
 		putchar('\n');
 	}

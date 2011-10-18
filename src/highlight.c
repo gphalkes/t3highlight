@@ -54,6 +54,7 @@ struct t3_highlight_t {
 
 struct t3_highlight_match_t {
 	size_t start,
+		match_start,
 		end;
 	int state, forbidden_state,
 		begin_attribute,
@@ -317,6 +318,7 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 
 	best_pos[0] = INT_MAX;
 
+	result->start = result->end;
 	result->begin_attribute = state->attribute_idx;
 	for (j = 0; j < state->patterns.used; j++) {
 		int options = 0;
@@ -346,28 +348,28 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 	}
 
 	if (best >= 0) {
-		result->start = best_pos[0];
+		result->match_start = best_pos[0];
 		result->end = best_pos[1];
 		/* Forbidden state is only set when we matched an empty end pattern. We recognize
 		   those by checking the match start and end, and by the fact that the next
 		   state is EXIT_STATE. The forbidden state then is the state
 		   we are leaving, such that if we next match an empty start pattern it must
 		   go into a higher numbered state. This ensures we will always make progress. */
-		result->forbidden_state = result->start == result->end &&
+		result->forbidden_state = result->match_start == result->end &&
 			state->patterns.data[best].next_state == EXIT_STATE ? current_pattern_state : -1;
 		result->state = find_state(highlight, result->state, state->patterns.data[best].next_state);
 		result->match_attribute = state->patterns.data[best].attribute_idx;
 		return t3_true;
 	}
 
-	result->start = size;
+	result->match_start = size;
 	result->end = size;
 	return t3_false;
 }
 
 
 void t3_highlight_reset(t3_highlight_match_t *match, int state) {
-	static const t3_highlight_match_t empty = { 0, 0, 0, -1, 0, 0 };
+	static const t3_highlight_match_t empty = { 0, 0, 0, 0, -1, 0, 0 };
 	*match = empty;
 	match->state = state;
 }
@@ -386,6 +388,10 @@ void t3_highlight_free_match(t3_highlight_match_t *match) {
 
 size_t t3_highlight_get_start(t3_highlight_match_t *match) {
 	return match->start;
+}
+
+size_t t3_highlight_get_match_start(t3_highlight_match_t *match) {
+	return match->match_start;
 }
 
 size_t t3_highlight_get_end(t3_highlight_match_t *match) {
