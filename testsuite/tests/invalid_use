@@ -1,0 +1,28 @@
+format = 1
+
+%define {
+	name = "loop1"
+	%pattern {
+		use = "loop2"
+	}
+}
+%define {
+	name = "loop2"
+	%pattern {
+		use = "loop3"
+	}
+}
+%define {
+	name = "loop3"
+	%pattern {
+		use = "loop1"
+	}
+}
+
+%pattern {
+	use = "loop2"
+}
+
+#TEST
+==
+==

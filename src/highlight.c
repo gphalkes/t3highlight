@@ -73,6 +73,7 @@ typedef struct {
 	void *map_style_data;
 	t3_highlight_t *highlight;
 	t3_config_t *syntax;
+	VECTOR(const char *, use_stack);
 } pattern_context_t;
 
 static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int idx, int *error);
@@ -118,8 +119,12 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	context.map_style_data = map_style_data;
 	context.highlight = result;
 	context.syntax = syntax;
-	if (!init_state(&context, patterns, 0, error))
+	VECTOR_INIT(context.use_stack);
+	if (!init_state(&context, patterns, 0, error)) {
+		free(context.use_stack.data);
 		goto return_error;
+	}
+	free(context.use_stack.data);
 	return result;
 
 return_error:
@@ -226,15 +231,30 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 			if (t3_config_get_bool(t3_config_get(patterns, "nested")))
 				add_delim_pattern(context, t3_config_get(patterns, "start"), action.next_state, &action, error);
 		} else if ((use = t3_config_get(patterns, "use")) != NULL) {
-			#warning FIXME: prevent recursive "use" definitions!
+			size_t i;
+
 			t3_config_t *definition = t3_config_find(t3_config_get(context->syntax, "define"),
 				match_name, (char *) t3_config_get_string(use), NULL);
 
+			//FIXME: using a separate error code would be better
 			if (definition == NULL)
-				RETURN_ERROR(T3_ERR_INVALID_FORMAT);
+				RETURN_ERROR(T3_ERR_UNDEFINED_USE);
+
+			//FIXME: using a separate error code would be better
+			for (i = 0; i < context->use_stack.used; i++) {
+				if (strcmp(t3_config_get_string(use), context->use_stack.data[i]) == 0)
+					RETURN_ERROR(T3_ERR_RECURSIVE_DEFINITION);
+			}
+
+			if (!VECTOR_RESERVE(context->use_stack))
+				RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+			VECTOR_LAST(context->use_stack) = t3_config_get_string(use);
 
 			if (!init_state(context, t3_config_get(definition, "pattern"), idx, error))
 				return t3_false;
+
+			/* Pop name of latest use from stack. */
+			context->use_stack.used--;
 
 			/* We do not fill in action, so we should just skip to the next entry in the list. */
 			continue;
@@ -404,6 +424,10 @@ const char *t3_highlight_strerror(int error) {
 			return _("invalid regular expression");
 		case T3_ERR_NO_SYNTAX:
 			return _("could not locate appropriate highlighting patterns");
+		case T3_ERR_UNDEFINED_USE:
+			return _("'use' specifies undefined pattern");
+		case T3_ERR_RECURSIVE_DEFINITION:
+			return _("recursive pattern definition");
 	}
 }
 
