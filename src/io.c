@@ -25,14 +25,13 @@ static const char map_schema[] = {
 #include "map.bytes"
 };
 
-static t3_config_t *load_map(int *error) {
+static t3_config_t *load_single_map(const char *name, int *error) {
 	t3_config_schema_t *schema = NULL;
 	t3_config_error_t local_error;
 	t3_config_t *map;
 	FILE *file;
 
-	/* FIXME: should we retrieve a list from elsewhere as well? User's home dir? */
-	if ((file = fopen(DATADIR "/" "lang.map", "r")) == NULL)
+	if ((file = fopen(name, "r")) == NULL)
 		RETURN_ERROR(T3_ERR_ERRNO);
 
 	map = t3_config_read_file(file, &local_error, NULL);
@@ -49,12 +48,58 @@ static t3_config_t *load_map(int *error) {
 		RETURN_ERROR(T3_ERR_INVALID_FORMAT);
 	t3_config_delete_schema(schema);
 
-	/* FIXME: check that the name-regex (if it exists) matches the name. If not, there is a problem. */
-
 	return map;
 
 return_error:
 	t3_config_delete_schema(schema);
+	return NULL;
+}
+
+static void merge(t3_config_t *main, t3_config_t *map) {
+	t3_config_t *main_lang = t3_config_get(main, "lang");
+	t3_config_t *map_lang = t3_config_get(map, "lang");
+	t3_config_t *ptr;
+
+	while ((ptr = t3_config_get(map_lang, NULL)) != NULL) {
+		t3_config_unlink_from_list(map_lang, ptr);
+		t3_config_add_existing(main_lang, NULL, ptr);
+	}
+}
+
+static t3_config_t *load_map(int *error) {
+	t3_config_t *full_map = NULL, *map;
+	const char *home_env;
+
+	if ((full_map = t3_config_new()) == NULL)
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+	if (!t3_config_add_plist(full_map, "lang", error))
+		goto return_error;
+
+	home_env = getenv("HOME");
+	if (home_env != NULL) {
+		char *tmp;
+		if ((tmp = malloc(strlen(home_env) + strlen(".libt3highlight/lang.map") + 2)) == NULL)
+			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		strcpy(tmp, home_env);
+		strcat(tmp, "/");
+		strcat(tmp, ".libt3highlight/lang.map");
+		map = load_single_map(tmp, NULL);
+		free(tmp);
+		if (map != NULL) {
+			merge(full_map, map);
+			t3_config_delete(map);
+		}
+	}
+
+	if ((map = load_single_map(DATADIR "/" "lang.map", error)) == NULL)
+		goto return_error;
+
+	merge(full_map, map);
+	t3_config_delete(map);
+	return full_map;
+
+return_error:
+	t3_config_delete(full_map);
 	return NULL;
 }
 
@@ -142,11 +187,6 @@ static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, i
 t3_highlight_t *t3_highlight_load_by_filename(const char *name, int (*map_style)(void *, const char *),
 		void *map_style_data, int *error)
 {
-#if 0
-	const char *file_name = strrchr(name, '/'); /* FIXME: use platform dependent dir separators */
-	if (file_name == NULL)
-		file_name = name;
-#endif
 	return load_by_xname("file-regex", name, map_style, map_style_data, error);
 }
 

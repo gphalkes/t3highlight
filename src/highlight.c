@@ -236,11 +236,9 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 			t3_config_t *definition = t3_config_find(t3_config_get(context->syntax, "define"),
 				match_name, (char *) t3_config_get_string(use), NULL);
 
-			//FIXME: using a separate error code would be better
 			if (definition == NULL)
 				RETURN_ERROR(T3_ERR_UNDEFINED_USE);
 
-			//FIXME: using a separate error code would be better
 			for (i = 0; i < context->use_stack.used; i++) {
 				if (strcmp(t3_config_get_string(use), context->use_stack.data[i]) == 0)
 					RETURN_ERROR(T3_ERR_RECURSIVE_DEFINITION);

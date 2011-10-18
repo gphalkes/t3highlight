@@ -1,0 +1,63 @@
+format = 1
+
+%include = "def/number.lang"
+
+%define {
+	name = "java-escape"
+	%pattern {
+		regex = '\\(?:u[0-9a-fA-F]{4}|[0-3][0-7]{2}|[0-7]{1,2}|[btnfr"''\\])'
+		style = "string-escape"
+	}
+}
+
+%define {
+	name = "java"
+	%pattern {
+		regex = '\b(?:abstract|continue|for|new|switch|assert|default|goto|' +
+			'package|synchronized|boolean|do|if|private|this|break|double|' +
+			'implements|protected|throw|byte|else|import|public|throws|case|' +
+			'enum|instanceof|return|transient|catch|extends|int|short|try|char|' +
+			'final|interface|static|void|class|finally|long|strictfp|volatile|' +
+			'const|float|native|super|while|true|false|null)\b'
+		style = "keyword"
+	}
+	%pattern {
+		start = '//'
+		end = '$'
+		style = "comment"
+	}
+	%pattern {
+		start = '/\*\*'
+		%pattern {
+			regex = '(?:@(?:author|deprecated|exception|param|return|see|serial|' +
+				'serialData|serialField|since|throws|version)|\{@(?:docRoot|' +
+				'inheritDoc))'
+			style = "comment-keyword"
+		}
+		%pattern {
+			start = '\{@(?:code|linkplain|link|literal|value)'
+			end = '\}'
+			delim-style = "comment-keyword"
+		}
+		end = '\*/'
+		style = "comment"
+	}
+	%pattern {
+		start = '/\*'
+		end = '\*/'
+		style = "comment"
+	}
+	%pattern {
+		start = '"'
+		%pattern { use = "java-escape" }
+		end = '"|$'
+	}
+	%pattern {
+		start = "'"
+		%pattern { use = "java-escape" }
+		end = "'|$"
+		style = "string"
+	}
+
+	%pattern { use = "java-number" }
+}
