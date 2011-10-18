@@ -49,7 +49,7 @@ static t3_config_t *load_map(int *error) {
 		RETURN_ERROR(T3_ERR_INVALID_FORMAT);
 	t3_config_delete_schema(schema);
 
-	/* FIXME: check that the name-pattern (if it exists) matches the name. If not, there is a problem. */
+	/* FIXME: check that the name-regex (if it exists) matches the name. If not, there is a problem. */
 
 	return map;
 
@@ -156,38 +156,55 @@ t3_highlight_t *t3_highlight_load_by_langname(const char *name, int (*map_style)
 	return load_by_xname("name-regex", name, map_style, map_style_data, error);
 }
 
-/* FIXME: this now uses open_from_path, but do we always want that? Perhaps we should
-   simply use open if the name contains a dir separator. */
 t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, const char *), void *map_style_data, int *error) {
 	t3_config_opts_t opts;
-	const char *path[] = { DATADIR, NULL };
+	const char *path[] = { NULL, NULL, NULL };
+	char *home_env = NULL;
 	t3_config_t *config;
 	t3_config_error_t config_error;
 	t3_highlight_t *result;
-	FILE *file;
+	FILE *file = NULL;
 
-	/* FIXME: do we want to add a path from the environment? User home directory? */
-
-	if ((file = t3_config_open_from_path(path, name, 0)) == NULL) {
-		if (error != NULL)
-			*error = T3_ERR_ERRNO;
-		return NULL;
+	/* Setup path. */
+	home_env = getenv("HOME");
+	if (home_env != NULL) {
+		char *tmp;
+		if ((tmp = malloc(strlen(home_env) + strlen(".libt3highlight") + 2)) == NULL)
+			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		strcpy(tmp, home_env);
+		strcat(tmp, "/");
+		strcat(tmp, ".libt3highlight");
+		path[0] = home_env = tmp;
 	}
+
+	path[path[0] == NULL ? 0 : 1] = DATADIR;
+
+	if ((file = t3_config_open_from_path(path, name, 0)) == NULL)
+		RETURN_ERROR(T3_ERR_ERRNO);
 
 	opts.flags = T3_CONFIG_INCLUDE_DFLT;
 	opts.include_callback.dflt.path = path;
 	opts.include_callback.dflt.flags = 0;
 
-	config = t3_config_read_file(file, &config_error, &opts);
+	if ((config = t3_config_read_file(file, &config_error, &opts)) == NULL)
+		RETURN_ERROR(config_error.error);
+
+	free(home_env);
+	/* home_env = NULL; */
 	fclose(file);
-	if (config == NULL) {
-		if (error != NULL)
-			*error = config_error.error;
-		return NULL;
-	}
+	/* file = NULL; */
 
 	result = t3_highlight_new(config, map_style, map_style_data, error);
 	t3_config_delete(config);
 
 	return result;
+
+return_error:
+	free(home_env);
+	if (file != NULL) {
+		int save_errno = errno;
+		fclose(file);
+		errno = save_errno;
+	}
+	return NULL;
 }
