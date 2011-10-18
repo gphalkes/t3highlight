@@ -78,14 +78,14 @@
 		start = '"'
 		%pattern { use = "unicode-string-escape" }
 		%pattern { use = "string-escape" }
-		end = '"|(?<!\\)$'
+		end = '"|(?:\G|[^\\])\K$'
 		style = "string"
 	}
 
 	%pattern {
 		start = "'"
 		%pattern { use = "string-escape" }
-		end = "'|(?<!\\)$"
+		end = "'|(?:\G|[^\\])\K$"
 		style = "string"
 	}
 

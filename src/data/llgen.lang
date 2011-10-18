@@ -15,6 +15,9 @@ format = 1
 	regex = "'(?:\\[^']+|.)'"
 	style = "string"
 }
+
+# Using string escape here is not exactly correct, because LLnextgen has a
+# slightly different definition of \x
 %pattern {
 	start = '"'
 	%pattern { use = "string-escape" }

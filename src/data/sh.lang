@@ -1,22 +1,30 @@
 format = 1
 
-%pattern {
-	start = '#'
-	end = '$'
-	style = "comment"
-}
-%pattern {
-	start = "'"
-	end = "'"
-	style = "string"
-}
-%pattern {
-	start = '"'
-	%pattern { regex = '\\[$`"]' }
-	end = '"'
-	style = "string"
+# Note: the highlighting here is somewhat broken, because of the mutual nesting
+# possibilities of ${ } and $( ), and other nesting stuff. However, making that
+# work properly is beyond the capabilities of syntax highlighting.
+
+%define {
+	name = "string+comment"
+	%pattern {
+		start = '#'
+		end = '$'
+		style = "comment"
+	}
+	%pattern {
+		start = "'"
+		end = "'"
+		style = "string"
+	}
+	%pattern {
+		start = '"'
+		%pattern { regex = '\\[$`"\\]' }
+		end = '"'
+		style = "string"
+	}
 }
 
+%pattern { use = "string+comment" }
 
 %pattern {
 	regex = '\$(?:[-@*#?$!0-9]|[_a-zA-Z][_a-zA-Z]*)'
@@ -37,9 +45,9 @@ format = 1
 	end = '`'
 	style = "misc"
 }
-#FIXME: this is quite broken, because there may be strings and other things inside
 %pattern {
 	start = '\$\('
+	%pattern { use = "string+comment" }
 	end = '\)'
 	style = "misc"
 	nested = yes

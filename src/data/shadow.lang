@@ -1,5 +1,13 @@
 format = 1
 
+%define {
+	name = "non-matching"
+	%pattern {
+		regex = '[^:]+'
+		style = "error"
+	}
+}
+
 %pattern {
 	# Username
 	regex = '^[^\s:]+'
@@ -9,9 +17,10 @@ format = 1
 	start = ':'
 	%pattern {
 		# Password
-		regex = '[^:]+'
+		regex = '(?<=:)[^:\s]+'
 		style = "string"
 	}
+	%pattern { use = "non-matching }
 	%pattern {
 		start = ':'
 		%pattern {
@@ -19,6 +28,7 @@ format = 1
 			regex = '(?<=:)\d+'
 			style = "number"
 		}
+		%pattern { use = "non-matching }
 		%pattern {
 			start = ':'
 			%pattern {
@@ -26,6 +36,7 @@ format = 1
 				regex = '(?<=:)\d+'
 				style = "misc"
 			}
+			%pattern { use = "non-matching }
 			%pattern {
 				start = ':'
 				%pattern {
@@ -33,6 +44,7 @@ format = 1
 					regex = '(?<=:)\d+'
 					style = "misc"
 				}
+				%pattern { use = "non-matching }
 				%pattern {
 					start = ':'
 					%pattern {
@@ -40,6 +52,7 @@ format = 1
 						regex = '(?<=:)\d+'
 						style = "comment"
 					}
+					%pattern { use = "non-matching }
 					%pattern {
 						start = ':'
 						%pattern {
@@ -47,6 +60,7 @@ format = 1
 							regex = '(?<=:)\d+'
 							style = "comment"
 						}
+						%pattern { use = "non-matching }
 						%pattern {
 							start = ':'
 							%pattern {
@@ -54,6 +68,7 @@ format = 1
 								regex = '(?<=:)\d+'
 								style = "variable"
 							}
+							%pattern { use = "non-matching }
 							%pattern {
 								start = ':'
 								# Reserved

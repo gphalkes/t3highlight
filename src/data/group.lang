@@ -1,5 +1,13 @@
 format = 1
 
+%define {
+	name = "non-matching"
+	%pattern {
+		regex = '[^:]+'
+		style = "error"
+	}
+}
+
 %pattern {
 	# Groupname
 	regex = '^[^\s:]+'
@@ -9,9 +17,10 @@ format = 1
 	start = ':'
 	%pattern {
 		# Password
-		regex = '(?<=:)\w+'
+		regex = '(?<=:)[^:\s]+'
 		style = "string"
 	}
+	%pattern { use = "non-matching }
 	%pattern {
 		start = ':'
 		%pattern {
@@ -19,6 +28,7 @@ format = 1
 			regex = '(?<=:)\d+'
 			style = "number"
 		}
+		%pattern { use = "non-matching }
 		%pattern {
 			start = ':'
 			%pattern {

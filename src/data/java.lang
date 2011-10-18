@@ -2,6 +2,14 @@ format = 1
 
 %include = "def/number.lang"
 
+%define {
+	name = "java-escape"
+	%pattern {
+		regex = '\\(?:u[0-9a-fA-F]{4}|[0-3][0-7]{2}|[0-7]{1,2}|[btnfr"''\\])'
+		style = "string-escape"
+	}
+}
+
 %pattern {
 	regex = '\b(?:abstract|continue|for|new|switch|assert|default|goto|' +
 		'package|synchronized|boolean|do|if|private|this|break|double|' +
@@ -39,19 +47,14 @@ format = 1
 }
 %pattern {
 	start = '"'
-	%pattern {
-		regex = '\\(?:u[0-9a-fA-F]{4}|[0-3][0-7]{2}|[0-7]{1,2}|[btnfr"''\\])'
-		style = "string-escape"
-	}
-	end = '"|(?<!\\)$'
+	%pattern { use = "java-escape" }
+	end = '"|$'
 }
 %pattern {
 	start = "'"
-	%pattern { regex = '\\.' }
-	end = "'|(?<!\\)$"
+	%pattern { use = "java-escape" }
+	end = "'|$"
 	style = "string"
 }
 
-%pattern {
-	use = "java-number"
-}
+%pattern { use = "java-number" }

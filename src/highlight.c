@@ -294,46 +294,52 @@ static int find_state(const t3_highlight_t *highlight, int current, int pattern)
 t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, size_t size, t3_highlight_match_t *result) {
 	int current_pattern_state = highlight->mapping.data[result->state].pattern;
 	state_t *state = &highlight->states.data[current_pattern_state];
-	int ovector[30];
-	size_t i, j;
+	int ovector[30], best = -1, best_pos[2];
+	size_t j;
+
+	best_pos[0] = INT_MAX;
 
 	result->begin_attribute = state->attribute_idx;
-	for (i = result->end; i <= size; i++) {
-		for (j = 0; j < state->patterns.used; j++) {
-			int options = PCRE_ANCHORED;
+	for (j = 0; j < state->patterns.used; j++) {
+		int options = 0;
 
-			/* For items that do not change state, we do not want an empty match
-			   ever (makes no progress). For state changing items, the rules are
-			   more complex. Empty matches are allowed except when immediately
-			   after the previous match and both of the following conditions are met:
-			   - the item we match is a "start" item (next state >= current state)
-			   - taking the state transistion enters a state smaller than or
-			     equal to the forbidden state (set below when we encounter an
-			     empty match for an end pattern)
-			*/
-			if (state->patterns.data[j].next_state == NO_CHANGE ||
-					(i == result->end &&
-					state->patterns.data[j].next_state >= current_pattern_state &&
-					state->patterns.data[j].next_state <= result->forbidden_state))
-				options |= PCRE_NOTEMPTY_ATSTART;
+		/* For items that do not change state, we do not want an empty match
+		   ever (makes no progress). For state changing items, the rules are
+		   more complex. Empty matches are allowed except when immediately
+		   after the previous match and both of the following conditions are met:
+		   - the item we match is a "start" item (next state >= current state)
+		   - taking the state transistion enters a state smaller than or
+			 equal to the forbidden state (set below when we encounter an
+			 empty match for an end pattern)
+		*/
+		if (state->patterns.data[j].next_state == NO_CHANGE)
+			options |= PCRE_NOTEMPTY;
+		else if (state->patterns.data[j].next_state >= current_pattern_state &&
+				state->patterns.data[j].next_state <= result->forbidden_state)
+			options |= PCRE_NOTEMPTY_ATSTART;
 
-			if (pcre_exec(state->patterns.data[j].regex, state->patterns.data[j].extra, line, size,
-					i, options, ovector, sizeof(ovector) / sizeof(ovector[0])) >= 0)
-			{
-				result->start = ovector[0];
-				result->end = ovector[1];
-				/* Forbidden state is only set when we matched an empty end pattern. We recognize
-				   those by checking the match start and end, and by the fact that the next
-				   state is EXIT_STATE. The forbidden state then is the state
-				   we are leaving, such that if we next match an empty start pattern it must
-				   go into a higher numbered state. This ensures we will always make progress. */
-				result->forbidden_state = result->start == result->end &&
-					state->patterns.data[j].next_state == EXIT_STATE ? current_pattern_state : -1;
-				result->state = find_state(highlight, result->state, state->patterns.data[j].next_state);
-				result->match_attribute = state->patterns.data[j].attribute_idx;
-				return t3_true;
-			}
+		if (pcre_exec(state->patterns.data[j].regex, state->patterns.data[j].extra, line, size,
+				result->end, options, ovector, sizeof(ovector) / sizeof(ovector[0])) >= 0 && ovector[0] < best_pos[0])
+		{
+			best = j;
+			best_pos[0] = ovector[0];
+			best_pos[1] = ovector[1];
 		}
+	}
+
+	if (best >= 0) {
+		result->start = best_pos[0];
+		result->end = best_pos[1];
+		/* Forbidden state is only set when we matched an empty end pattern. We recognize
+		   those by checking the match start and end, and by the fact that the next
+		   state is EXIT_STATE. The forbidden state then is the state
+		   we are leaving, such that if we next match an empty start pattern it must
+		   go into a higher numbered state. This ensures we will always make progress. */
+		result->forbidden_state = result->start == result->end &&
+			state->patterns.data[best].next_state == EXIT_STATE ? current_pattern_state : -1;
+		result->state = find_state(highlight, result->state, state->patterns.data[best].next_state);
+		result->match_attribute = state->patterns.data[best].attribute_idx;
+		return t3_true;
 	}
 
 	result->start = size;
