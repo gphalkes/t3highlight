@@ -1,4 +1,7 @@
 syntax: glob
+doc/doxygen.conf
+doc/DoxygenLayout.xml
+doc/API
 src/highlight_shared.c
 src/.deps
 src/.libs

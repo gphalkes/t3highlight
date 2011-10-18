@@ -17,8 +17,8 @@
 #include <t3config/config.h>
 #include <t3highlight/highlight_api.h>
 
-/** @defgroup t3config_other Functions, constants and enums. */
-/** @addtogroup t3config_other */
+/** @defgroup t3highlight_other Functions, constants and enums. */
+/** @addtogroup t3highlight_other */
 /** @{ */
 
 #ifdef __cplusplus
@@ -67,8 +67,8 @@ typedef struct t3_highlight_match_t t3_highlight_match_t;
     A struct representing a display name/language file name tuple.
 */
 typedef struct {
-	char *name;
-	char *lang_file;
+	char *name; /**< Display name of a language. */
+	char *lang_file; /**< Name of the language file, to be used with ::t3_highlight_load. */
 } t3_highlight_lang_t;
 
 /** List the known languages.
@@ -100,6 +100,9 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load(const char *name,
 	int (*map_style)(void *, const char *), void *map_style_data, int *error);
 /** Load a highlighting pattern, using a source file name.
     @param name The source file name used to determine the appropriate highlighting pattern.
+	@param map_style See ::t3_highlight_load.
+	@param map_style_data See ::t3_highlight_load.
+	@param error See ::t3_highlight_load.
 
     Other parameters and return value are equal to ::t3_highlight_load. The
     file-regex member in the language definition in the lang.map file is used
@@ -109,6 +112,9 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_filename(const char *name,
 	int (*map_style)(void *, const char *), void *map_style_data, int *error);
 /** Load a highlighting pattern, using a language name.
     @param name The source file name used to determine the appropriate highlighting pattern.
+	@param map_style See ::t3_highlight_load.
+	@param map_style_data See ::t3_highlight_load.
+	@param error See ::t3_highlight_load.
 
     Other parameters and return value are equal to ::t3_highlight_load. The
     name-regex member in the language definition in the lang.map file is used
@@ -118,6 +124,9 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_langname(const char *name,
 	int (*map_style)(void *, const char *), void *map_style_data, int *error);
 /** Create a highlighting pattern from a previously created configuration.
     @param syntax The @c t3_config_t to create the highlighting pattern from.
+	@param map_style See ::t3_highlight_load.
+	@param map_style_data See ::t3_highlight_load.
+	@param error See ::t3_highlight_load.
 
     Other parameters and return value are equal to ::t3_highlight_load. The
     highlighting pattern are stored in the format of @c libt3config. Any
@@ -150,7 +159,6 @@ T3_HIGHLIGHT_API void t3_highlight_free(t3_highlight_t *highlight);
     is stored in @c line with @c line_length bytes.
     @code
         t3_bool match_result;
-        size_t begin = 0;
 
         t3_highlight_next_line(match);
         do {
@@ -220,5 +228,5 @@ T3_HIGHLIGHT_API long t3_highlight_get_version(void);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
+/** @} */
 #endif
