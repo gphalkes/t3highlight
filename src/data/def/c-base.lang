@@ -75,15 +75,14 @@
 	%pattern { use = "c++-comment" }
 
 	%pattern {
-		start = '"'
-		%pattern { use = "unicode-string-escape" }
+		start = '(?:\bL)?"'
 		%pattern { use = "string-escape" }
 		end = '"|(?:\G|[^\\])\K$'
 		style = "string"
 	}
 
 	%pattern {
-		start = "'"
+		start = "(?:\bL)?'"
 		%pattern { use = "string-escape" }
 		end = "'|(?:\G|[^\\])\K$"
 		style = "string"

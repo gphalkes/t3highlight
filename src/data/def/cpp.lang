@@ -21,5 +21,12 @@
 %define {
 	name = "c++"
 	%pattern { use = "c++-keywords" }
+	%pattern {
+		start = '\b(?:U|u8?)"'
+		%pattern { use = "unicode-string-escape" }
+		%pattern { use = "string-escape" }
+		end = '"|(?:\G|[^\\])\K$'
+		style = "string"
+	}
 	%pattern { use = "c-base" }
 }
