@@ -236,6 +236,37 @@ defined pattern with a certain name is used.
 
 @section style_names Style names.
 
+As shown in the previous section, the style to be used for highlighting items
+in the text is determined by a string value. Although the names are not
+strictly standardized, it is important for the proper functioning of programs
+using libt3highlight to use the same names for styling across different
+highlighting description files. Therefore, this section lists the names of
+styles to be used, with a short description of what they are intended for.
+
+@li @c normal Standard text that is not highlighted.
+@li @c keyword Keywords in the langauge, and items that are perceived by the
+  user as keywords. An example of the latter is the @c NULL keyword in the C
+  language, which is not a keyword but a constant defined in a header file.
+  However, it is used so pervasivly it is perceived as a keyword by many.
+@li @c string String and character constants.
+@li @c string-escape Escape sequences in string and character constants, where
+  appropriate.
+@li @c comment Comments.
+@li @c comment-keyword For highlighting items within comments. This is mainly
+  to be used when the comments themselves have a specified structure. Examples
+  of this are C++ Doxygen comments and Javadoc comments.
+@li @c number Numerical constants.
+@li @c variable Variable references in languages in which they are recognisable
+  as such. Examples are Shell and Perl scripts, in which variable references
+  are introduced by special characters.
+@li @c error Explicitly highlight syntax errors. Use sparingly, and only when
+  it is absolutely certain that the syntax is incorrect.
+@li @c misc Highlighting of items not covered by the above. An example where
+  this is used are C-preprocessor directives.
+
+This list may be extended in the future. However, because libt3highlight is
+also used for highlighting in environments where the display possibilities are
+limited, the number of styles will remain small.
 
 @section tips_and_tricks Tips and tricks.
 
