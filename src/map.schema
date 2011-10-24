@@ -30,7 +30,7 @@ types {
 				type = "string"
 			}
 		}
-		%constraint = "name & lang-file"
+		%constraint = "{a language definition requires 'name' and 'lang-file'} name & lang-file"
 	}
 }
 
@@ -44,4 +44,4 @@ allowed-keys {
 		item-type = "mapping"
 	}
 }
-%constraint = "format & lang"
+%constraint = "{'format' and 'lang' are required} format & lang"

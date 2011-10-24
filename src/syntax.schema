@@ -43,12 +43,12 @@ types {
 				type = "bool"
 			}
 		}
-		%constraint = "#(regex, start, use) = 1"
-		%constraint = "start ^ !end"
-		%constraint = "start | !pattern"
-		%constraint = "start | regex | !style"
-		%constraint = "start | !delim-style"
-		%constraint = "!(use & nested)"
+		%constraint = "{pattern must include exactly one of 'regex', 'start' or 'use'} #(regex, start, use) = 1"
+		%constraint = "{'start' and 'end' must always appear together} start ^ !end"
+		%constraint = "{'pattern' can only occur together with 'start'} start | !pattern"
+		%constraint = "{'style' is only valid when either 'start' or 'regex' is used} start | regex | !style"
+		%constraint = "{'delim-style' can oly occur together with 'start'} start | !delim-style"
+		%constraint = "{'nested' can only occur together with 'start'} start | !nested"
 	}
 	definition {
 		type = "section"
@@ -61,14 +61,14 @@ types {
 				item-type = "pattern"
 			}
 		}
-		%constraint = "name & pattern"
+		%constraint = "{a definition must have a 'name' and 'pattern'} name & pattern"
 	}
 }
 
 allowed-keys {
 	format {
 		type = "int"
-		%constraint = "% = 1"
+		%constraint = "{format version unsupported} % = 1"
 	}
 	pattern {
 		type = "list"
@@ -79,4 +79,4 @@ allowed-keys {
 		item-type = "definition"
 	}
 }
-%constraint = "pattern & format"
+%constraint = "{'format' and 'pattern' are required} pattern & format"
