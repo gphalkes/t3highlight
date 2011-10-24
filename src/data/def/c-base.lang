@@ -17,7 +17,7 @@
 %define {
 	name = "doxygen-keywords"
 	%pattern {
-		regex = '@(?:[@\\]addindex|addtogroup|anchor|arg|attention|' +
+		regex = '[@\\](?:addindex|addtogroup|anchor|arg|attention|' +
 		'author|a|brief|bug|b|callgraph|callergraph|category|class|code|' +
 		'cond|copybrief|copydetails|copydoc|c|date|defgroup|def|deprecated|' +
 		'details|dir|dontinclude|dot|dotfile|else|elseif|em|endcode|' +
@@ -32,9 +32,16 @@
 		'p|ref|relatesalso|relates|remarks|return|retval|sa|section|see|' +
 		'showinitializer|since|skipline|skip|struct|subpage|subsection|' +
 		'subsubsection|test|throw|todo|tparam|typedef|union|until|var|' +
-		'verbatim|verbinclude|version|warning|weakgroup|xmlonly|xrefitem|\$|' +
-		'@|\\|&|~|<|>|#|%)'
+		'verbatim|verbinclude|version|warning|weakgroup|xmlonly|xrefitem)(?!\w)'
 		style = "comment-keyword"
+	}
+	%pattern {
+		regex = '[@\\](?:\$|@|\\|&|~|<|>|#|%|\{|\}|")'
+		style = "comment-keyword"
+	}
+	%pattern {
+		regex = '[@\\]\w*'
+		style = "error"
 	}
 	#FIXME: also include C# xml type commands that are also accepted by doxygen
 }
@@ -105,6 +112,9 @@
 		end = '(?<!\\)$'
 		delim-style = "misc"
 	}
+
+	%pattern { use = "c-integer" }
+	%pattern { use = "c-float" }
 
 	%pattern {
 		regex = '^\s*#\s*\w*'
