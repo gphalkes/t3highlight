@@ -40,7 +40,7 @@ extern "C" {
 */
 #define T3_HIGHLIGHT_VERSION 0
 
-/** @name Error codes (libt3key specific) */
+/** @name Error codes (libt3highlight specific) */
 /*@{*/
 /** Error code: invalid structure of the syntax highlighting file. */
 #define T3_ERR_INVALID_FORMAT (-96)
@@ -53,6 +53,24 @@ extern "C" {
 /** Error code: syntax highlighting file contains recursive defines. */
 #define T3_ERR_RECURSIVE_DEFINITION (-92)
 /*@}*/
+
+/** @name Flags for ::t3_highlight_load. */
+/*@{*/
+/** Treat input as UTF-8 encoded text, instead of assuming the C locale. */
+#define T3_HIGHLIGHT_UTF8 (1<<0)
+/** Assume the text to be highlighted is valid UTF-8.
+
+    Be very careful using this flag: using this flag when the input is not
+    valid UTF-8, it may crash your program! For a definition of what is
+    considered valid UTF-8, see the PCRE documentation. At the time of writing
+    it refers to RFC 3629.
+
+    If the input is guaranteed to be valid UTF-8, using this flag will provide
+    a performance benefit.
+*/
+#define T3_HIGHLIGHT_UTF8_NOCHECK (1<<1)
+/*@}*/
+
 
 /** @struct t3_highlight_t
     An opaque struct representing a highlighting pattern.
@@ -87,6 +105,7 @@ T3_HIGHLIGHT_API void t3_highlight_free_list(t3_highlight_lang_t *list);
     @param name The file name (relative to the search path) to load.
     @param map_style Callback function to map symbolic style names to integers.
     @param map_style_data Data for the @p map_style callback.
+    @param flags Flags for loading of highlighting files and syntax highlighting.
     @param error Location to store an error code, or @c NULL.
     @return An opaque struct representing a highlighting pattern, or @c NULL on error.
 
@@ -97,11 +116,12 @@ T3_HIGHLIGHT_API void t3_highlight_free_list(t3_highlight_lang_t *list);
     same value as the 'normal' style.
 */
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load(const char *name,
-	int (*map_style)(void *, const char *), void *map_style_data, int *error);
+	int (*map_style)(void *, const char *), void *map_style_data, int flags, int *error);
 /** Load a highlighting pattern, using a source file name.
     @param name The source file name used to determine the appropriate highlighting pattern.
 	@param map_style See ::t3_highlight_load.
 	@param map_style_data See ::t3_highlight_load.
+	@param flags See ::t3_highlight_load.
 	@param error See ::t3_highlight_load.
 
     Other parameters and return value are equal to ::t3_highlight_load. The
@@ -109,11 +129,12 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load(const char *name,
     to determine which highlighting patterns should be loaded.
 */
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_filename(const char *name,
-	int (*map_style)(void *, const char *), void *map_style_data, int *error);
+	int (*map_style)(void *, const char *), void *map_style_data, int flags, int *error);
 /** Load a highlighting pattern, using a language name.
     @param name The source file name used to determine the appropriate highlighting pattern.
 	@param map_style See ::t3_highlight_load.
 	@param map_style_data See ::t3_highlight_load.
+	@param flags See ::t3_highlight_load.
 	@param error See ::t3_highlight_load.
 
     Other parameters and return value are equal to ::t3_highlight_load. The
@@ -121,11 +142,12 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_filename(const char *name,
     to determine which highlighting patterns should be loaded.
 */
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_langname(const char *name,
-	int (*map_style)(void *, const char *), void *map_style_data, int *error);
+	int (*map_style)(void *, const char *), void *map_style_data, int flags, int *error);
 /** Create a highlighting pattern from a previously created configuration.
     @param syntax The @c t3_config_t to create the highlighting pattern from.
 	@param map_style See ::t3_highlight_load.
 	@param map_style_data See ::t3_highlight_load.
+	@param flags See ::t3_highlight_load.
 	@param error See ::t3_highlight_load.
 
     Other parameters and return value are equal to ::t3_highlight_load. The
@@ -134,7 +156,7 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_langname(const char *name,
     can be used to create a highlighting pattern.
 */
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_new(t3_config_t *syntax,
-	int (*map_style)(void *, const char *), void *map_style_data, int *error);
+	int (*map_style)(void *, const char *), void *map_style_data, int flags, int *error);
 
 /** Free all memory associated with a highlighting pattern.
     It is acceptable to pass a @c NULL pointer.

@@ -147,7 +147,7 @@ void t3_highlight_free_list(t3_highlight_lang_t *list) {
 }
 
 static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, int (*map_style)(void *, const char *),
-		void *map_style_data, int *error)
+		void *map_style_data, int flags, int *error)
 {
 	t3_config_t *map, *ptr;
 	pcre *pcre;
@@ -172,7 +172,7 @@ static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, i
 		pcre_free(pcre);
 		if (pcre_result >= 0) {
 			t3_highlight_t *result = t3_highlight_load(t3_config_get_string(t3_config_get(ptr, "lang-file")),
-				map_style, map_style_data, error);
+				map_style, map_style_data, flags, error);
 			t3_config_delete(map);
 			return result;
 		}
@@ -185,18 +185,20 @@ static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, i
 }
 
 t3_highlight_t *t3_highlight_load_by_filename(const char *name, int (*map_style)(void *, const char *),
-		void *map_style_data, int *error)
+		void *map_style_data, int flags, int *error)
 {
-	return load_by_xname("file-regex", name, map_style, map_style_data, error);
+	return load_by_xname("file-regex", name, map_style, map_style_data, flags, error);
 }
 
 t3_highlight_t *t3_highlight_load_by_langname(const char *name, int (*map_style)(void *, const char *),
-		void *map_style_data, int *error)
+		void *map_style_data, int flags, int *error)
 {
-	return load_by_xname("name-regex", name, map_style, map_style_data, error);
+	return load_by_xname("name-regex", name, map_style, map_style_data, flags, error);
 }
 
-t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, const char *), void *map_style_data, int *error) {
+t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, const char *), void *map_style_data,
+		int flags, int *error)
+{
 	t3_config_opts_t opts;
 	const char *path[] = { NULL, NULL, NULL };
 	char *home_env = NULL;
@@ -234,7 +236,7 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 	fclose(file);
 	/* file = NULL; */
 
-	result = t3_highlight_new(config, map_style, map_style_data, error);
+	result = t3_highlight_new(config, map_style, map_style_data, flags, error);
 	t3_config_delete(config);
 
 	return result;

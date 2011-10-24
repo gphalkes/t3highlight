@@ -50,6 +50,7 @@ typedef struct {
 struct t3_highlight_t {
 	VECTOR(state_t, states);
 	VECTOR(state_mapping_t, mapping);
+	int flags;
 };
 
 struct t3_highlight_match_t {
@@ -74,13 +75,16 @@ typedef struct {
 	void *map_style_data;
 	t3_highlight_t *highlight;
 	t3_config_t *syntax;
+	int flags;
 	VECTOR(const char *, use_stack);
 } pattern_context_t;
 
 static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int idx, int *error);
 static void free_state(state_t *state);
 
-t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, const char *), void *map_style_data, int *error) {
+t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, const char *),
+		void *map_style_data, int flags, int *error)
+{
 	t3_highlight_t *result = NULL;
 	t3_config_schema_t *schema = NULL;
 	t3_config_t *patterns;
@@ -120,12 +124,15 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	context.map_style_data = map_style_data;
 	context.highlight = result;
 	context.syntax = syntax;
+	context.flags = flags;
 	VECTOR_INIT(context.use_stack);
 	if (!init_state(&context, patterns, 0, error)) {
 		free(context.use_stack.data);
 		goto return_error;
 	}
 	free(context.use_stack.data);
+
+	result->flags = flags;
 	return result;
 
 return_error:
@@ -139,12 +146,14 @@ return_error:
 	return NULL;
 }
 
-static t3_bool compile_pattern(t3_config_t *pattern, pattern_t *action, int *error) {
+static t3_bool compile_pattern(t3_config_t *pattern, pattern_t *action, int flags, int *error) {
 	const char *error_message;
 	int error_offset, local_error;
 	const char *study_error;
 
-	if ((action->regex = pcre_compile2(t3_config_get_string(pattern), 0, &local_error, &error_message, &error_offset, NULL)) == NULL) {
+	if ((action->regex = pcre_compile2(t3_config_get_string(pattern), flags & T3_HIGHLIGHT_UTF8 ? PCRE_UTF8 : 0,
+			&local_error, &error_message, &error_offset, NULL)) == NULL)
+	{
 		if (error != NULL)
 			*error = local_error == 21 ? T3_ERR_OUT_OF_MEMORY : T3_ERR_INVALID_REGEX;
 		return t3_false;
@@ -161,7 +170,7 @@ static t3_bool add_delim_pattern(pattern_context_t *context, t3_config_t *regex,
 	pattern_t nest_action;
 	nest_action.next_state = next_state;
 
-	if (!compile_pattern(regex, &nest_action, error))
+	if (!compile_pattern(regex, &nest_action, context->flags, error))
 		return t3_false;
 
 	nest_action.attribute_idx = action->attribute_idx;
@@ -196,7 +205,7 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 			context->map_style(context->map_style_data, t3_config_get_string(style));
 
 		if ((regex = t3_config_get(patterns, "regex")) != NULL) {
-			if (!compile_pattern(regex, &action, error))
+			if (!compile_pattern(regex, &action, context->flags, error))
 				return t3_false;
 
 			action.attribute_idx = style_attr_idx;
@@ -207,7 +216,7 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 			action.attribute_idx = (style = t3_config_get(patterns, "delim-style")) == NULL ?
 				style_attr_idx : context->map_style(context->map_style_data, t3_config_get_string(style));
 
-			if (!compile_pattern(regex, &action, error))
+			if (!compile_pattern(regex, &action, context->flags, error))
 				return t3_false;
 
 			/* Create new state to which start will switch. */
@@ -321,7 +330,7 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 	result->start = result->end;
 	result->begin_attribute = state->attribute_idx;
 	for (j = 0; j < state->patterns.used; j++) {
-		int options = 0;
+		int options = highlight->flags & T3_HIGHLIGHT_UTF8_NOCHECK ? PCRE_NO_UTF8_CHECK : 0;
 
 		/* For items that do not change state, we do not want an empty match
 		   ever (makes no progress). For state changing items, the rules are
