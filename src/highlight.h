@@ -163,6 +163,9 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_new(t3_config_t *syntax,
 */
 T3_HIGHLIGHT_API void t3_highlight_free(t3_highlight_t *highlight);
 
+/** Get the language file associated with this highlighting pattern. */
+T3_HIGHLIGHT_API const char *t3_highlight_get_langfile(const t3_highlight_t *highlight);
+
 /** Find the next highlighting match in a subject string.
     @param highlight The highlighting pattern to use.
     @param str The string to search in.

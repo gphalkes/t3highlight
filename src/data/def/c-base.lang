@@ -43,6 +43,7 @@
 		regex = '[@\\]\w*'
 		style = "error"
 	}
+	#FIXME: also include HTML commands accepted by doxygen
 	#FIXME: also include C# xml type commands that are also accepted by doxygen
 }
 

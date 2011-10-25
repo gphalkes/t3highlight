@@ -18,7 +18,7 @@
 
 #include "highlight.h"
 #include "highlight_errors.h"
-#include "vector.h"
+#include "internal.h"
 
 #ifdef USE_GETTEXT
 #include <libintl.h>
@@ -26,32 +26,6 @@
 #else
 #define _(x) (x)
 #endif
-
-#define NO_CHANGE (-1)
-#define EXIT_STATE (-2)
-
-typedef struct {
-	pcre *regex;
-	pcre_extra *extra;
-	int next_state, /* Values: NO_CHANGE, EXIT_STATE or a value >= 0. */
-		attribute_idx;
-} pattern_t;
-
-typedef struct {
-	VECTOR(pattern_t, patterns);
-	int attribute_idx;
-} state_t;
-
-typedef struct {
-	int parent;
-	int pattern;
-} state_mapping_t;
-
-struct t3_highlight_t {
-	VECTOR(state_t, states);
-	VECTOR(state_mapping_t, mapping);
-	int flags;
-};
 
 struct t3_highlight_match_t {
 	size_t start,
@@ -61,8 +35,6 @@ struct t3_highlight_match_t {
 		begin_attribute,
 		match_attribute;
 };
-
-#define RETURN_ERROR(x) do { if (error != NULL) *error = (x); goto return_error; } while (0)
 
 static const state_t null_state = { { NULL, 0, 0 }, 0 };
 
@@ -125,6 +97,8 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	context.highlight = result;
 	context.syntax = syntax;
 	context.flags = flags;
+	/* FIXME: we should pre-allocate the first 256 items, such that we are unlikely to
+	   ever need to reallocate while matching. */
 	VECTOR_INIT(context.use_stack);
 	if (!init_state(&context, patterns, 0, error)) {
 		free(context.use_stack.data);
@@ -133,6 +107,7 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	free(context.use_stack.data);
 
 	result->flags = flags;
+	result->lang_file = NULL;
 	return result;
 
 return_error:
@@ -295,6 +270,7 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 	VECTOR_ITERATE(highlight->states, free_state);
 	free(highlight->states.data);
 	free(highlight->mapping.data);
+	free(highlight->lang_file);
 	free(highlight);
 }
 

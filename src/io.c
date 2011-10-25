@@ -18,8 +18,20 @@
 #include <pcre.h>
 
 #include "highlight.h"
+#include "internal.h"
 
-#define RETURN_ERROR(x) do { if (error != NULL) *error = (x); goto return_error; } while (0)
+#ifndef HAS_STRDUP
+/** strdup implementation if none is provided by the environment. */
+char *_t3_highlight_strdup(const char *str) {
+	char *result;
+	size_t len = strlen(str) + 1;
+
+	if ((result = malloc(len)) == NULL)
+		return NULL;
+	memcpy(result, str, len);
+	return result;
+}
+#endif
 
 static const char map_schema[] = {
 #include "map.bytes"
@@ -202,7 +214,7 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 	t3_config_opts_t opts;
 	const char *path[] = { NULL, NULL, NULL };
 	char *home_env = NULL;
-	t3_config_t *config;
+	t3_config_t *config = NULL;
 	t3_config_error_t config_error;
 	t3_highlight_t *result;
 	FILE *file = NULL;
@@ -232,16 +244,23 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 		RETURN_ERROR(config_error.error);
 
 	free(home_env);
-	/* home_env = NULL; */
+	home_env = NULL;
 	fclose(file);
-	/* file = NULL; */
+	file = NULL;
 
-	result = t3_highlight_new(config, map_style, map_style_data, flags, error);
+
+	if ((result = t3_highlight_new(config, map_style, map_style_data, flags, error)) == NULL)
+		goto return_error;
+
+	if ((result->lang_file = _t3_highlight_strdup(name)) == NULL)
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+
 	t3_config_delete(config);
 
 	return result;
 
 return_error:
+	t3_config_delete(config);
 	free(home_env);
 	if (file != NULL) {
 		int save_errno = errno;
@@ -249,4 +268,8 @@ return_error:
 		errno = save_errno;
 	}
 	return NULL;
+}
+
+const char *t3_highlight_get_langfile(const t3_highlight_t *highlight) {
+	return highlight == NULL ? NULL : highlight->lang_file;
 }

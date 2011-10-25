@@ -28,6 +28,7 @@ include ../../makesys/rules.mk
 T3NAME := highlight
 include ../../shared/rules.mk
 
+all: | links
 
 .objects/%.bytes: %.schema
 	$(GENOBJDIR)
