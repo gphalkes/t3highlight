@@ -1,0 +1,62 @@
+# Copyright (C) 2011 G.P. Halkes
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3, as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+EXTENSIONS="c libtool pkgconfig verbose_compile pkgconfig_dep gettext"
+LTSHARED=1
+DEFAULT_LINGUAS=nl
+INSTALLDIRS="libdir docdir includedir datadir"
+
+config() {
+	clean_c
+	cat > .config.c <<EOF
+#include <pcre.h>
+int main(int argc, char *argv[]) {
+	const char *err;
+	int err_offset;
+	pcre *pcre = pcre_compile("pattern", PCRE_UTF8, &err, &err_offset, NULL);
+	return 0;
+}
+EOF
+
+	pkgconfig libpcre LIBPCRE test_link || {
+		check_message "Checking for pcre-config..."
+		echo "Running: pcre-config --cflags" >> config.log
+		if pcre-config --cflags >> config.log 2>&1 ; then
+			check_message_result "yes"
+			if test_link "libpcre compile" "TESTFLAGS=`pcre-config --cflags`" "TESTLIBS=`pcre-config --libs`" ; then
+				LIBPCRE_FLAGS="`pcre-config --cflags`"
+				LIBPCRE_LIBS="`pcre-config --libs`"
+				true
+			fi
+		else
+			check_message_result "no"
+			false
+		fi
+	} || \
+		error "!! Can not find libpcre. libpcre is required to compile libt3highlight."
+
+	clean_c
+	cat > .config.c <<EOF
+#include <t3config/config.h>
+
+int main(int argc, char *argv[]) {
+	t3_config_get_version();
+	return 0;
+}
+EOF
+	pkgconfig libt3config/0.2 LIBT3CONFIG test_link || \
+		error "!! Can not find libt3config. libt3config is required to compile libt3highlight."
+
+	create_makefile "CONFIGFLAGS=${CONFIGFLAGS} ${LIBPCRE_FLAGS} ${LIBT3CONFIG_FLAGS}" \
+		"CONFIGLIBS=${CONFIGLIBS} ${LIBPCRE_LIBS} ${LIBT3CONFIG_LIBS}"
+}

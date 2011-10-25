@@ -1,0 +1,11 @@
+prefix=<PREFIX>
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: libt3highlight
+Description: Syntax highlighting library
+Version: <VERSION>
+URL: http://os.ghalkes.nl/t3/libt3highlight.html
+Requires.private: libpcre libt3config
+Cflags: -I${includedir}/t3/highlight
+Libs: -L${libdir} -lt3highlight

@@ -1,0 +1,101 @@
+# Copyright (C) 2011 G.P. Halkes
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3, as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+.POSIX:
+
+# C-compiler flags
+CFLAGS=-O2
+
+# Configuration flags and libraries. Include flags here to compile against the
+# libpcre and libt3config libraries.
+# If your system does not provide strdup, remove -DHAS_STRDUP
+CONFIGFLAGS=-DHAS_STRDUP
+CONFIGLIBS=
+
+# Gettext configuration
+# GETTEXTFLAGS should contain -DUSE_GETTEXT to enable gettext translations
+# GETTEXTLIBS should contain all link flags to allow linking with gettext, if
+# it has been enabled. The GNU libc already contains the gettext library, so
+# there is no need to add any flags. Otherwise, -lintl is usually required, and
+# sometimes -liconv as well.
+# LOCALEDIR: the directory where the locale dependant files should be installed.
+# LINGUAS: translations to be installed. Look in po directory for available
+#  translations.
+GETTEXTFLAGS=
+GETTEXTLIBS=
+LOCALEDIR=$(prefix)/share/locale
+LINGUAS=
+
+# The libtool executable
+LIBTOOL=libtool
+
+# Installation prefix
+prefix=/usr/local
+
+# Install program to use (should be BSD install compatible)
+INSTALL=install
+
+# Miscelaneous install paths
+libdir=$(prefix)/lib
+docdir=$(prefix)/share/doc/libt3highlight-<VERSION>
+includedir=$(prefix)/include
+pkgconfigdir=$(libdir)/pkgconfig
+
+SILENCELT=--silent
+SILENTCCLT=@echo '[CCLT]' $< ;
+SILENTLDLT=@echo '[LDLT]' $@ ;
+
+OBJECTS=<OBJECTS>
+
+all: src/libt3highlight.la libt3highlight.pc
+
+.PHONY: all clean dist-clean install uninstall
+.SUFFIXES: .c .o .lo .la .mo .po
+.IGNORE: uninstall
+
+clean:
+	rm -rf src/*.lo src/generated/*.lo src/.libs src/generated/.libs src/libt3highlight.la
+
+dist-clean: clean
+	rm -rf Makefile config.log libt3highlight.pc
+
+.c.lo:
+	$(SILENTCCLT) $(LIBTOOL) $(SILENCELT) --mode=compile --tag=CC $(CC) -shared $(CFLAGS) $(CONFIGFLAGS) $(GETTEXTFLAGS) -DLOCALEDIR=\"$(LOCALEDIR)\" -Isrc -DT3_HIGHLIGHT_BUILD_DSO -c -o $@ $<
+
+src/libt3highlight.la: $(OBJECTS)
+	$(SILENTLDLT) $(LIBTOOL) $(SILENCELT) --mode=link --tag=CC $(CC) -shared -version-info <VERSIONINFO> $(CFLAGS) $(LDFLAGS) -o $@ $(OBJECTS) $(LDLIBS) $(CONFIGLIBS) $(GETTEXTLIBS) -rpath $(libdir)
+
+libt3highlight.pc: libt3highlight.pc.in
+	@{ echo '/^prefix=/c\' ; echo 'prefix=$(prefix)' ; } > .sedscript
+	@LIBDIR=$(libdir); if [ "$${LIBDIR#$(prefix)}" != "$${LIBDIR}" ] ; then LIBDIR="\$${prefix}$${LIBDIR#$(prefix)}" ; fi ; \
+		{ echo '/^libdir=/c\' ; echo "libdir=$${LIBDIR}" ; } >> .sedscript
+	@INCLUDEDIR=$(includedir); if [ "$${INCLUDEDIR#$(prefix)}" != "$${INCLUDEDIR}" ] ; then INCLUDEDIR="\$${prefix}$${INCLUDEDIR#$(prefix)}" ; fi ; \
+		{ echo '/^includedir=/c\' ; echo "includedir=$${INCLUDEDIR}" ; } >> .sedscript
+	sed -f .sedscript $< > $@
+
+install: all
+	$(INSTALL) -d $(libdir)
+	$(LIBTOOL) --mode=install $(INSTALL) -s -m0644 src/libt3highlight.la $(libdir)
+	chmod 0644 $(libdir)/libt3highlight.la
+	$(INSTALL) -d $(includedir)/t3/highlight/t3highlight
+	$(INSTALL) -m0644 src/highlight.h src/highlight_api.h src/highlight_errors.h $(includedir)/t3/highlight/t3highlight
+	$(INSTALL) -d $(docdir)/API/search
+	( cd doc ; find API -type f ) | while read X ; do $(INSTALL) -m0644 doc/$${X} $(docdir)/$${X} ; done
+	$(INSTALL) -m0644 COPYING README Changelog $(docdir)
+	$(INSTALL) -d $(pkgconfigdir)
+	$(INSTALL) -m0644 libt3highlight.pc $(pkgconfigdir)
+
+uninstall:
+	$(LIBTOOL) --mode=uninstall rm $(libdir)/libt3highlight.la
+	rm -rf $(includedir)/t3/highlight
+	rm -rf $(docdir)
+	rm -f $(pkgconfigdir)/libt3highlight.pc

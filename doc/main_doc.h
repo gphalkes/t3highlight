@@ -2,7 +2,7 @@
 
 @section introduction Introduction
 
-The libt3highlight library provides functions for syntax highlighting differnt
+The libt3highlight library provides functions for syntax highlighting different
 types of text files.
 
 libt3highlight is part of the <A HREF="http://os.ghalkes.nl/t3/">Tilde Terminal
