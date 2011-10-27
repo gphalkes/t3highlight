@@ -46,6 +46,7 @@ INSTALL=install
 
 # Miscelaneous install paths
 libdir=$(prefix)/lib
+datadir=$(prefix)/share
 docdir=$(prefix)/share/doc/libt3highlight-<VERSION>
 includedir=$(prefix)/include
 pkgconfigdir=$(libdir)/pkgconfig
@@ -69,7 +70,7 @@ dist-clean: clean
 	rm -rf Makefile config.log libt3highlight.pc
 
 .c.lo:
-	$(SILENTCCLT) $(LIBTOOL) $(SILENCELT) --mode=compile --tag=CC $(CC) -shared $(CFLAGS) $(CONFIGFLAGS) $(GETTEXTFLAGS) -DLOCALEDIR=\"$(LOCALEDIR)\" -Isrc -DT3_HIGHLIGHT_BUILD_DSO -c -o $@ $<
+	$(SILENTCCLT) $(LIBTOOL) $(SILENCELT) --mode=compile --tag=CC $(CC) -shared $(CFLAGS) $(CONFIGFLAGS) $(GETTEXTFLAGS) -DLOCALEDIR=\"$(LOCALEDIR)\" -Isrc -DT3_HIGHLIGHT_BUILD_DSO -DDATADIR=\"$(datadir)/libt3highlight<LIBVERSION>\" -c -o $@ $<
 
 src/libt3highlight.la: $(OBJECTS)
 	$(SILENTLDLT) $(LIBTOOL) $(SILENCELT) --mode=link --tag=CC $(CC) -shared -version-info <VERSIONINFO> $(CFLAGS) $(LDFLAGS) -o $@ $(OBJECTS) $(LDLIBS) $(CONFIGLIBS) $(GETTEXTLIBS) -rpath $(libdir)
@@ -91,6 +92,8 @@ install: all
 	$(INSTALL) -d $(docdir)/API/search
 	( cd doc ; find API -type f ) | while read X ; do $(INSTALL) -m0644 doc/$${X} $(docdir)/$${X} ; done
 	$(INSTALL) -m0644 COPYING README Changelog $(docdir)
+	$(INSTALL) -d $(datadir)/libt3highlight<LIBVERSION>
+	find src/data -type f | while read X ; do $(INSTALL) -m0644 $${X} $(datadir)/libt3highlight<LIBVERSION> ; done
 	$(INSTALL) -d $(pkgconfigdir)
 	$(INSTALL) -m0644 libt3highlight.pc $(pkgconfigdir)
 
