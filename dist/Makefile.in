@@ -47,7 +47,7 @@ INSTALL=install
 # Miscelaneous install paths
 libdir=$(prefix)/lib
 datadir=$(prefix)/share
-docdir=$(prefix)/share/doc/libt3highlight-<VERSION>
+docdir=$(prefix)/share/doc/libt3highlight
 includedir=$(prefix)/include
 pkgconfigdir=$(libdir)/pkgconfig
 
@@ -83,22 +83,33 @@ libt3highlight.pc: libt3highlight.pc.in
 		{ echo '/^includedir=/c\' ; echo "includedir=$${INCLUDEDIR}" ; } >> .sedscript
 	sed -f .sedscript $< > $@
 
+# Macros to make DESTDIR support more readable
+_libdir=$(DESTDIR)$(libdir)
+_datadir=$(DESTDIR)$(datadir)
+_docdir=$(DESTDIR)$(docdir)
+_includedir=$(DESTDIR)$(includedir)
+_pkgconfigdir=$(DESTDIR)$(pkgconfigdir)
+_LOCALEDIR=$(DESTDIR)$(LOCALEDIR)
+
 install: all
-	$(INSTALL) -d $(libdir)
-	$(LIBTOOL) --mode=install $(INSTALL) -s -m0644 src/libt3highlight.la $(libdir)
-	chmod 0644 $(libdir)/libt3highlight.la
-	$(INSTALL) -d $(includedir)/t3/highlight/t3highlight
-	$(INSTALL) -m0644 src/highlight.h src/highlight_api.h src/highlight_errors.h $(includedir)/t3/highlight/t3highlight
-	$(INSTALL) -d $(docdir)/API/search
-	( cd doc ; find API -type f ) | while read X ; do $(INSTALL) -m0644 doc/$${X} $(docdir)/$${X} ; done
-	$(INSTALL) -m0644 COPYING README Changelog $(docdir)
-	$(INSTALL) -d $(datadir)/libt3highlight<LIBVERSION>
-	find src/data -type f | while read X ; do $(INSTALL) -m0644 $${X} $(datadir)/libt3highlight<LIBVERSION> ; done
-	$(INSTALL) -d $(pkgconfigdir)
-	$(INSTALL) -m0644 libt3highlight.pc $(pkgconfigdir)
+	$(INSTALL) -d $(_libdir)
+	$(LIBTOOL) --mode=install $(INSTALL) -s -m0644 src/libt3highlight.la $(_libdir)
+	chmod 0644 $(_libdir)/libt3highlight.la
+	$(INSTALL) -d $(_includedir)/t3/highlight/t3highlight
+	$(INSTALL) -m0644 src/highlight.h src/highlight_api.h src/highlight_errors.h $(_includedir)/t3/highlight/t3highlight
+	$(INSTALL) -d $(_docdir)/API/search
+	( cd doc ; find API -type f ) | while read X ; do $(INSTALL) -m0644 doc/$${X} $(_docdir)/$${X} ; done
+	$(INSTALL) -m0644 COPYING README Changelog $(_docdir)
+	$(INSTALL) -d $(_datadir)/libt3highlight<LIBVERSION>/def
+	find src/data -type f | while read X ; do $(INSTALL) -m0644 $${X} $(_datadir)/libt3highlight<LIBVERSION>/$${X#src/data} ; done
+	$(INSTALL) -d $(_pkgconfigdir)
+	$(INSTALL) -m0644 libt3highlight.pc $(_pkgconfigdir)
 
 uninstall:
-	$(LIBTOOL) --mode=uninstall rm $(libdir)/libt3highlight.la
-	rm -rf $(includedir)/t3/highlight
-	rm -rf $(docdir)
-	rm -f $(pkgconfigdir)/libt3highlight.pc
+	$(LIBTOOL) --mode=uninstall rm $(_libdir)/libt3highlight.la
+	rm -rf $(_includedir)/t3/highlight
+	rm -rf $(_docdir)
+	rm -rf $(_datadir)/libt3highlight<LIBVERSION>
+	rm -f $(_pkgconfigdir)/libt3highlight.pc
+
+# LIBVERSION=<LIBVERSION>

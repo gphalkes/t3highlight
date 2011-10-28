@@ -28,6 +28,7 @@ sed -i "/#define T3_HIGHLIGHT_VERSION/c #define T3_HIGHLIGHT_VERSION ${VERSION_B
 OBJECTS="`echo \"${SOURCES} ${GENSOURCES} ${AUXSOURCES}\" | tr ' ' '\n' | sed -r 's%\.objects/%%' | egrep '^src/.*\.c$' | sed -r 's/\.c\>/.lo/g' | tr '\n' ' '`"
 
 #FIXME: somehow verify binary compatibility, and print an error if not compatible
+LIBVERSION="${VERSIONINFO%%:*}"
 
 sed -r -i "s%<LIBVERSION>%${LIBVERSION}%g" ${TOPDIR}/Makefile.in
 
