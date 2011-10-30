@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-	pkgconfig libpcre LIBPCRE test_link || {
+	pkgconfig libpcre/8.00 LIBPCRE test_link || {
 		check_message "Checking for pcre-config..."
 		echo "Running: pcre-config --cflags" >> config.log
 		if pcre-config --cflags >> config.log 2>&1 ; then

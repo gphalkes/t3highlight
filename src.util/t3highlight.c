@@ -273,14 +273,14 @@ int main(int argc, char *argv[]) {
 		fatal("-l/--language required for reading from standard input\n");
 #ifdef DEBUG
 	} else if (option_language_file != NULL) {
-		if ((highlight = t3_highlight_load(option_language_file, map_style, styles, &error)) == NULL)
+		if ((highlight = t3_highlight_load(option_language_file, map_style, styles, T3_HIGHLIGHT_UTF8, &error)) == NULL)
 			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
 #endif
 	} else if (option_language != NULL) {
-		if ((highlight = t3_highlight_load_by_langname(option_language, map_style, styles, &error)) == NULL)
+		if ((highlight = t3_highlight_load_by_langname(option_language, map_style, styles, T3_HIGHLIGHT_UTF8, &error)) == NULL)
 			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
 	} else {
-		if ((highlight = t3_highlight_load_by_filename(option_input, map_style, styles, &error)) == NULL)
+		if ((highlight = t3_highlight_load_by_filename(option_input, map_style, styles, T3_HIGHLIGHT_UTF8, &error)) == NULL)
 			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
 	}
 

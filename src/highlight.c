@@ -31,7 +31,7 @@ struct t3_highlight_match_t {
 	size_t start,
 		match_start,
 		end;
-	int state, forbidden_state,
+	int state,
 		begin_attribute,
 		match_attribute;
 };
@@ -309,18 +309,13 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 		int options = highlight->flags & T3_HIGHLIGHT_UTF8_NOCHECK ? PCRE_NO_UTF8_CHECK : 0;
 
 		/* For items that do not change state, we do not want an empty match
-		   ever (makes no progress). For state changing items, the rules are
-		   more complex. Empty matches are allowed except when immediately
-		   after the previous match and both of the following conditions are met:
-		   - the item we match is a "start" item (next state >= current state)
-		   - taking the state transistion enters a state smaller than or
-			 equal to the forbidden state (set below when we encounter an
-			 empty match for an end pattern)
+		   ever (makes no progress). Furthermore, start patterns have to make
+		   progress, to ensure that we do not end up in an infinite loop of
+		   state entry and exit, or nesting.
 		*/
 		if (state->patterns.data[j].next_state == NO_CHANGE)
 			options |= PCRE_NOTEMPTY;
-		else if (state->patterns.data[j].next_state >= current_pattern_state &&
-				state->patterns.data[j].next_state <= result->forbidden_state)
+		else if (state->patterns.data[j].next_state >= 0)
 			options |= PCRE_NOTEMPTY_ATSTART;
 
 		if (pcre_exec(state->patterns.data[j].regex, state->patterns.data[j].extra, line, size,
@@ -335,13 +330,6 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 	if (best >= 0) {
 		result->match_start = best_pos[0];
 		result->end = best_pos[1];
-		/* Forbidden state is only set when we matched an empty end pattern. We recognize
-		   those by checking the match start and end, and by the fact that the next
-		   state is EXIT_STATE. The forbidden state then is the state
-		   we are leaving, such that if we next match an empty start pattern it must
-		   go into a higher numbered state. This ensures we will always make progress. */
-		result->forbidden_state = result->match_start == result->end &&
-			state->patterns.data[best].next_state == EXIT_STATE ? current_pattern_state : -1;
 		result->state = find_state(highlight, result->state, state->patterns.data[best].next_state);
 		result->match_attribute = state->patterns.data[best].attribute_idx;
 		return t3_true;
@@ -354,7 +342,7 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 
 
 void t3_highlight_reset(t3_highlight_match_t *match, int state) {
-	static const t3_highlight_match_t empty = { 0, 0, 0, 0, -1, 0, 0 };
+	static const t3_highlight_match_t empty = { 0, 0, 0, 0, 0, 0 };
 	*match = empty;
 	match->state = state;
 }
@@ -397,7 +385,6 @@ int t3_highlight_get_state(t3_highlight_match_t *match) {
 
 int t3_highlight_next_line(t3_highlight_match_t *match) {
 	match->end = 0;
-	match->forbidden_state = -1;
 	return match->state;
 }
 
