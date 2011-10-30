@@ -29,4 +29,8 @@ styles {
 		start = '<number>'
 		end = '</number>'
 	}
+	variable {
+		start = '<variable>'
+		end = '</variable>'
+	}
 }

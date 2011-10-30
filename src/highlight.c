@@ -38,11 +38,10 @@ struct t3_highlight_match_t {
 		match_attribute;
 };
 
-static const state_t null_state = { { NULL, 0, 0 }, 0 };
-
-static const char syntax_schema[] = {
-#include "syntax.bytes"
-};
+typedef struct {
+	const char *name;
+	int state;
+} use_mapping_t;
 
 typedef struct {
 	int (*map_style)(void *, const char *);
@@ -50,8 +49,27 @@ typedef struct {
 	t3_highlight_t *highlight;
 	t3_config_t *syntax;
 	int flags;
-	VECTOR(const char *, use_stack);
+	VECTOR(use_mapping_t, use_map);
 } pattern_context_t;
+
+typedef struct {
+	t3_highlight_match_t *match;
+	const char *line;
+	size_t size;
+	state_t *state;
+	int ovector[30],
+		best_start,
+		best_end;
+	pattern_t *best;
+	int options;
+	int recursion_depth;
+} match_context_t;
+
+static const state_t null_state = { { NULL, 0, 0 }, 0 };
+
+static const char syntax_schema[] = {
+#include "syntax.bytes"
+};
 
 static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int idx, int *error);
 static void free_state(state_t *state);
@@ -97,12 +115,12 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	context.flags = flags;
 	/* FIXME: we should pre-allocate the first 256 items, such that we are unlikely to
 	   ever need to reallocate while matching. */
-	VECTOR_INIT(context.use_stack);
+	VECTOR_INIT(context.use_map);
 	if (!init_state(&context, patterns, 0, error)) {
-		free(context.use_stack.data);
+		free(context.use_map.data);
 		goto return_error;
 	}
-	free(context.use_stack.data);
+	free(context.use_map.data);
 
 	result->flags = flags;
 	result->lang_file = NULL;
@@ -221,23 +239,31 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 			if (definition == NULL)
 				RETURN_ERROR(T3_ERR_UNDEFINED_USE);
 
-			for (i = 0; i < context->use_stack.used; i++) {
-				if (strcmp(t3_config_get_string(use), context->use_stack.data[i]) == 0)
-					RETURN_ERROR(T3_ERR_RECURSIVE_DEFINITION);
+			action.regex = NULL;
+			action.extra = NULL;
+
+			for (i = 0; i < context->use_map.used; i++) {
+				if (strcmp(t3_config_get_string(use), context->use_map.data[i].name) == 0)
+					break;
 			}
 
-			if (!VECTOR_RESERVE(context->use_stack))
-				RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
-			VECTOR_LAST(context->use_stack) = t3_config_get_string(use);
+			if (i == context->use_map.used) {
+				action.next_state = context->highlight->states.used;
 
-			if (!init_state(context, t3_config_get(definition, "pattern"), idx, error))
-				return t3_false;
+				if (!VECTOR_RESERVE(context->use_map))
+					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+				VECTOR_LAST(context->use_map).name = t3_config_get_string(use);
+				VECTOR_LAST(context->use_map).state = action.next_state;
 
-			/* Pop name of latest use from stack. */
-			context->use_stack.used--;
+				if (!VECTOR_RESERVE(context->highlight->states))
+					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+				VECTOR_LAST(context->highlight->states) = null_state;
 
-			/* We do not fill in action, so we should just skip to the next entry in the list. */
-			continue;
+				if (!init_state(context, t3_config_get(definition, "pattern"), action.next_state, error))
+					return t3_false;
+			} else {
+				action.next_state = context->use_map.data[i].state;
+			}
 		} else {
 			RETURN_ERROR(T3_ERR_INTERNAL);
 		}
@@ -291,43 +317,73 @@ static int find_state(t3_highlight_match_t *match, int pattern) {
 	return match->mapping.used - 1;
 }
 
-t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t size) {
-	int current_pattern_state = match->mapping.data[match->state].pattern;
-	state_t *state = &match->highlight->states.data[current_pattern_state];
-	int ovector[30], best = -1, best_pos[2];
+static void match_internal(match_context_t *context) {
 	size_t j;
 
-	best_pos[0] = INT_MAX;
+	context->recursion_depth++;
 
-	match->start = match->end;
-	match->begin_attribute = state->attribute_idx;
-	for (j = 0; j < state->patterns.used; j++) {
-		int options = match->highlight->flags & T3_HIGHLIGHT_UTF8_NOCHECK ? PCRE_NO_UTF8_CHECK : 0;
+	for (j = 0; j < context->state->patterns.used; j++) {
+		int options;
 
+		/* If the regex member == NULL, this pattern is actually a pointer to
+		   another state which we should search here ("use"). */
+		if (context->state->patterns.data[j].regex == NULL) {
+			/* Don't keep on going into use definitions. At level 50, we probably
+			   ended up in a cycle, so just stop it. */
+			if (context->recursion_depth > 50)
+				continue;
+			state_t *save_state = context->state;
+			context->state = &context->match->highlight->states.data[context->state->patterns.data[j].next_state];
+			match_internal(context);
+			context->state = save_state;
+			continue;
+		}
+
+		options = context->options;
 		/* For items that do not change state, we do not want an empty match
 		   ever (makes no progress). Furthermore, start patterns have to make
 		   progress, to ensure that we do not end up in an infinite loop of
 		   state entry and exit, or nesting.
 		*/
-		if (state->patterns.data[j].next_state == NO_CHANGE)
+		if (context->state->patterns.data[j].next_state == NO_CHANGE)
 			options |= PCRE_NOTEMPTY;
-		else if (state->patterns.data[j].next_state >= 0)
+		else if (context->state->patterns.data[j].next_state >= 0)
 			options |= PCRE_NOTEMPTY_ATSTART;
 
-		if (pcre_exec(state->patterns.data[j].regex, state->patterns.data[j].extra, line, size,
-				match->end, options, ovector, sizeof(ovector) / sizeof(ovector[0])) >= 0 && ovector[0] < best_pos[0])
+		if (pcre_exec(context->state->patterns.data[j].regex, context->state->patterns.data[j].extra,
+				context->line, context->size, context->match->end, options, context->ovector,
+				sizeof(context->ovector) / sizeof(context->ovector[0])) >= 0 && context->ovector[0] < context->best_start)
 		{
-			best = j;
-			best_pos[0] = ovector[0];
-			best_pos[1] = ovector[1];
+			context->best = &context->state->patterns.data[j];
+			context->best_start = context->ovector[0];
+			context->best_end = context->ovector[1];
 		}
 	}
 
-	if (best >= 0) {
-		match->match_start = best_pos[0];
-		match->end = best_pos[1];
-		match->state = find_state(match, state->patterns.data[best].next_state);
-		match->match_attribute = state->patterns.data[best].attribute_idx;
+	context->recursion_depth--;
+}
+
+t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t size) {
+	match_context_t context;
+	context.match = match;
+	context.line = line;
+	context.size = size;
+	context.state = &match->highlight->states.data[match->mapping.data[match->state].pattern];
+	context.best = NULL;
+	context.best_start = INT_MAX;
+	context.options = match->highlight->flags & T3_HIGHLIGHT_UTF8_NOCHECK ? PCRE_NO_UTF8_CHECK : 0;
+	context.recursion_depth = 0;
+
+	match->start = match->end;
+	match->begin_attribute = context.state->attribute_idx;
+
+	match_internal(&context);
+
+	if (context.best != NULL) {
+		match->match_start = context.best_start;
+		match->end = context.best_end;
+		match->state = find_state(match, context.best->next_state);
+		match->match_attribute = context.best->attribute_idx;
 		return t3_true;
 	}
 
@@ -335,7 +391,6 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 	match->end = size;
 	return t3_false;
 }
-
 
 void t3_highlight_reset(t3_highlight_match_t *match, int state) {
 	match->start = 0;

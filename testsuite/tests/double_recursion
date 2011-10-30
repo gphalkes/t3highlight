@@ -1,0 +1,51 @@
+format = 1
+
+%define {
+	name = "variable"
+	%pattern {
+		start = '\$\{'
+		%pattern { use = "variable" }
+		end = '\}'
+		style = "variable"
+	}
+	%pattern {
+		start = '\$\('
+		%pattern { use = "variable" }
+		end = '\)'
+		style = "variable"
+	}
+}
+
+%pattern {
+	use = "variable"
+}
+
+#TEST
+Name
+==
+Name
+==
+
+#TEST
+$(FOO) x
+==
+<variable>$(</variable><variable>FOO</variable><variable>)</variable> x
+==
+
+#TEST
+${FOO} x
+==
+<variable>${</variable><variable>FOO</variable><variable>}</variable> x
+==
+
+#TEST
+$(FOO $(BAR)) x
+==
+<variable>$(</variable><variable>FOO </variable><variable>$(</variable><variable>BAR</variable><variable>)</variable><variable>)</variable> x
+==
+
+#TEST
+$(FOO ${BAR}) x
+==
+<variable>$(</variable><variable>FOO </variable><variable>${</variable><variable>BAR</variable><variable>}</variable><variable>)</variable> x
+==

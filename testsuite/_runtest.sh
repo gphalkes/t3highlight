@@ -10,6 +10,8 @@ if [ "${PWD##*/}" != work ] ; then
 	exit 1
 fi
 
+rm *
+
 unset TESTNR
 while [ $# -gt 1 ] ; do
 	case "$1" in

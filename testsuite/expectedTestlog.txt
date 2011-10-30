@@ -1,4 +1,5 @@
+==== Testcase ../tests/clang ====
+==== Testcase ../tests/double_recursion ====
 ==== Testcase ../tests/invalid_use ====
-Error loading highlighting patterns: recursive pattern definition
 ==== Testcase ../tests/nested ====
 ==== Testcase ../tests/potential-loop.test ====
