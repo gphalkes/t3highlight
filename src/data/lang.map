@@ -28,7 +28,7 @@ format = 1
 }
 %lang {
 	name = "Shell"
-	name-regex = "^(?i)(?:ba)?sh$"
+	name-regex = "^(?i)(?:ba)?sh|(?i)shell$"
 	file-regex = "(?i)\.sh$"
 	lang-file = "sh.lang"
 }
@@ -45,6 +45,13 @@ format = 1
 	lang-file = "passwd.lang"
 }
 %lang {
+	name = "Makefile"
+	name-regex = "^(?i)make(?:file)?$"
+	file-regex = "(?i)(?:^|/)(?:gnu)?makefile$|\.mk$"
+	lang-file = "make.lang"
+}
+
+%lang {
 	name = "Group file"
 	name-regex = "^(?i)group$"
 	file-regex = "^/etc/group(?:[^/]+)?$"
@@ -56,6 +63,7 @@ format = 1
 	file-regex = "^/etc/shadow(?:[^/]+)?$"
 	lang-file = "shadow.lang"
 }
+# This definition should be last, because it matches for any file in /etc
 %lang {
 	name = "Configuration file"
 	name-regex = "(?i)conf(?:ig)?"

@@ -37,6 +37,7 @@ static const char map_schema[] = {
 #include "map.bytes"
 };
 
+/** Load a single language map. */
 static t3_config_t *load_single_map(const char *name, int *error) {
 	t3_config_schema_t *schema = NULL;
 	t3_config_error_t local_error;
@@ -67,6 +68,7 @@ return_error:
 	return NULL;
 }
 
+/** Merge two maps, destroying the second one in the process. */
 static void merge(t3_config_t *main, t3_config_t *map) {
 	t3_config_t *main_lang = t3_config_get(main, "lang");
 	t3_config_t *map_lang = t3_config_get(map, "lang");
@@ -76,6 +78,7 @@ static void merge(t3_config_t *main, t3_config_t *map) {
 		t3_config_unlink_from_list(map_lang, ptr);
 		t3_config_add_existing(main_lang, NULL, ptr);
 	}
+	t3_config_delete(map);
 }
 
 static t3_config_t *load_map(int *error) {
@@ -97,10 +100,8 @@ static t3_config_t *load_map(int *error) {
 		strcat(tmp, ".libt3highlight/lang.map");
 		map = load_single_map(tmp, NULL);
 		free(tmp);
-		if (map != NULL) {
+		if (map != NULL)
 			merge(full_map, map);
-			t3_config_delete(map);
-		}
 	}
 
 	if ((map = load_single_map(DATADIR "/" "lang.map", error)) == NULL)
@@ -158,6 +159,14 @@ void t3_highlight_free_list(t3_highlight_lang_t *list) {
 	free(list);
 }
 
+/** Load a highlight file by file name or language name.
+    @param regex_name The name of the configuration key containing the regular expression to match.
+    @param name The name to match with the regex.
+    @param map_style See ::t3_highlight_load.
+    @param map_style_data See ::t3_highlight_load.
+    @param map_style_flags See ::t3_highlight_load.
+    @param map_style_error Location to store an error code.
+*/
 static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, int (*map_style)(void *, const char *),
 		void *map_style_data, int flags, int *error)
 {

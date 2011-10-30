@@ -1,9 +1,5 @@
 format = 1
 
-# Note: the highlighting here is somewhat broken, because of the mutual nesting
-# possibilities of ${ } and $( ), and other nesting stuff. However, making that
-# work properly is beyond the capabilities of syntax highlighting.
-
 %define {
 	name = "string+comment"
 	%pattern {
@@ -19,48 +15,86 @@ format = 1
 	%pattern {
 		start = '"'
 		%pattern { regex = '\\[$`"\\]' }
+		%pattern { use = "variable" }
 		end = '"'
 		style = "string"
 	}
 }
 
-%pattern { use = "string+comment" }
-
-%pattern {
-	regex = '\$(?:[-@*#?$!0-9]|[_a-zA-Z][_a-zA-Z]*)'
-	style = "variable"
-}
-%pattern {
-	start = '\$\{'
+%define {
+	name = "variable"
 	%pattern {
-		regex = '\\.'
+		regex = '\$(?:[-@*#?$!0-9]|[_a-zA-Z][_a-zA-Z]*)'
+		style = "variable"
 	}
-	end = '\}'
-	style = "variable"
-	nested = yes
+	%pattern {
+		start = '\$\{'
+		%pattern { regex = '\\.' }
+		%pattern { use = "arithmetic" }
+		%pattern { use = "eval" }
+		%pattern { use = "simple-eval" }
+		end = '\}'
+		style = "variable"
+		nested = yes
+	}
+}
+%define {
+	name = "eval"
+	%pattern {
+		start = '\$\('
+		%pattern { regex = '\\.' }
+		%pattern { use = "string+comment" }
+		%pattern { use = "keyword" }
+		%pattern {
+			start = '\('
+			%pattern { regex = '\\/' }
+			%pattern { use = "string+comment" }
+			%pattern { use = "keyword" }
+			end = '\)'
+			nested = yes
+		}
+		end = '\)'
+		style = "misc"
+		nested = yes
+	}
+}
+%define {
+	name = "simple-eval"
+	%pattern {
+		start = '`'
+		%pattern { regex = '\\[\\`$]' }
+		end = '`'
+		style = "misc"
+	}
+}
+%define {
+	name = "arithmetic"
+	%pattern {
+		start = '\$\(\('
+		%pattern { regex = '\\.' }
+		%pattern { use = "variable" }
+		%pattern { use = "eval" }
+		end = '\)\)'
+	}
+}
+%define {
+	name = "keyword"
+	%pattern {
+		regex = '(?<![-\w])(?:if|then|else|elif|fi|done|do|case|esac|while|until|for|in|' +
+			'break|continue|eval|exec|exit|export|readonly|return|set|shift|' +
+			'times|trap|unset|source|alias|bg|bind|break|builtin|caller|cd|' +
+			'command|compgen|complete|compopt|declare|typeset|dirs|disown|echo|' +
+			'enable|fc|fg|getopts|hash|help|history|jobs|kill|let|local|logout|' +
+			'mapfile|readarray|popd|printf|pushd|pwd|read|shopt|suspend|test|' +
+			'type|ulimit|umask|unalias|wait)\b'
+		style = "keyword"
+	}
 }
 
-%pattern {
-	start = '`'
-	end = '`'
-	style = "misc"
-}
-%pattern {
-	start = '\$\('
-	%pattern { use = "string+comment" }
-	end = '\)'
-	style = "misc"
-	nested = yes
-}
-
-
-%pattern {
-	regex = '(?<![-\w])(?:if|then|else|elif|fi|done|do|case|esac|while|until|for|in|' +
-		'break|continue|eval|exec|exit|export|readonly|return|set|shift|' +
-		'times|trap|unset|source|alias|bg|bind|break|builtin|caller|cd|' +
-		'command|compgen|complete|compopt|declare|typeset|dirs|disown|echo|' +
-		'enable|fc|fg|getopts|hash|help|history|jobs|kill|let|local|logout|' +
-		'mapfile|readarray|popd|printf|pushd|pwd|read|shopt|suspend|test|' +
-		'type|ulimit|umask|unalias|wait)\b'
-	style = "keyword"
-}
+%pattern { regex = '\\.' }
+%pattern { use = "string+comment" }
+%pattern { use = "variable" }
+%pattern { use = "arithmetic" }
+%pattern { use = "eval" }
+%pattern { use = "simple-eval" }
+%pattern { use = "keyword" }

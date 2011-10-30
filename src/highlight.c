@@ -239,15 +239,21 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 			if (definition == NULL)
 				RETURN_ERROR(T3_ERR_UNDEFINED_USE);
 
+			/* regex = NULL signifies that this is a link to another state. We
+			   also have to set extra to NULL, to prevent segfaults on free. */
 			action.regex = NULL;
 			action.extra = NULL;
 
+			/* Lookup the name in the use_map. If the definition was already
+			   compiled before, we don't have to do it again, but we can simply
+			   refer to the previous definition. */
 			for (i = 0; i < context->use_map.used; i++) {
 				if (strcmp(t3_config_get_string(use), context->use_map.data[i].name) == 0)
 					break;
 			}
 
 			if (i == context->use_map.used) {
+				/* If we didn't already compile the defintion, do it now. */
 				action.next_state = context->highlight->states.used;
 
 				if (!VECTOR_RESERVE(context->use_map))
