@@ -69,6 +69,8 @@ extern "C" {
     a performance benefit.
 */
 #define T3_HIGHLIGHT_UTF8_NOCHECK (1<<1)
+/** Use the default include path to lookup the file. */
+#define T3_HIGHLIGHT_USE_PATH (1<<2)
 /*@}*/
 
 
@@ -167,10 +169,9 @@ T3_HIGHLIGHT_API void t3_highlight_free(t3_highlight_t *highlight);
 T3_HIGHLIGHT_API const char *t3_highlight_get_langfile(const t3_highlight_t *highlight);
 
 /** Find the next highlighting match in a subject string.
-    @param highlight The highlighting pattern to use.
+    @param match The ::t3_highlight_match_t structure to store the result.
     @param str The string to search in.
     @param size The length of the string in bytes.
-    @param match The ::t3_highlight_match_t structure to store the result.
     @return A boolean indicating whether the end of the line has been reached.
 
     This function should be called repeatedly to find all the highlighting
@@ -179,15 +180,15 @@ T3_HIGHLIGHT_API const char *t3_highlight_get_langfile(const t3_highlight_t *hig
     this function, because it holds the intermediate state information.
 
     The following code demonstrates how to highlight a single line. It assumes
-    that a ::t3_highlight_t struct named @c highlight has been previously
-    created, as well as a ::t3_highlight_match_t named @c match. The line data
-    is stored in @c line with @c line_length bytes.
+    that a ::t3_highlight_match_t struct named @c match has been previously
+    created. The line data is assumed to be stored in @c line with
+    @c line_length bytes.
     @code
         t3_bool match_result;
 
         t3_highlight_next_line(match);
         do {
-            match_result = t3_highlight_match(highlight, line, line_length, match);
+            match_result = t3_highlight_match(match, line, line_length);
             size_t begin = t3_highlight_get_start(match),
                 start = t3_highlight_get_match_start(match),
                 end = t3_highlight_get_end(match);
@@ -199,11 +200,13 @@ T3_HIGHLIGHT_API const char *t3_highlight_get_langfile(const t3_highlight_t *hig
     Note that both the pre-match section from 'begin' to 'start', and the match
     section from 'start' to 'end' may be empty.
 */
-T3_HIGHLIGHT_API t3_bool t3_highlight_match(const t3_highlight_t *highlight,
-	const char *str, size_t size, t3_highlight_match_t *match);
+T3_HIGHLIGHT_API t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *str, size_t size);
 
-/** Allocate and initialize a new ::t3_highlight_match_t structure. */
-T3_HIGHLIGHT_API t3_highlight_match_t *t3_highlight_new_match(void);
+/** Allocate and initialize a new ::t3_highlight_match_t structure.
+    @param highlight The ::t3_highlight_t structure this ::t3_highlight_match_t
+        structure will be used for.
+*/
+T3_HIGHLIGHT_API t3_highlight_match_t *t3_highlight_new_match(const t3_highlight_t *highlight);
 /** Free ::t3_highlight_match_t structure.
     It is acceptable to pass a @c NULL pointer.
 */

@@ -184,7 +184,7 @@ static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, i
 		pcre_free(pcre);
 		if (pcre_result >= 0) {
 			t3_highlight_t *result = t3_highlight_load(t3_config_get_string(t3_config_get(ptr, "lang-file")),
-				map_style, map_style_data, flags, error);
+				map_style, map_style_data, flags| T3_HIGHLIGHT_USE_PATH, error);
 			t3_config_delete(map);
 			return result;
 		}
@@ -219,22 +219,26 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 	t3_highlight_t *result;
 	FILE *file = NULL;
 
-	/* Setup path. */
-	home_env = getenv("HOME");
-	if (home_env != NULL) {
-		char *tmp;
-		if ((tmp = malloc(strlen(home_env) + strlen(".libt3highlight") + 2)) == NULL)
-			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
-		strcpy(tmp, home_env);
-		strcat(tmp, "/");
-		strcat(tmp, ".libt3highlight");
-		path[0] = home_env = tmp;
+	if (flags & T3_HIGHLIGHT_USE_PATH) {
+		/* Setup path. */
+		home_env = getenv("HOME");
+		if (home_env != NULL) {
+			char *tmp;
+			if ((tmp = malloc(strlen(home_env) + strlen(".libt3highlight") + 2)) == NULL)
+				RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+			strcpy(tmp, home_env);
+			strcat(tmp, "/");
+			strcat(tmp, ".libt3highlight");
+			path[0] = home_env = tmp;
+		}
+
+		path[path[0] == NULL ? 0 : 1] = DATADIR;
+		if ((file = t3_config_open_from_path(path, name, 0)) == NULL)
+			RETURN_ERROR(T3_ERR_ERRNO);
+	} else {
+		if ((file = fopen(name, "r")) == NULL)
+			RETURN_ERROR(T3_ERR_ERRNO);
 	}
-
-	path[path[0] == NULL ? 0 : 1] = DATADIR;
-
-	if ((file = t3_config_open_from_path(path, name, 0)) == NULL)
-		RETURN_ERROR(T3_ERR_ERRNO);
 
 	opts.flags = T3_CONFIG_INCLUDE_DFLT;
 	opts.include_callback.dflt.path = path;

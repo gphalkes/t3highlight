@@ -28,6 +28,7 @@ typedef struct {
 #define VECTOR_ITERATE(name, func) do { size_t _i; for (_i = 0; _i < (name).used; _i++) func(&(name).data[_i]); } while (0)
 #define VECTOR_RESERVE(name) _t3_highlight_vector_reserve((vector_base_t *) &name, sizeof((name).data[0]))
 #define VECTOR_LAST(name) (name).data[(name).used - 1]
+#define VECTOR_FREE(name) free((name).data)
 
 T3_HIGHLIGHT_LOCAL t3_bool _t3_highlight_vector_reserve(vector_base_t *vector, size_t elsize);
 

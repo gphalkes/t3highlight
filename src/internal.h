@@ -40,7 +40,6 @@ typedef struct {
 
 struct t3_highlight_t {
 	VECTOR(state_t, states);
-	VECTOR(state_mapping_t, mapping);
 	char *lang_file;
 	int flags;
 };

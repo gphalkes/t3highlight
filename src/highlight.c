@@ -28,6 +28,8 @@
 #endif
 
 struct t3_highlight_match_t {
+	const t3_highlight_t *highlight;
+	VECTOR(state_mapping_t, mapping);
 	size_t start,
 		match_start,
 		end;
@@ -82,10 +84,6 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	if ((result = malloc(sizeof(t3_highlight_t))) == NULL)
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 	VECTOR_INIT(result->states);
-	VECTOR_INIT(result->mapping);
-	if (!VECTOR_RESERVE(result->mapping))
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
-	memset(&VECTOR_LAST(result->mapping), 0, sizeof(state_mapping_t));
 
 	patterns = t3_config_get(syntax, "pattern");
 
@@ -115,7 +113,6 @@ return_error:
 	if (result != NULL) {
 		VECTOR_ITERATE(result->states, free_state);
 		free(result->states.data);
-		free(result->mapping.data);
 		free(result);
 	}
 	return NULL;
@@ -261,52 +258,51 @@ static void free_pattern(pattern_t *pattern) {
 
 static void free_state(state_t *state) {
 	VECTOR_ITERATE(state->patterns, free_pattern);
-	free(state->patterns.data);
+	VECTOR_FREE(state->patterns);
 }
 
 void t3_highlight_free(t3_highlight_t *highlight) {
 	if (highlight == NULL)
 		return;
 	VECTOR_ITERATE(highlight->states, free_state);
-	free(highlight->states.data);
-	free(highlight->mapping.data);
+	VECTOR_FREE(highlight->states);
 	free(highlight->lang_file);
 	free(highlight);
 }
 
-static int find_state(const t3_highlight_t *highlight, int current, int pattern) {
+static int find_state(t3_highlight_match_t *match, int pattern) {
 	size_t i;
 
 	if (pattern == EXIT_STATE)
-		return highlight->mapping.data[current].parent;
+		return match->mapping.data[match->state].parent;
 	if (pattern == NO_CHANGE)
-		return current;
+		return match->state;
 
 	/* Check if the state is already mapped. */
-	for (i = current + 1; i < highlight->mapping.used; i++) {
-		if (highlight->mapping.data[i].parent == current && highlight->mapping.data[i].pattern == pattern)
+	for (i = match->state + 1; i < match->mapping.used; i++) {
+		if (match->mapping.data[i].parent == match->state && match->mapping.data[i].pattern == pattern)
 			return i;
 	}
 
-	if (!VECTOR_RESERVE(highlight->mapping))
+	if (!VECTOR_RESERVE(match->mapping))
 		return 0;
-	VECTOR_LAST(highlight->mapping).parent = current;
-	VECTOR_LAST(highlight->mapping).pattern = pattern;
-	return highlight->mapping.used - 1;
+	VECTOR_LAST(match->mapping).parent = match->state;
+	VECTOR_LAST(match->mapping).pattern = pattern;
+	return match->mapping.used - 1;
 }
 
-t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, size_t size, t3_highlight_match_t *result) {
-	int current_pattern_state = highlight->mapping.data[result->state].pattern;
-	state_t *state = &highlight->states.data[current_pattern_state];
+t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t size) {
+	int current_pattern_state = match->mapping.data[match->state].pattern;
+	state_t *state = &match->highlight->states.data[current_pattern_state];
 	int ovector[30], best = -1, best_pos[2];
 	size_t j;
 
 	best_pos[0] = INT_MAX;
 
-	result->start = result->end;
-	result->begin_attribute = state->attribute_idx;
+	match->start = match->end;
+	match->begin_attribute = state->attribute_idx;
 	for (j = 0; j < state->patterns.used; j++) {
-		int options = highlight->flags & T3_HIGHLIGHT_UTF8_NOCHECK ? PCRE_NO_UTF8_CHECK : 0;
+		int options = match->highlight->flags & T3_HIGHLIGHT_UTF8_NOCHECK ? PCRE_NO_UTF8_CHECK : 0;
 
 		/* For items that do not change state, we do not want an empty match
 		   ever (makes no progress). Furthermore, start patterns have to make
@@ -319,7 +315,7 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 			options |= PCRE_NOTEMPTY_ATSTART;
 
 		if (pcre_exec(state->patterns.data[j].regex, state->patterns.data[j].extra, line, size,
-				result->end, options, ovector, sizeof(ovector) / sizeof(ovector[0])) >= 0 && ovector[0] < best_pos[0])
+				match->end, options, ovector, sizeof(ovector) / sizeof(ovector[0])) >= 0 && ovector[0] < best_pos[0])
 		{
 			best = j;
 			best_pos[0] = ovector[0];
@@ -328,34 +324,49 @@ t3_bool t3_highlight_match(const t3_highlight_t *highlight, const char *line, si
 	}
 
 	if (best >= 0) {
-		result->match_start = best_pos[0];
-		result->end = best_pos[1];
-		result->state = find_state(highlight, result->state, state->patterns.data[best].next_state);
-		result->match_attribute = state->patterns.data[best].attribute_idx;
+		match->match_start = best_pos[0];
+		match->end = best_pos[1];
+		match->state = find_state(match, state->patterns.data[best].next_state);
+		match->match_attribute = state->patterns.data[best].attribute_idx;
 		return t3_true;
 	}
 
-	result->match_start = size;
-	result->end = size;
+	match->match_start = size;
+	match->end = size;
 	return t3_false;
 }
 
 
 void t3_highlight_reset(t3_highlight_match_t *match, int state) {
-	static const t3_highlight_match_t empty = { 0, 0, 0, 0, 0, 0 };
-	*match = empty;
+	match->start = 0;
+	match->match_start = 0;
+	match->end = 0;
+	match->begin_attribute = 0;
+	match->match_attribute = 0;
 	match->state = state;
 }
 
-t3_highlight_match_t *t3_highlight_new_match(void) {
+t3_highlight_match_t *t3_highlight_new_match(const t3_highlight_t *highlight) {
 	t3_highlight_match_t *result = malloc(sizeof(t3_highlight_match_t));
 	if (result == NULL)
 		return NULL;
+
+	VECTOR_INIT(result->mapping);
+	if (!VECTOR_RESERVE(result->mapping)) {
+		free(result);
+		return NULL;
+	}
+
+	result->highlight = highlight;
+	memset(&VECTOR_LAST(result->mapping), 0, sizeof(state_mapping_t));
 	t3_highlight_reset(result, 0);
 	return result;
 }
 
 void t3_highlight_free_match(t3_highlight_match_t *match) {
+	if (match == NULL)
+		return;
+	VECTOR_FREE(match->mapping);
 	free(match);
 }
 

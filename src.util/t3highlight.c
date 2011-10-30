@@ -73,17 +73,15 @@ static PARSE_FUNCTION(parse_args)
 			option_verbose = 1;
 		END_OPTION
 		OPTION('l', "language", REQUIRED_ARG)
-			if (option_language != NULL)
+			if (option_language != NULL || option_language_file != NULL)
 				fatal("Error: only one language option allowed\n");
 			option_language = optArg;
 		END_OPTION
-#ifdef DEBUG
 		LONG_OPTION("language-file", REQUIRED_ARG)
-			if (option_language_file != NULL || option_language != NULL)
+			if (option_language != NULL || option_language_file != NULL)
 				fatal("Error: only one language option allowed\n");
 			option_language_file = optArg;
 		END_OPTION
-#endif
 		OPTION('L', "list", NO_ARG)
 			int i, error;
 			t3_highlight_lang_t *list = t3_highlight_list(&error);
@@ -109,6 +107,7 @@ static PARSE_FUNCTION(parse_args)
 		OPTION('h', "help", NO_ARG)
 			printf("Usage: t3highlight [<options>] [<file>]\n"
 				"  -l<lang>,--language=<lang>      Highlight using language <lang>\n"
+				"  --language-file=<file>          Load highlighting description file <file>\n"
 				"  -L,--list                       List available languages and styles\n"
 				"  -s<style>,--style=<style>       Output using style <style>\n"
 				"  -v,--verbose                    Enable verbose output mode\n"
@@ -214,7 +213,7 @@ static void highlight_file(const char *name, t3_highlight_t *highlight) {
 	size_t n;
 	ssize_t chars_read;
 
-	t3_highlight_match_t *match = t3_highlight_new_match();
+	t3_highlight_match_t *match = t3_highlight_new_match(highlight);
 	t3_bool match_result;
 
 	//FIXME: use proper error message
@@ -232,7 +231,7 @@ static void highlight_file(const char *name, t3_highlight_t *highlight) {
 
 		t3_highlight_next_line(match);
 		do {
-			match_result = t3_highlight_match(highlight, line, chars_read, match);
+			match_result = t3_highlight_match(match, line, chars_read);
 			size_t start = t3_highlight_get_start(match),
 				match_start = t3_highlight_get_match_start(match),
 				end = t3_highlight_get_end(match);
@@ -258,6 +257,7 @@ int main(int argc, char *argv[]) {
 	t3_highlight_t *highlight;
 	int error, i;
 	//FIXME: setlocale etc. for gettext
+	//FIXME: open style by file name only if so specified on the cli
 
 	parse_args(argc, argv);
 
@@ -271,11 +271,9 @@ int main(int argc, char *argv[]) {
 
 	if (option_language == NULL && option_input == NULL) {
 		fatal("-l/--language required for reading from standard input\n");
-#ifdef DEBUG
 	} else if (option_language_file != NULL) {
 		if ((highlight = t3_highlight_load(option_language_file, map_style, styles, T3_HIGHLIGHT_UTF8, &error)) == NULL)
 			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
-#endif
 	} else if (option_language != NULL) {
 		if ((highlight = t3_highlight_load_by_langname(option_language, map_style, styles, T3_HIGHLIGHT_UTF8, &error)) == NULL)
 			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
