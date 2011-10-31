@@ -1,7 +1,7 @@
 format = 1
 
 %define {
-	functions {
+	make-functions {
 		%pattern {
 			regex = '(?<=\$[{(])(?:patsubst|subst|strip|findstring|filter(?:-out)|' +
 				'sort|word|wordlist|words|firstword|lastword|dir|notdir|suffix|' +
@@ -11,18 +11,18 @@ format = 1
 			style = "misc"
 		}
 	}
-	variable {
+	make-variable {
 		%pattern {
 			start = '\$\{'
-			%pattern { use = "variable" }
-			%pattern { use = "functions" }
+			%pattern { use = "make-variable" }
+			%pattern { use = "make-functions" }
 			end = '\}'
 			style = "variable"
 		}
 		%pattern {
 			start = '\$\('
-			%pattern { use = "variable" }
-			%pattern { use = "functions" }
+			%pattern { use = "make-variable" }
+			%pattern { use = "make-functions" }
 			end = '\)'
 			style = "variable"
 		}
@@ -30,45 +30,48 @@ format = 1
 			regex = '\$\$'
 		}
 	}
-	comment {
+	make-comment {
 		%pattern {
 			start = '#'
 			end = '(?<!\\)$'
 			style = "comment"
 		}
 	}
-	shell {
-		# FIXME: Here we need to build the shell language. Simply including sh.lang
-		# is not going to work, because escaping of the dollar character is
-		# required. However, we can probably get away with a simpler version of the
-		# shell stuff, because if it gets complicated you probably want to put it
-		# in a proper script anyway.
+	make-shell {
+		# We define the "shell" pattern as a separate pattern to allow
+		# overriding. Although in almost all cases it will be sh, the SHELL
+		# variable defines the shell in use. Furthermore, simply including
+		# sh.lang is not going to work, because escaping of the dollar
+		# character is required.
 
-		# Another complication is that commands are terminated at the end of line,
-		# unless a \ preceeds the newline. This is different from the normal shell
-		# matching behaviour, where most environments span newlines.
-		%pattern { use = "variable" }
-		%pattern { use = "comment" }
+		# Another complication is that commands are terminated at the end of
+		# line, unless a \ preceeds the newline. This is different from the
+		# normal shell matching behaviour, where most environments span
+		# newlines.
+
+		# The one thing we do know is that make variables are expanded in the
+		# commands, so we include those by default.
+		%pattern { use = "make-variable" }
 	}
 }
 
-%pattern { use = "variable" }
-%pattern { use = "comment" }
+%pattern { use = "make-variable" }
+%pattern { use = "make-comment" }
 %pattern {
 	start = '^\t'
-	%pattern { use = "shell" }
+	%pattern { use = "make-shell" }
 	end = '(?<!\\)$'
 }
 %pattern {
 	start = '[:+?]?='
-	%pattern { use = "variable" }
-	%pattern { use = "comment" }
+	%pattern { use = "make-variable" }
+	%pattern { use = "make-comment" }
 	end = '(?<!\\)$'
 }
 # BSD make also uses != as shell expansion
 %pattern {
 	start = '!='
-	%pattern { use = "shell" }
+	%pattern { use = "make-shell" }
 	end = '(?<!\\)$'
 }
 %pattern {
@@ -76,31 +79,31 @@ format = 1
 	start = '::?|!'
 	%pattern {
 		start = ';'
-		%pattern { use = "shell" }
+		%pattern { use = "make-shell" }
 		end = '(?<!\\)$'
 	}
-	%pattern { use = "variable" }
-	%pattern { use = "comment" }
+	%pattern { use = "make-variable" }
+	%pattern { use = "make-comment" }
 	end = '(?<!\\)$|#'
 }
 # GNU make directives
 %pattern {
 	start = '^ *\K(?:-?include|ifn?(:?def|eq)|else|endif)\b'
-	%pattern { use = "variable" }
-	%pattern { use = "comment" }
+	%pattern { use = "make-variable" }
+	%pattern { use = "make-comment" }
 	end = '(?<!\\)$'
 	delim-style = "keyword"
 }
 %pattern {
 	start = '^ *\K\.(?:s?include|undef|error|warning|if(?:n?(?:def|make))|elif(?:n?(?:def|make))?|else)\b'
-	%pattern { use = "variable" }
-	%pattern { use = "comment" }
+	%pattern { use = "make-variable" }
+	%pattern { use = "make-comment" }
 	end = '(?<!\\)$'
 	delim-style = "keyword"
 }
 
 # This pattern colors all line beginnings. All assignments and rules will stop
-# coloring after the operator, due to the patterns above
+# coloring after the operator, due to the patterns above.
 %pattern {
 	regex = '[^ ]'
 	style = 'string'

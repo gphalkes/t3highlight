@@ -1,7 +1,7 @@
 format = 1
 
 %define {
-	string {
+	sh-string {
 		%pattern {
 			start = "'"
 			end = "'"
@@ -10,15 +10,15 @@ format = 1
 		%pattern {
 			start = '"'
 			%pattern { regex = '\\[$`"\\]' }
-			%pattern { use = "variable" }
-			%pattern { use = "arithmetic" }
-			%pattern { use = "eval" }
-			%pattern { use = "simple-eval" }
+			%pattern { use = "sh-variable" }
+			%pattern { use = "sh-arithmetic" }
+			%pattern { use = "sh-eval" }
+			%pattern { use = "sh-simple-eval" }
 			end = '"'
 			style = "string"
 		}
 	}
-	comment {
+	sh-comment {
 		%pattern {
 			start = '#'
 			end = '$'
@@ -27,7 +27,7 @@ format = 1
 	}
 
 
-	variable {
+	sh-variable {
 		%pattern {
 			regex = '\$(?:[-@*#?$!0-9]|[_a-zA-Z][_a-zA-Z]*)'
 			style = "variable"
@@ -35,43 +35,43 @@ format = 1
 		%pattern {
 			start = '\$\{'
 			%pattern { regex = '\\.' }
-			%pattern { use = "string" }
-			%pattern { use = "arithmetic" }
-			%pattern { use = "eval" }
-			%pattern { use = "simple-eval" }
+			%pattern { use = "sh-string" }
+			%pattern { use = "sh-arithmetic" }
+			%pattern { use = "sh-eval" }
+			%pattern { use = "sh-simple-eval" }
 			end = '\}'
 			style = "variable"
 			nested = yes
 		}
 	}
 
-	eval {
+	sh-eval {
 		%pattern {
 			start = '\$\('
-			%pattern { use = "shell" }
+			%pattern { use = "sh-shell" }
 			%pattern {
 				start = '\('
-				%pattern { use = "shell" }
+				%pattern { use = "sh-shell" }
 				end = '\)'
 				nested = yes
 			}
 			end = '\)'
 			style = "misc"
 			# Don't need nested here, because we already include eval through
-			# use = "shell"
+			# use = "sh-shell"
 		}
 	}
 
-	arithmetic {
+	sh-arithmetic {
 		%pattern {
 			start = '\$\(\('
 			%pattern { regex = '\\.' }
-			%pattern { use = "variable" }
-			%pattern { use = "eval" }
+			%pattern { use = "sh-variable" }
+			%pattern { use = "sh-eval" }
 			end = '\)\)'
 		}
 	}
-	simple-eval {
+	sh-simple-eval {
 		%pattern {
 			start = '`'
 			%pattern { regex = '\\[\\`$]' }
@@ -80,7 +80,7 @@ format = 1
 		}
 	}
 
-	keyword {
+	sh-keyword {
 		%pattern {
 			regex = '(?<![-\w])(?:if|then|else|elif|fi|done|do|case|esac|while|until|for|in|' +
 				'break|continue|eval|exec|exit|export|readonly|return|set|shift|' +
@@ -93,15 +93,15 @@ format = 1
 		}
 	}
 
-	shell {
+	sh-shell {
 		%pattern { regex = '\\.' }
-		%pattern { use = "string" }
-		%pattern { use = "comment" }
-		%pattern { use = "variable" }
-		%pattern { use = "arithmetic" }
-		%pattern { use = "eval" }
-		%pattern { use = "simple-eval" }
-		%pattern { use = "keyword" }
+		%pattern { use = "sh-string" }
+		%pattern { use = "sh-comment" }
+		%pattern { use = "sh-variable" }
+		%pattern { use = "sh-arithmetic" }
+		%pattern { use = "sh-eval" }
+		%pattern { use = "sh-simple-eval" }
+		%pattern { use = "sh-keyword" }
 
 		# Here we run into a limitation of libt3highlight: in principle any word (quoted
 		# and all) may be supplied after the << operator. However, we have to have a
@@ -113,10 +113,10 @@ format = 1
 		# actually screw up.
 		%pattern {
 			start = '(?i)<<-?EOF'
-			%pattern { use = "variable" }
-			%pattern { use = "arithmetic" }
-			%pattern { use = "eval" }
-			%pattern { use = "simple-eval" }
+			%pattern { use = "sh-variable" }
+			%pattern { use = "sh-arithmetic" }
+			%pattern { use = "sh-eval" }
+			%pattern { use = "sh-simple-eval" }
 			end = '^(?i)EOF'
 			style = "string"
 		}
@@ -124,5 +124,5 @@ format = 1
 }
 
 %pattern {
-	use = "shell"
+	use = "sh-shell"
 }
