@@ -47,8 +47,14 @@ format = 1
 %lang {
 	name = "Makefile"
 	name-regex = "^(?i)make(?:file)?$"
-	file-regex = "(?i)(?:^|/)(?:gnu)?makefile$|\.mk$"
+	file-regex = "(?i)(?:^|/)(?:gnu|bsd)?makefile$|\.mk$"
 	lang-file = "make.lang"
+}
+%lang {
+	name = "Difference"
+	name-regex = "^(?i)diff(?:erence)?$"
+	file-regex = "\.(?:diff|patch)$"
+	lang-file = "diff.lang"
 }
 
 %lang {

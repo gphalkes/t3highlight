@@ -55,4 +55,13 @@ styles {
 		start = "\033[31;1m"
 		end = "\033[0m"
 	}
+
+	addition {
+		start = "\033[32;1m"
+		end = "\033[0m"
+	}
+	deletion {
+		start = "\033[32;1m"
+		end = "\033[0m"
+	}
 }

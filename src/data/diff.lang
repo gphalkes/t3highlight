@@ -1,0 +1,98 @@
+format = 1
+
+%define {
+	context-diff {
+		%pattern {
+			start = '^\*{3} .*'
+			%pattern {
+				regex = '^-{3} .*'
+				style = "addition"
+			}
+			%pattern {
+				start = '^\*{15}'
+				%pattern {
+					start = '^\*{3} .*'
+					end = '^(?=-{3}|[^-! ])'
+					%pattern {
+						regex = '^[-!].*'
+						style = "deletion"
+					}
+					delim-style = "deletion"
+				}
+				%pattern {
+					start = '^-{3} .*'
+					end = '^(?=[^+! ])'
+					%pattern {
+						regex = '^[+!].*'
+						style = "addition"
+					}
+					delim-style = "addition"
+				}
+				end = '^(?=[^*])'
+			}
+			end = '^'
+			delim-style = "deletion"
+		}
+	}
+
+	unified-diff {
+		%pattern {
+			start = '^-{3} .*'
+			%pattern {
+				start = '^\+{3} .*'
+				%pattern {
+					regex = '^@@.*@@$'
+					style = "keyword"
+				}
+				%pattern {
+					regex = '^-.*'
+					style = "deletion"
+				}
+				%pattern {
+					regex = '^\+.*'
+					style = "addition"
+				}
+				end = '^(?=[^ ])'
+				delim-style = "addition"
+			}
+			end = '^'
+			delim-style = "deletion"
+		}
+	}
+
+	traditional-diff {
+		%pattern {
+			start = '^\d+(?:,\d+)?[acd]\d+(?:,\d+)?$'
+			%pattern {
+				regex = '^\d+(?:,\d+)?[acd]\d+(?:,\d+)?$'
+				style = "keyword"
+			}
+			%pattern {
+				regex = '^>.*'
+				style = "addition"
+			}
+			%pattern {
+				regex = '^<.*'
+				style = "deletion"
+			}
+			%pattern {
+				regex = '^-{3}$'
+				#style = "keyword"
+			}
+			end = '^'
+			delim-style = "keyword"
+		}
+	}
+}
+
+%pattern { use = "context-diff" }
+%pattern { use = "unified-diff" }
+%pattern { use = "traditional-diff" }
+%pattern {
+	regex = '^diff .*'
+	style = "string"
+}
+%pattern {
+	regex = '^\w.*'
+	style = "misc"
+}

@@ -275,6 +275,8 @@ styles to be used, with a short description of what they are intended for.
   are introduced by special characters.
 @li @c error Explicitly highlight syntax errors. Use sparingly, and only when
   it is absolutely certain that the syntax is incorrect.
+@li @c addition Used in diff output for additions.
+@li @c deletion Used in diff output for deletions.
 @li @c misc Highlighting of items not covered by the above. An example where
   this is used are C-preprocessor directives.
 
