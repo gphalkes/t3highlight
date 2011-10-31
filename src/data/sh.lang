@@ -48,24 +48,17 @@ format = 1
 	eval {
 		%pattern {
 			start = '\$\('
-			%pattern { regex = '\\.' }
-			%pattern { use = "string" }
-			%pattern { use = "comment" }
-			%pattern { use = "variable" }
-			%pattern { use = "keyword" }
+			%pattern { use = "shell" }
 			%pattern {
 				start = '\('
-				%pattern { regex = '\\/' }
-				%pattern { use = "string" }
-				%pattern { use = "comment" }
-				%pattern { use = "variable" }
-				%pattern { use = "keyword" }
+				%pattern { use = "shell" }
 				end = '\)'
 				nested = yes
 			}
 			end = '\)'
 			style = "misc"
-			nested = yes
+			# Don't need nested here, because we already include eval through
+			# use = "shell"
 		}
 	}
 
@@ -99,31 +92,37 @@ format = 1
 			style = "keyword"
 		}
 	}
+
+	shell {
+		%pattern { regex = '\\.' }
+		%pattern { use = "string" }
+		%pattern { use = "comment" }
+		%pattern { use = "variable" }
+		%pattern { use = "arithmetic" }
+		%pattern { use = "eval" }
+		%pattern { use = "simple-eval" }
+		%pattern { use = "keyword" }
+
+		# Here we run into a limitation of libt3highlight: in principle any word (quoted
+		# and all) may be supplied after the << operator. However, we have to have a
+		# fixed end pattern, which can not refer to the start pattern. So we cant'
+		# have a variable start condition, because we can't end it anymore. Thus,
+		# instead we choose a particular (and obvious) start word, and use that.
+		# Far from perfect, but it will do the job in most cases. To make it slightly
+		# more useful, we use case-insensitive matching, which may in some cases
+		# actually screw up.
+		%pattern {
+			start = '(?i)<<-?EOF'
+			%pattern { use = "variable" }
+			%pattern { use = "arithmetic" }
+			%pattern { use = "eval" }
+			%pattern { use = "simple-eval" }
+			end = '^(?i)EOF'
+			style = "string"
+		}
+	}
 }
 
-%pattern { regex = '\\.' }
-%pattern { use = "string" }
-%pattern { use = "comment" }
-%pattern { use = "variable" }
-%pattern { use = "arithmetic" }
-%pattern { use = "eval" }
-%pattern { use = "simple-eval" }
-%pattern { use = "keyword" }
-
-# Here we run into a limitation of libt3highlight: in principle any word (quoted
-# and all) may be supplied after the << operator. However, we have to have a
-# fixed end pattern, which can not refer to the start pattern. So we cant'
-# have a variable start condition, because we can't end it anymore. Thus,
-# instead we choose a particular (and obvious) start word, and use that.
-# Far from perfect, but it will do the job in most cases. To make it slightly
-# more useful, we use case-insensitive matching, which may in some cases
-# actually screw up.
 %pattern {
-	start = '(?i)<<-?EOF'
-	%pattern { use = "variable" }
-	%pattern { use = "arithmetic" }
-	%pattern { use = "eval" }
-	%pattern { use = "simple-eval" }
-	end = '^(?i)EOF'
-	style = "string"
+	use = "shell"
 }
