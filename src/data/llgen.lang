@@ -1,6 +1,6 @@
 format = 1
 
-%include = "def/cpp.lang"
+%include = "def/cxx.lang"
 
 %pattern {
 	start = '/\*'
