@@ -27,7 +27,7 @@ format = 1
 
 %pattern {
 	start = '\('
-	%pattern { use = "c++" }
+	%pattern { use = "cxx" }
 	end = '\)'
 	nested = yes
 }
@@ -45,7 +45,7 @@ format = 1
 	start = '{'
 	end = '}'
 	%pattern {
-		use = "c++"
+		use = "cxx"
 	}
 	nested = yes
 }

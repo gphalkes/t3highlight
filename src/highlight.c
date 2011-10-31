@@ -152,8 +152,8 @@ static t3_bool compile_pattern(t3_config_t *pattern, pattern_t *action, int flag
 	return t3_true;
 }
 
-static t3_bool match_name(const t3_config_t *config, void *data) {
-	return strcmp(t3_config_get_string(t3_config_get(config, "name")), data) == 0;
+static t3_bool match_name(const t3_config_t *config, const void *data) {
+	return t3_config_get(config, (const char *) data) != NULL;
 }
 
 static t3_bool add_delim_pattern(pattern_context_t *context, t3_config_t *regex, int next_state, const pattern_t *action, int *error) {
@@ -233,8 +233,8 @@ static t3_bool init_state(pattern_context_t *context, t3_config_t *patterns, int
 		} else if ((use = t3_config_get(patterns, "use")) != NULL) {
 			size_t i;
 
-			t3_config_t *definition = t3_config_find(t3_config_get(context->syntax, "define"),
-				match_name, (char *) t3_config_get_string(use), NULL);
+			t3_config_t *definition = t3_config_get(t3_config_find(t3_config_get(context->syntax, "define"),
+				match_name, t3_config_get_string(use), NULL), t3_config_get_string(use));
 
 			if (definition == NULL)
 				RETURN_ERROR(T3_ERR_UNDEFINED_USE);
@@ -351,10 +351,8 @@ static void match_internal(match_context_t *context) {
 		   progress, to ensure that we do not end up in an infinite loop of
 		   state entry and exit, or nesting.
 		*/
-		if (context->state->patterns.data[j].next_state == NO_CHANGE)
+		if (context->state->patterns.data[j].next_state == NO_CHANGE || context->state->patterns.data[j].next_state >= 0)
 			options |= PCRE_NOTEMPTY;
-		else if (context->state->patterns.data[j].next_state >= 0)
-			options |= PCRE_NOTEMPTY_ATSTART;
 
 		if (pcre_exec(context->state->patterns.data[j].regex, context->state->patterns.data[j].extra,
 				context->line, context->size, context->match->end, options, context->ovector,

@@ -108,7 +108,6 @@ static t3_config_t *load_map(int *error) {
 		goto return_error;
 
 	merge(full_map, map);
-	t3_config_delete(map);
 	return full_map;
 
 return_error:
@@ -228,20 +227,21 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 	t3_highlight_t *result;
 	FILE *file = NULL;
 
-	if (flags & T3_HIGHLIGHT_USE_PATH) {
-		/* Setup path. */
-		home_env = getenv("HOME");
-		if (home_env != NULL) {
-			char *tmp;
-			if ((tmp = malloc(strlen(home_env) + strlen(".libt3highlight") + 2)) == NULL)
-				RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
-			strcpy(tmp, home_env);
-			strcat(tmp, "/");
-			strcat(tmp, ".libt3highlight");
-			path[0] = home_env = tmp;
-		}
+	/* Setup path. */
+	home_env = getenv("HOME");
+	if (home_env != NULL) {
+		char *tmp;
+		if ((tmp = malloc(strlen(home_env) + strlen(".libt3highlight") + 2)) == NULL)
+			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		strcpy(tmp, home_env);
+		strcat(tmp, "/");
+		strcat(tmp, ".libt3highlight");
+		path[0] = home_env = tmp;
+	}
 
-		path[path[0] == NULL ? 0 : 1] = DATADIR;
+	path[path[0] == NULL ? 0 : 1] = DATADIR;
+
+	if (flags & T3_HIGHLIGHT_USE_PATH) {
 		if ((file = t3_config_open_from_path(path, name, 0)) == NULL)
 			RETURN_ERROR(T3_ERR_ERRNO);
 	} else {

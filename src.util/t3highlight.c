@@ -266,11 +266,11 @@ int main(int argc, char *argv[]) {
 	else
 		styles = load_style(option_style);
 
-	if (strcmp(option_input, "-") == 0)
+	if (option_input != NULL && strcmp(option_input, "-") == 0)
 		option_input = NULL;
 
-	if (option_language == NULL && option_input == NULL) {
-		fatal("-l/--language required for reading from standard input\n");
+	if (option_language == NULL && option_language_file == NULL && option_input == NULL) {
+		fatal("-l/--language or --language-file required for reading from standard input\n");
 	} else if (option_language_file != NULL) {
 		if ((highlight = t3_highlight_load(option_language_file, map_style, styles, T3_HIGHLIGHT_UTF8, &error)) == NULL)
 			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));

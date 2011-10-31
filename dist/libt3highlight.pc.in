@@ -6,6 +6,7 @@ Name: libt3highlight
 Description: Syntax highlighting library
 Version: <VERSION>
 URL: http://os.ghalkes.nl/t3/libt3highlight.html
-Requires.private: libpcre libt3config
+Requires: libt3config
+Requires.private: libpcre
 Cflags: -I${includedir}/t3/highlight
 Libs: -L${libdir} -lt3highlight

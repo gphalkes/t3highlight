@@ -1,18 +1,19 @@
 format = 1
 
 %define {
-	name = "variable"
-	%pattern {
-		start = '\$\{'
-		%pattern { use = "variable" }
-		end = '\}'
-		style = "variable"
-	}
-	%pattern {
-		start = '\$\('
-		%pattern { use = "variable" }
-		end = '\)'
-		style = "variable"
+	variable {
+		%pattern {
+			start = '\$\{'
+			%pattern { use = "variable" }
+			end = '\}'
+			style = "variable"
+		}
+		%pattern {
+			start = '\$\('
+			%pattern { use = "variable" }
+			end = '\)'
+			style = "variable"
+		}
 	}
 }
 

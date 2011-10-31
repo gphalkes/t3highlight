@@ -1,0 +1,5 @@
+format = 1
+
+%include = "def/cxx.lang"
+
+%pattern { use = "cxx" }

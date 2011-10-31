@@ -1,56 +1,56 @@
 format = 1
 
 %define {
-	name = "functions"
-	%pattern {
-		regex = '(?<=\$[{(])(?:patsubst|subst|strip|findstring|filter(?:-out)|' +
-			'sort|word|wordlist|words|firstword|lastword|dir|notdir|suffix|' +
-			'basename|addsuffix|addprefix|join|wildcard|realpath|abspath|' +
-			'if|or|and|foreach|call|value|eval|origin|flavor|error|warning|' +
-			'info)\b'
-		style = "misc"
+	functions {
+		%pattern {
+			regex = '(?<=\$[{(])(?:patsubst|subst|strip|findstring|filter(?:-out)|' +
+				'sort|word|wordlist|words|firstword|lastword|dir|notdir|suffix|' +
+				'basename|addsuffix|addprefix|join|wildcard|realpath|abspath|' +
+				'if|or|and|foreach|call|value|eval|origin|flavor|error|warning|' +
+				'info)\b'
+			style = "misc"
+		}
 	}
-}
+	variable {
+		%pattern {
+			start = '\$\{'
+			%pattern { use = "variable" }
+			%pattern { use = "functions" }
+			end = '\}'
+			style = "variable"
+		}
+		%pattern {
+			start = '\$\('
+			%pattern { use = "variable" }
+			%pattern { use = "functions" }
+			end = '\)'
+			style = "variable"
+		}
+		%pattern {
+			regex = '\$\$'
+		}
+	}
+	comment {
+		%pattern {
+			start = '#'
+			end = '(?<!\\)$'
+			style = "comment"
+		}
+	}
+	shell {
+		# FIXME: Here we need to build the shell language. Simply including sh.lang
+		# is not going to work, because escaping of the dollar character is
+		# required. However, we can probably get away with a simpler version of the
+		# shell stuff, because if it gets complicated you probably want to put it
+		# in a proper script anyway.
 
-%define {
-	name = "variable"
-	%pattern {
-		start = '\$\{'
-		%pattern { use = "variable" }
-		%pattern { use = "functions" }
-		end = '\}'
-		style = "variable"
-	}
-	%pattern {
-		start = '\$\('
-		%pattern { use = "variable" }
-		%pattern { use = "functions" }
-		end = '\)'
-		style = "variable"
-	}
-	%pattern {
-		regex = '\$\$'
-	}
-}
-%define {
-	name = "comment"
-	%pattern {
-		start = '#'
-		end = '(?<!\\)$'
-		style = "comment"
-	}
-}
-
-%define {
-	# FIXME: Here we need to build the shell language. Simply including sh.lang
-	# is not going to work, because escaping of the dollar character is
-	# required. However, we can probably get away with a simpler version of the
-	# shell stuff, because if it gets complicated you probably want to put it
-	# in a proper script anyway.
-	name = "shell"
-	%pattern {
-		regex = "echo"
-		style = "keyword"
+		# Another complication is that commands are terminated at the end of line,
+		# unless a \ preceeds the newline. This is different from the normal shell
+		# matching behaviour.
+		%pattern {
+			regex = "echo"
+			style = "keyword"
+		}
 	}
 }
 

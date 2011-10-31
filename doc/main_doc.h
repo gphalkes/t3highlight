@@ -169,7 +169,9 @@ the @c start regular expression is matched, everything up to and including the
 first text matching the @c end regular expression is styled using the style
 selected with the @c style key. If the text matching the @c start and @c end
 patterns must be styled differently from the rest of the text, the
-<code>delim-style</code> key can be used.
+<code>delim-style</code> key can be used. The @c start pattern is not allowed
+to match the empty string. Although it is legal to write patterns which would
+match the empty string, only the first non-empty match is considered.
 
 A state definition can also have sub-patterns. This is done by simply adding
 @c @%pattern sections inside the pattern definition. If the sub-patterns are to

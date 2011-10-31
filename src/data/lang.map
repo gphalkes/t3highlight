@@ -6,7 +6,7 @@ format = 1
 	# We treat .h files as if they are C++ files, because many C++ header files
 	# use the .h suffix. There is little harm in treating a C file as a C++ file.
 	file-regex = "\.(?:cpp|C|cxx|cc|hpp|hxx|H|h)$"
-	lang-file = "cpp.lang"
+	lang-file = "cxx.lang"
 }
 %lang {
 	name = "C"

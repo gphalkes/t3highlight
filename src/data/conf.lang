@@ -19,5 +19,5 @@ format = 1
 }
 
 # Generic C-style strings
-%pattern { use = "dqs-w/ce" }
-%pattern { use = "sqs-w/ce" }
+%pattern { use = "dqs-wce" }
+%pattern { use = "sqs-wce" }

@@ -53,15 +53,16 @@ types {
 	definition {
 		type = "section"
 		allowed-keys {
-			name {
-				type = "string"
-			}
 			pattern {
 				type = "list"
 				item-type = "pattern"
 			}
 		}
-		%constraint = "{a definition must have a 'name' and 'pattern'} name & pattern"
+		%constraint = "{a definition must have a 'pattern'} pattern"
+	}
+	define {
+		type = "section"
+		item-type = "definition"
 	}
 }
 
@@ -76,7 +77,7 @@ allowed-keys {
 	}
 	define {
 		type = "list"
-		item-type = "definition"
+		item-type = "define"
 	}
 }
 %constraint = "{'format' and 'pattern' are required} pattern & format"

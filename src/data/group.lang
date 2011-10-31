@@ -1,10 +1,11 @@
 format = 1
 
 %define {
-	name = "non-matching"
-	%pattern {
-		regex = '[^:]+'
-		style = "error"
+	non-matching {
+		%pattern {
+			regex = '[^:]+'
+			style = "error"
+		}
 	}
 }
 

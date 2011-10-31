@@ -1,43 +1,37 @@
-
 %define {
-	name = "c-integer"
-	%pattern {
-		regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+|[-+]?\d+)[uU]?[lL]?\b'
-		style = "number"
+	c-integer {
+		%pattern {
+			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+|[-+]?\d+)[uU]?[lL]?\b'
+			style = "number"
+		}
 	}
-}
-%define {
-	name = "c-float"
-	%pattern {
-		regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+[pP][-+]?\d+[lLfF]?|[-+]?(?:\d*\.)?\d+(?:[eE][-+]?\d+)?[lLfF]?)'
-		style = "number"
+	c-float {
+		%pattern {
+			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+[pP][-+]?\d+[lLfF]?|[-+]?(?:\d*\.)?\d+(?:[eE][-+]?\d+)?[lLfF]?)'
+			style = "number"
+		}
 	}
-}
 
-
-%define {
-	name = "java-integer"
-	%pattern {
-		regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+|[-+]?\d+)[lL]?\b'
-		style = "number"
+	java-integer {
+		%pattern {
+			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+|[-+]?\d+)[lL]?\b'
+			style = "number"
+		}
 	}
-}
-%define {
-	name = "java-float"
-	%pattern {
-		regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+[pP][-+]?\d+[dDfF]?|[-+]?(?:\d*\.)?\d+(?:[eE][-+]?\d+)?[dDfF]?)'
-		style = "number"
+	java-float {
+		%pattern {
+			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+[pP][-+]?\d+[dDfF]?|[-+]?(?:\d*\.)?\d+(?:[eE][-+]?\d+)?[dDfF]?)'
+			style = "number"
+		}
 	}
-}
 
+	c-number {
+		%pattern { use = "c-float" }
+		%pattern { use = "c-integer" }
+	}
 
-%define {
-	name = "c-number"
-	%pattern { use = "c-float" }
-	%pattern { use = "c-integer" }
-}
-%define {
-	name = "java-number"
-	%pattern { use = "java-float" }
-	%pattern { use = "java-integer" }
+	java-number {
+		%pattern { use = "java-float" }
+		%pattern { use = "java-integer" }
+	}
 }
