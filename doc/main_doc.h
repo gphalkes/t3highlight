@@ -211,25 +211,37 @@ number of) backslashes before it.
 
 @subsection use_definition Using predefined patterns.
 
-It is possible to create named patterns. These must be defined by creating @c
-@%define sections. The @c @%define sections must include a @c name key and a
-set of @c @%pattern defintions. For example:
+It is possible to create named patterns. These must be defined by creating one
+or more @c @%define sections. The @c @%define sections must contain named
+sections which contain @%pattern definitions. For example:
 
 @verbatim
 %define {
-	name = "types"
-	%pattern {
-		regex = '\b(?:int|float|bool)\b'
-		style = "keyword"
+	types {
+		%pattern {
+			regex = '\b(?:int|float|bool)\b'
+			style = "keyword"
+		}
+	}
+	hash-comment {
+		%pattern {
+			start = '#'
+			end = '$'
+			style = "comment"
+		}
 	}
 }
 @endverbatim
 
-will define a named pattern @c types, which can be used as follows:
+will define a named pattern @c types and a pattern named @c hash-comment, which
+can be used as follows:
 
 @verbatim
 %pattern {
 	use = "types"
+}
+%pattern {
+	use = "hash-comment"
 }
 @endverbatim
 

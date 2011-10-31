@@ -46,11 +46,9 @@ format = 1
 
 		# Another complication is that commands are terminated at the end of line,
 		# unless a \ preceeds the newline. This is different from the normal shell
-		# matching behaviour.
-		%pattern {
-			regex = "echo"
-			style = "keyword"
-		}
+		# matching behaviour, where most environments span newlines.
+		%pattern { use = "variable" }
+		%pattern { use = "comment" }
 	}
 }
 
@@ -67,8 +65,15 @@ format = 1
 	%pattern { use = "comment" }
 	end = '(?<!\\)$'
 }
+# BSD make also uses != as shell expansion
 %pattern {
-	start = ':'
+	start = '!='
+	%pattern { use = "shell" }
+	end = '(?<!\\)$'
+}
+%pattern {
+	# BSD make also uses ! as rule separator
+	start = '::?|!'
 	%pattern {
 		start = ';'
 		%pattern { use = "shell" }
@@ -78,14 +83,25 @@ format = 1
 	%pattern { use = "comment" }
 	end = '(?<!\\)$|#'
 }
+# GNU make directives
 %pattern {
-	regex = '^ *(?:-?include|ifn?def|ifn?eq|else|endif)\b'
-	style = "keyword"
+	start = '^ *\K(?:-?include|ifn?(:?def|eq)|else|endif)\b'
+	%pattern { use = "variable" }
+	%pattern { use = "comment" }
+	end = '(?<!\\)$'
+	delim-style = "keyword"
+}
+%pattern {
+	start = '^ *\K\.(?:s?include|undef|error|warning|if(?:n?(?:def|make))|elif(?:n?(?:def|make))?|else)\b'
+	%pattern { use = "variable" }
+	%pattern { use = "comment" }
+	end = '(?<!\\)$'
+	delim-style = "keyword"
 }
 
 # This pattern colors all line beginnings. All assignments and rules will stop
 # coloring after the operator, due to the patterns above
 %pattern {
-	regex = '.'
+	regex = '[^ ]'
 	style = 'string'
 }
