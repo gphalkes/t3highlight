@@ -3,21 +3,21 @@ format = 1
 %include = "def/generic.lang"
 
 # The #-style comments are frequently used
-%pattern { use = "hash-comment" }
+%highlight { use = "hash-comment" }
 
 # Ini style comments
-%pattern {
+%highlight {
 	start = "^\s*;"
 	end = "$"
 	style = "comment"
 }
 
 # Ini style headings
-%pattern {
+%highlight {
 	regex = "^\s*\[[^]]+\]"
 	style = "keyword"
 }
 
 # Generic C-style strings
-%pattern { use = "dqs-wce" }
-%pattern { use = "sqs-wce" }
+%highlight { use = "dqs-wce" }
+%highlight { use = "sqs-wce" }

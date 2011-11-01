@@ -2,41 +2,41 @@ format = 1
 
 %define {
 	c-integer {
-		%pattern {
+		%highlight {
 			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+|[-+]?\d+)[uU]?[lL]?\b'
 			style = "number"
 		}
 	}
 	c-float {
-		%pattern {
+		%highlight {
 			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+[pP][-+]?\d+[lLfF]?|[-+]?(?:\d*\.)?\d+(?:[eE][-+]?\d+)?[lLfF]?)'
 			style = "number"
 		}
 	}
 
 	c-number {
-		%pattern { use = "c-float" }
-		%pattern { use = "c-integer" }
+		%highlight { use = "c-float" }
+		%highlight { use = "c-integer" }
 	}
 }
 
 %define {
 	unicode-string-escape {
-		%pattern {
+		%highlight {
 			regex = '\\(?:u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})'
 			style = "string-escape"
 		}
 	}
 
 	string-escape {
-		%pattern {
+		%highlight {
 			regex = '\\(?:x[0-9a-fA-F]+|[0-7]{1,3}|.)'
 			style = "string-escape"
 		}
 	}
 
 	doxygen-keywords {
-		%pattern {
+		%highlight {
 			regex = '[@\\](?:addindex|addtogroup|anchor|arg|attention|' +
 			'author|a|brief|bug|b|callgraph|callergraph|category|class|code|' +
 			'cond|copybrief|copydetails|copydoc|c|date|defgroup|def|deprecated|' +
@@ -55,11 +55,11 @@ format = 1
 			'verbatim|verbinclude|version|warning|weakgroup|xmlonly|xrefitem)(?!\w)'
 			style = "comment-keyword"
 		}
-		%pattern {
+		%highlight {
 			regex = '[@\\](?:\$|@|\\|&|~|<|>|#|%|\{|\}|")'
 			style = "comment-keyword"
 		}
-		%pattern {
+		%highlight {
 			regex = '[@\\]\w*'
 			style = "error"
 		}
@@ -68,13 +68,13 @@ format = 1
 	}
 
 	c-comment {
-		%pattern {
+		%highlight {
 			start = '/\*[*!]'
-			%pattern { use = "doxygen-keywords" }
+			%highlight { use = "doxygen-keywords" }
 			end = '\*/'
 			style = "comment"
 		}
-		%pattern {
+		%highlight {
 			start = '/\*'
 			end = '\*/'
 			style = "comment"
@@ -82,13 +82,13 @@ format = 1
 	}
 
 	cxx-comment {
-		%pattern {
+		%highlight {
 			start = '//[/!]'
-			%pattern { use = "doxygen-keywords" }
+			%highlight { use = "doxygen-keywords" }
 			end = '(?<!\\)$'
 			style = "comment"
 		}
-		%pattern {
+		%highlight {
 			start = '//'
 			end = '(?<!\\)$'
 			style = "comment"
@@ -98,33 +98,33 @@ format = 1
 
 %define {
 	c-base {
-		%pattern { use = "c-comment" }
-		%pattern { use = "cxx-comment" }
+		%highlight { use = "c-comment" }
+		%highlight { use = "cxx-comment" }
 
-		%pattern {
+		%highlight {
 			start = '(?:\bL)?"'
-			%pattern { use = "string-escape" }
+			%highlight { use = "string-escape" }
 			end = '"|(?:\G|[^\\])\K$'
 			style = "string"
 		}
 
-		%pattern {
+		%highlight {
 			start = "(?:\bL)?'"
-			%pattern { use = "string-escape" }
+			%highlight { use = "string-escape" }
 			end = "'|(?:\G|[^\\])\K$"
 			style = "string"
 		}
 
-		%pattern {
+		%highlight {
 			start = '^\s*#\s*include'
-			%pattern { use = "c-comment" }
-			%pattern { use = "cxx-comment" }
-			%pattern {
+			%highlight { use = "c-comment" }
+			%highlight { use = "cxx-comment" }
+			%highlight {
 				start = '"'
 				end = '"|(?<!\\)$'
 				style = "string"
 			}
-			%pattern {
+			%highlight {
 				start = '<'
 				end = '>|(?<!\\)$'
 				style = "string"
@@ -133,17 +133,17 @@ format = 1
 			delim-style = "misc"
 		}
 
-		%pattern { use = "c-integer" }
-		%pattern { use = "c-float" }
+		%highlight { use = "c-integer" }
+		%highlight { use = "c-float" }
 
-		%pattern {
+		%highlight {
 			regex = '^\s*#\s*\w*'
 			style = "misc"
 		}
 	}
 
 	c-keywords {
-		%pattern {
+		%highlight {
 			regex = '\b(?:auto|break|case|char|const|continue|default|do|double|else|' +
 				'enum|extern|float|for|goto|if|inline|int|long|register|restrict|' +
 				'return|short|signed|sizeof|static|struct|switch|typedef|union|' +
@@ -153,12 +153,12 @@ format = 1
 	}
 
 	c {
-		%pattern { use = "c-keywords" }
-		%pattern { use = "c-base" }
+		%highlight { use = "c-keywords" }
+		%highlight { use = "c-base" }
 	}
 }
 
-%pattern { use = "c" }
+%highlight { use = "c" }
 
 #TEST
 /* Copyright (C) 2011 G.P. Halkes

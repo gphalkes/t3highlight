@@ -1,6 +1,6 @@
 %define {
 	make-functions {
-		%pattern {
+		%highlight {
 			regex = '(?<=\$[{(])(?:patsubst|subst|strip|findstring|filter(?:-out)|' +
 				'sort|word|wordlist|words|firstword|lastword|dir|notdir|suffix|' +
 				'basename|addsuffix|addprefix|join|wildcard|realpath|abspath|' +
@@ -10,33 +10,33 @@
 		}
 	}
 	make-variable {
-		%pattern {
+		%highlight {
 			start = '\$\{'
-			%pattern { use = "make-variable" }
-			%pattern { use = "make-functions" }
+			%highlight { use = "make-variable" }
+			%highlight { use = "make-functions" }
 			end = '\}'
 			style = "variable"
 		}
-		%pattern {
+		%highlight {
 			start = '\$\('
-			%pattern { use = "make-variable" }
-			%pattern { use = "make-functions" }
+			%highlight { use = "make-variable" }
+			%highlight { use = "make-functions" }
 			end = '\)'
 			style = "variable"
 		}
-		%pattern {
+		%highlight {
 			regex = '\$\$'
 		}
 	}
 	make-comment {
-		%pattern {
+		%highlight {
 			start = '#'
 			end = '(?<!\\)$'
 			style = "comment"
 		}
 	}
 	make-shell {
-		# We define the "shell" pattern as a separate pattern to allow
+		# We define the "shell" highlight as a separate highlight to allow
 		# overriding. Although in almost all cases it will be sh, the SHELL
 		# variable defines the shell in use. Furthermore, simply including
 		# sh.lang is not going to work, because escaping of the dollar
@@ -49,60 +49,60 @@
 
 		# The one thing we do know is that make variables are expanded in the
 		# commands, so we include those by default.
-		%pattern { use = "make-variable" }
+		%highlight { use = "make-variable" }
 	}
 
 	make {
-		%pattern { use = "make-variable" }
-		%pattern { use = "make-comment" }
-		%pattern {
+		%highlight { use = "make-variable" }
+		%highlight { use = "make-comment" }
+		%highlight {
 			start = '^\t'
-			%pattern { use = "make-shell" }
+			%highlight { use = "make-shell" }
 			end = '(?<!\\)$'
 		}
-		%pattern {
+		%highlight {
 			start = '[:+?]?='
-			%pattern { use = "make-variable" }
-			%pattern { use = "make-comment" }
+			%highlight { use = "make-variable" }
+			%highlight { use = "make-comment" }
 			end = '(?<!\\)$'
 		}
 		# BSD make also uses != as shell expansion
-		%pattern {
+		%highlight {
 			start = '!='
-			%pattern { use = "make-shell" }
+			%highlight { use = "make-shell" }
 			end = '(?<!\\)$'
 		}
-		%pattern {
+		%highlight {
 			# BSD make also uses ! as rule separator
 			start = '::?|!'
-			%pattern {
+			%highlight {
 				start = ';'
-				%pattern { use = "make-shell" }
+				%highlight { use = "make-shell" }
 				end = '(?<!\\)$'
 			}
-			%pattern { use = "make-variable" }
-			%pattern { use = "make-comment" }
+			%highlight { use = "make-variable" }
+			%highlight { use = "make-comment" }
 			end = '(?<!\\)$|#'
 		}
 		# GNU make directives
-		%pattern {
+		%highlight {
 			start = '^ *\K(?:-?include|ifn?(:?def|eq)|else|endif)\b'
-			%pattern { use = "make-variable" }
-			%pattern { use = "make-comment" }
+			%highlight { use = "make-variable" }
+			%highlight { use = "make-comment" }
 			end = '(?<!\\)$'
 			delim-style = "keyword"
 		}
-		%pattern {
+		%highlight {
 			start = '^ *\K\.(?:s?include|undef|error|warning|if(?:n?(?:def|make))|elif(?:n?(?:def|make))?|else)\b'
-			%pattern { use = "make-variable" }
-			%pattern { use = "make-comment" }
+			%highlight { use = "make-variable" }
+			%highlight { use = "make-comment" }
 			end = '(?<!\\)$'
 			delim-style = "keyword"
 		}
 
-		# This pattern colors all line beginnings. All assignments and rules will stop
-		# coloring after the operator, due to the patterns above.
-		%pattern {
+		# This highlight colors all line beginnings. All assignments and rules will stop
+		# coloring after the operator, due to the highlights above.
+		%highlight {
 			regex = '[^ ]'
 			style = 'string'
 		}

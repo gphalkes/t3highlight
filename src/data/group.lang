@@ -2,42 +2,42 @@ format = 1
 
 %define {
 	non-matching {
-		%pattern {
+		%highlight {
 			regex = '[^:]+'
 			style = "error"
 		}
 	}
 }
 
-%pattern {
+%highlight {
 	# Groupname
 	regex = '^[^\s:]+'
 	style = "keyword"
 }
-%pattern {
+%highlight {
 	start = ':'
-	%pattern {
+	%highlight {
 		# Password
 		regex = '(?<=:)[^:\s]+'
 		style = "string"
 	}
-	%pattern { use = "non-matching" }
-	%pattern {
+	%highlight { use = "non-matching" }
+	%highlight {
 		start = ':'
-		%pattern {
+		%highlight {
 			# Group ID
 			regex = '(?<=:)\d+'
 			style = "number"
 		}
-		%pattern { use = "non-matching" }
-		%pattern {
+		%highlight { use = "non-matching" }
+		%highlight {
 			start = ':'
-			%pattern {
+			%highlight {
 				# User list
 				regex = '[^:,]+'
 				style = "misc"
 			}
-			%pattern {
+			%highlight {
 				start = ':'
 				end = '$'
 				style = "error"

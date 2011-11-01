@@ -102,7 +102,7 @@ href="http://os.ghalkes.nl/t3/doc/t3config">the libt3config documentation</a>.
 
 A complete highlighting description file for libt3highlight consists of a
 file format specifier, which must have the value @c 1, an optional list of
-named pattern definitions which can be used elsewhere, and a list of pattern
+named highlight definitions which can be used elsewhere, and a list of highlight
 definitions constituting the highlighting. A simple example, which marks any
 text from a hash sign (@#) up to the end of the line as a comment looks like
 this:
@@ -110,7 +110,7 @@ this:
 @verbatim
 format = 1
 
-%pattern {
+%highlight {
 	start = "#"
 	end = "$"
 	style = "comment"
@@ -140,20 +140,20 @@ the user's home directory and the default libt3highlight data directory
 files should not contain a @c format key. Only files intended to be used as
 complete language definitions should include the @c format key.
 
-@section pattern_definitions Pattern definitions.
+@section highlight_definitions Highlight definitions.
 
-A pattern definition can have three forms: a single matching item using the
+A highlight definition can have three forms: a single matching item using the
 @c regex key, a state definition using the @c start and @c end keys, and a
-reference to a named pattern using the @c use key.
+reference to a named highlight using the @c use key.
 
 @subsection single_regex Single regular expression.
 
 To define items like keywords and other simple items which can be described
-using a single regular expression, a pattern can be defined using the @c regex
+using a single regular expression, a highlight can be defined using the @c regex
 key. The style can be selected using the @c style key. For example:
 
 @verbatim
-%pattern {
+%highlight {
 	regex = '\b(?:int|float|bool)\b'
 	style = "keyword"
 }
@@ -168,39 +168,39 @@ A state definition uses the @c start and @c end regular-expression keys. Once
 the @c start regular expression is matched, everything up to and including the
 first text matching the @c end regular expression is styled using the style
 selected with the @c style key. If the text matching the @c start and @c end
-patterns must be styled differently from the rest of the text, the
-<code>delim-style</code> key can be used. The @c start pattern is not allowed
-to match the empty string. Although it is legal to write patterns which would
+regexes must be styled differently from the rest of the text, the
+<code>delim-style</code> key can be used. The @c start regex is not allowed
+to match the empty string. Although it is legal to write regexes which would
 match the empty string, only the first non-empty match is considered.
 
-A state definition can also have sub-patterns. This is done by simply adding
-@c @%pattern sections inside the pattern definition. If the sub-patterns are to
-be matched before trying to match the @c end pattern, make sure that the first
-@c @%pattern definition occurs before the @c end definition.
+A state definition can also have sub-highlights. This is done by simply adding
+@c @%highlight sections inside the highlight definition. If the sub-highlights
+are to be matched before trying to match the @c end regex, make sure that the
+first @c @%highlight definition occurs before the @c end definition.
 
 Finally, a state may be defined as nested, which means that when the @c start
-pattern occurs while the state is already active, it will match again and the
+regex occurs while the state is already active, it will match again and the
 state will be entered again. This means that to return to the initial state,
-the @c end pattern will have to match twice or more, depending on the nesting
-level. As is the case with the @c end pattern, if the @c start pattern is to
-be tried before the sub-patterns, it must be included before the first
-sub-pattern definition.
+the @c end regex will have to match twice or more, depending on the nesting
+level. As is the case with the @c end regex, if the @c start regex is to
+be tried before the sub-highlights, it must be included before the first
+sub-highlight definition.
 
 As an example, which includes nesting, look at the following definition for a
 Bourne-shell variable. Shell variables start with @${, and end with }. However,
 if the } is preceeded by a backslash (@\), it is not considered to end the
 variable reference. Furthermore, a dollar sign preceeded by a backslash is not
-considered to start a nested variable reference. Therefore, a sub-pattern is
+considered to start a nested variable reference. Therefore, a sub-highlight is
 defined that matches all occurences of a backslash and another character.
 Because the search for the next match is started from the end of the last
 match, a backslash followed by a dollar sign or a closing curly brace will
-never match the @c start or @c end pattern, unless there are two (or any even
+never match the @c start or @c end regex, unless there are two (or any even
 number of) backslashes before it.
 
 @verbatim
-%pattern {
+%highlight {
 	start = '\$\{'
-	%pattern {
+	%highlight {
 		regex = '\\.'
 	}
 	end = '\}'
@@ -209,22 +209,22 @@ number of) backslashes before it.
 }
 @endverbatim
 
-@subsection use_definition Using predefined patterns.
+@subsection use_definition Using predefined highlights.
 
-It is possible to create named patterns. These must be defined by creating one
+It is possible to create named highlights. These must be defined by creating one
 or more @c @%define sections. The @c @%define sections must contain named
-sections which contain @%pattern definitions. For example:
+sections which contain @%highlight definitions. For example:
 
 @verbatim
 %define {
 	types {
-		%pattern {
+		%highlight {
 			regex = '\b(?:int|float|bool)\b'
 			style = "keyword"
 		}
 	}
 	hash-comment {
-		%pattern {
+		%highlight {
 			start = '#'
 			end = '$'
 			style = "comment"
@@ -233,20 +233,20 @@ sections which contain @%pattern definitions. For example:
 }
 @endverbatim
 
-will define a named pattern @c types and a pattern named @c hash-comment, which
+will define a named highlight @c types and a highlight named @c hash-comment, which
 can be used as follows:
 
 @verbatim
-%pattern {
+%highlight {
 	use = "types"
 }
-%pattern {
+%highlight {
 	use = "hash-comment"
 }
 @endverbatim
 
-There is no check for multiple patterns with the same name, and only the first
-defined pattern with a certain name is used.
+There is no check for multiple highlights with the same name, and only the first
+defined highlight with a certain name is used.
 
 @section style_names Style names.
 
@@ -286,16 +286,16 @@ limited, the number of styles will remain small.
 
 @section tips_and_tricks Tips and tricks.
 
-This section lists useful tips and tricks for writing pattern files.
+This section lists useful tips and tricks for writing highlight files.
 
 @subsection define_lang Using the whole language as a named definition.
 
 To make it easier to embed a complete language into another, it is useful to
-write the whole language definition as a @c @%define pattern. This definition
-should be put in a separate file, and a new file, which simply includes the
-definition file and a single pattern definition to use the named pattern,
-should be created. See the definition of the C language in <tt>c.lang</tt> as
-an example.
+write the whole language definition as a named highlight definition. This
+definition should be put in a separate file, and a new file, which simply
+includes the definition file and a single highlight definition to use the named
+highlight, should be created. See the definition of the C language in
+<tt>c.lang</tt> as an example.
 
 @subsection c_string C-style strings.
 
@@ -307,16 +307,16 @@ difficulty is that the highlighting should stop at the end of the line if it is
 not preceeded by a backslash.
 
 The first step is to create a state started by a double-quote character. In
-this state we define a pattern to match escape-sequences. Finally we have to
-create an end pattern. This consists of either a double-quote, or the end of
+this state we define a highlight to match escape-sequences. Finally we have to
+create an end regex. This consists of either a double-quote, or the end of
 line. However, the end of line must only match if the last character before the
 end of the line is not a backslash. But we must also take into account the fact
 that there may not be any character left on the line. We could use a lookbehind
 assertion, but that would also match a backslash we have already matched
-previously using the sub-pattern.
+previously using the sub-highlight.
 
 Instead, we use the @\G operator from PCRE, which allows us to match the point
-where the last match finished. So we write our pattern to match either @\G
+where the last match finished. So we write our regex to match either @\G
 followed by the end of the line, or any character except for a backslash
 followed by the end of the line. As a finishing touch, we indicate that
 anything before the end of the line should not be reported as part of the
@@ -324,9 +324,9 @@ matching text (using @\K), to ensure that if we later decide to add a @c
 delim-style, it will not style the last character before the end of the line.
 
 @verbatim
-%pattern {
+%highlight {
 	start = '"'
-	%pattern {
+	%highlight {
 		regex = '\\.'
 	}
 	end = '"|(?:\G|[^\\])\K$'

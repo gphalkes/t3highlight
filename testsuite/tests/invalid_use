@@ -2,23 +2,23 @@ format = 1
 
 %define {
 	loop1 {
-		%pattern {
+		%highlight {
 			use = "loop2"
 		}
 	}
 	loop2 {
-		%pattern {
+		%highlight {
 			use = "loop3"
 		}
 	}
 	loop3 {
-		%pattern {
+		%highlight {
 			use = "loop1"
 		}
 	}
 }
 
-%pattern {
+%highlight {
 	use = "loop2"
 }
 

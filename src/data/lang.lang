@@ -1,24 +1,24 @@
 format = 1
 
 %include = "def/generic.lang"
-%pattern { use = "hash-comment" }
+%highlight { use = "hash-comment" }
 
-%pattern {
-	regex = '(?<!\w)(?:%include|%pattern|%define|start|end|regex|use|style|' +
+%highlight {
+	regex = '(?<!\w)(?:%include|%highlight|%define|start|end|regex|use|style|' +
 		'delim-style|nested|true|false|yes|no|format|name)'
 	style = "keyword"
 }
-%pattern {
+%highlight {
 	start = '"'
-	%pattern {
+	%highlight {
 		regex = '""'
 	}
 	end = '"|$'
 	style = "string"
 }
-%pattern {
+%highlight {
 	start = "'"
-	%pattern {
+	%highlight {
 		regex = "''"
 	}
 	end = "'|$"

@@ -2,6 +2,6 @@ format = 1
 
 %include = "def/sh.lang"
 
-%pattern {
+%highlight {
 	use = "sh-shell"
 }

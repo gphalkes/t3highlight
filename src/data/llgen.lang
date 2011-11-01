@@ -2,49 +2,49 @@ format = 1
 
 %include = "def/cxx.lang"
 
-%pattern {
+%highlight {
 	start = '/\*'
 	end = '\*/'
 	style = "comment"
 }
-%pattern {
+%highlight {
 	start = '//'
 	end = '$'
 }
-%pattern {
+%highlight {
 	regex = "'(?:\\[^']+|.)'"
 	style = "string"
 }
 
 # Using string escape here is not exactly correct, because LLnextgen has a
 # slightly different definition of \x
-%pattern {
+%highlight {
 	start = '"'
-	%pattern { use = "string-escape" }
+	%highlight { use = "string-escape" }
 	end = '"'
 	style = "string"
 }
 
-%pattern {
+%highlight {
 	start = '\('
-	%pattern { use = "cxx" }
+	%highlight { use = "cxx" }
 	end = '\)'
 	nested = yes
 }
 
-%pattern {
+%highlight {
 	regex = '(?:%\w+)'
 	style = 'keyword'
 }
-%pattern {
+%highlight {
 	regex = '(?:\b[0-9]+\b|\*|\+|\?|\.\.[.?])'
 	style = "keyword"
 }
 
-%pattern {
+%highlight {
 	start = '{'
 	end = '}'
-	%pattern {
+	%highlight {
 		use = "cxx"
 	}
 	nested = yes

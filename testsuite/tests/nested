@@ -1,17 +1,17 @@
 format = 1
 
-%pattern {
+%highlight {
 	start = "\/\*"
 	end = "\*\/"
 	nested = yes
 	style = "comment"
 	delim-style = "comment-keyword"
 }
-%pattern {
+%highlight {
 	start = "{"
-	%pattern {
+	%highlight {
 		start = "\("
-		%pattern {
+		%highlight {
 			regex = "\bbar\b"
 			style = "string"
 		}
@@ -19,7 +19,7 @@ format = 1
 		end = "\)"
 		nested = yes
 	}
-	%pattern {
+	%highlight {
 		regex = "\bfoo\b"
 		style = "keyword"
 	}

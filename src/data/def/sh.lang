@@ -1,23 +1,23 @@
 %define {
 	sh-string {
-		%pattern {
+		%highlight {
 			start = "'"
 			end = "'"
 			style = "string"
 		}
-		%pattern {
+		%highlight {
 			start = '"'
-			%pattern { regex = '\\[$`"\\]' }
-			%pattern { use = "sh-variable" }
-			%pattern { use = "sh-arithmetic" }
-			%pattern { use = "sh-eval" }
-			%pattern { use = "sh-simple-eval" }
+			%highlight { regex = '\\[$`"\\]' }
+			%highlight { use = "sh-variable" }
+			%highlight { use = "sh-arithmetic" }
+			%highlight { use = "sh-eval" }
+			%highlight { use = "sh-simple-eval" }
 			end = '"'
 			style = "string"
 		}
 	}
 	sh-comment {
-		%pattern {
+		%highlight {
 			start = '#'
 			end = '$'
 			style = "comment"
@@ -26,17 +26,17 @@
 
 
 	sh-variable {
-		%pattern {
+		%highlight {
 			regex = '\$(?:[-@*#?$!0-9]|[_a-zA-Z][_a-zA-Z]*)'
 			style = "variable"
 		}
-		%pattern {
+		%highlight {
 			start = '\$\{'
-			%pattern { regex = '\\.' }
-			%pattern { use = "sh-string" }
-			%pattern { use = "sh-arithmetic" }
-			%pattern { use = "sh-eval" }
-			%pattern { use = "sh-simple-eval" }
+			%highlight { regex = '\\.' }
+			%highlight { use = "sh-string" }
+			%highlight { use = "sh-arithmetic" }
+			%highlight { use = "sh-eval" }
+			%highlight { use = "sh-simple-eval" }
 			end = '\}'
 			style = "variable"
 			nested = yes
@@ -44,12 +44,12 @@
 	}
 
 	sh-eval {
-		%pattern {
+		%highlight {
 			start = '\$\('
-			%pattern { use = "sh-shell" }
-			%pattern {
+			%highlight { use = "sh-shell" }
+			%highlight {
 				start = '\('
-				%pattern { use = "sh-shell" }
+				%highlight { use = "sh-shell" }
 				end = '\)'
 				nested = yes
 			}
@@ -61,25 +61,25 @@
 	}
 
 	sh-arithmetic {
-		%pattern {
+		%highlight {
 			start = '\$\(\('
-			%pattern { regex = '\\.' }
-			%pattern { use = "sh-variable" }
-			%pattern { use = "sh-eval" }
+			%highlight { regex = '\\.' }
+			%highlight { use = "sh-variable" }
+			%highlight { use = "sh-eval" }
 			end = '\)\)'
 		}
 	}
 	sh-simple-eval {
-		%pattern {
+		%highlight {
 			start = '`'
-			%pattern { regex = '\\[\\`$]' }
+			%highlight { regex = '\\[\\`$]' }
 			end = '`'
 			style = "misc"
 		}
 	}
 
 	sh-keyword {
-		%pattern {
+		%highlight {
 			regex = '(?<![-\w])(?:if|then|else|elif|fi|done|do|case|esac|while|until|for|in|' +
 				'break|continue|eval|exec|exit|export|readonly|return|set|shift|' +
 				'times|trap|unset|source|alias|bg|bind|break|builtin|caller|cd|' +
@@ -92,29 +92,29 @@
 	}
 
 	sh-shell {
-		%pattern { regex = '\\.' }
-		%pattern { use = "sh-string" }
-		%pattern { use = "sh-comment" }
-		%pattern { use = "sh-variable" }
-		%pattern { use = "sh-arithmetic" }
-		%pattern { use = "sh-eval" }
-		%pattern { use = "sh-simple-eval" }
-		%pattern { use = "sh-keyword" }
+		%highlight { regex = '\\.' }
+		%highlight { use = "sh-string" }
+		%highlight { use = "sh-comment" }
+		%highlight { use = "sh-variable" }
+		%highlight { use = "sh-arithmetic" }
+		%highlight { use = "sh-eval" }
+		%highlight { use = "sh-simple-eval" }
+		%highlight { use = "sh-keyword" }
 
 		# Here we run into a limitation of libt3highlight: in principle any word (quoted
 		# and all) may be supplied after the << operator. However, we have to have a
-		# fixed end pattern, which can not refer to the start pattern. So we cant'
+		# fixed end highlight, which can not refer to the start highlight. So we cant'
 		# have a variable start condition, because we can't end it anymore. Thus,
 		# instead we choose a particular (and obvious) start word, and use that.
 		# Far from perfect, but it will do the job in most cases. To make it slightly
 		# more useful, we use case-insensitive matching, which may in some cases
 		# actually screw up.
-		%pattern {
+		%highlight {
 			start = '(?i)<<-?EOF'
-			%pattern { use = "sh-variable" }
-			%pattern { use = "sh-arithmetic" }
-			%pattern { use = "sh-eval" }
-			%pattern { use = "sh-simple-eval" }
+			%highlight { use = "sh-variable" }
+			%highlight { use = "sh-arithmetic" }
+			%highlight { use = "sh-eval" }
+			%highlight { use = "sh-simple-eval" }
 			end = '^(?i)EOF'
 			style = "string"
 		}

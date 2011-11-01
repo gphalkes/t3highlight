@@ -14,7 +14,7 @@
 # Schema for syntax-highlighting definition files for libt3highlight
 
 types {
-	pattern {
+	highlight {
 		type = "section"
 		allowed-keys {
 			regex {
@@ -29,9 +29,9 @@ types {
 			style {
 				type = "string"
 			}
-			pattern {
+			highlight {
 				type = "list"
-				item-type = "pattern"
+				item-type = "highlight"
 			}
 			delim-style {
 				type = "string"
@@ -43,9 +43,9 @@ types {
 				type = "bool"
 			}
 		}
-		%constraint = "{pattern must include exactly one of 'regex', 'start' or 'use'} #(regex, start, use) = 1"
+		%constraint = "{highlight must include exactly one of 'regex', 'start' or 'use'} #(regex, start, use) = 1"
 		%constraint = "{'start' and 'end' must always appear together} start ^ !end"
-		%constraint = "{'pattern' can only occur together with 'start'} start | !pattern"
+		%constraint = "{'highlight' can only occur together with 'start'} start | !highlight"
 		%constraint = "{'style' is only valid when either 'start' or 'regex' is used} start | regex | !style"
 		%constraint = "{'delim-style' can oly occur together with 'start'} start | !delim-style"
 		%constraint = "{'nested' can only occur together with 'start'} start | !nested"
@@ -53,12 +53,12 @@ types {
 	definition {
 		type = "section"
 		allowed-keys {
-			pattern {
+			highlight {
 				type = "list"
-				item-type = "pattern"
+				item-type = "highlight"
 			}
 		}
-		%constraint = "{a definition must have a 'pattern'} pattern"
+		%constraint = "{a definition must have a 'highlight'} highlight"
 	}
 	define {
 		type = "section"
@@ -71,13 +71,13 @@ allowed-keys {
 		type = "int"
 		%constraint = "{format version unsupported} % = 1"
 	}
-	pattern {
+	highlight {
 		type = "list"
-		item-type = "pattern"
+		item-type = "highlight"
 	}
 	define {
 		type = "list"
 		item-type = "define"
 	}
 }
-%constraint = "{'format' and 'pattern' are required} pattern & format"
+%constraint = "{'format' and 'highlight' are required} highlight & format"

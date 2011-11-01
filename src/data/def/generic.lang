@@ -1,6 +1,6 @@
 %define {
 	hash-comment {
-		%pattern {
+		%highlight {
 			start = '#'
 			end = '$'
 			style = "comment"
@@ -11,7 +11,7 @@
 
 	# Double Quoted String, With C-style Escape
 	dqs-wce {
-		%pattern {
+		%highlight {
 			start = '"'
 			end = '"|(?:\G|[^\\])\K$'
 			style = "string"
@@ -20,7 +20,7 @@
 
 	# Double Quoted String, With C-style Escape
 	sqs-wce {
-		%pattern {
+		%highlight {
 			start = "'"
 			end = "'|(?:\G|[^\\])\K$"
 			style = "string"

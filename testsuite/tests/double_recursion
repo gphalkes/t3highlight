@@ -2,22 +2,22 @@ format = 1
 
 %define {
 	variable {
-		%pattern {
+		%highlight {
 			start = '\$\{'
-			%pattern { use = "variable" }
+			%highlight { use = "variable" }
 			end = '\}'
 			style = "variable"
 		}
-		%pattern {
+		%highlight {
 			start = '\$\('
-			%pattern { use = "variable" }
+			%highlight { use = "variable" }
 			end = '\)'
 			style = "variable"
 		}
 	}
 }
 
-%pattern {
+%highlight {
 	use = "variable"
 }
 

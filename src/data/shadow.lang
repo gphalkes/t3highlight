@@ -2,78 +2,78 @@ format = 1
 
 %define {
 	non-matching {
-		%pattern {
+		%highlight {
 			regex = '[^:]+'
 			style = "error"
 		}
 	}
 }
 
-%pattern {
+%highlight {
 	# Username
 	regex = '^[^\s:]+'
 	style = "keyword"
 }
-%pattern {
+%highlight {
 	start = ':'
-	%pattern {
+	%highlight {
 		# Password
 		regex = '(?<=:)[^:\s]+'
 		style = "string"
 	}
-	%pattern { use = "non-matching" }
-	%pattern {
+	%highlight { use = "non-matching" }
+	%highlight {
 		start = ':'
-		%pattern {
+		%highlight {
 			# Date of last password change
 			regex = '(?<=:)\d+'
 			style = "number"
 		}
-		%pattern { use = "non-matching" }
-		%pattern {
+		%highlight { use = "non-matching" }
+		%highlight {
 			start = ':'
-			%pattern {
+			%highlight {
 				# Minimum password age
 				regex = '(?<=:)\d+'
 				style = "misc"
 			}
-			%pattern { use = "non-matching" }
-			%pattern {
+			%highlight { use = "non-matching" }
+			%highlight {
 				start = ':'
-				%pattern {
+				%highlight {
 					# Maximum password age
 					regex = '(?<=:)\d+'
 					style = "misc"
 				}
-				%pattern { use = "non-matching" }
-				%pattern {
+				%highlight { use = "non-matching" }
+				%highlight {
 					start = ':'
-					%pattern {
+					%highlight {
 						# Password warning period
 						regex = '(?<=:)\d+'
 						style = "comment"
 					}
-					%pattern { use = "non-matching" }
-					%pattern {
+					%highlight { use = "non-matching" }
+					%highlight {
 						start = ':'
-						%pattern {
+						%highlight {
 							# Password inactivity period
 							regex = '(?<=:)\d+'
 							style = "comment"
 						}
-						%pattern { use = "non-matching" }
-						%pattern {
+						%highlight { use = "non-matching" }
+						%highlight {
 							start = ':'
-							%pattern {
+							%highlight {
 								# Account expiration date
 								regex = '(?<=:)\d+'
 								style = "variable"
 							}
-							%pattern { use = "non-matching" }
-							%pattern {
+							%highlight { use = "non-matching" }
+							%highlight {
 								start = ':'
 								# Reserved
-								%pattern {
+								%highlight {
 									start = ':'
 									end = '$'
 									style = "error"

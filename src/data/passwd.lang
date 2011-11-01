@@ -2,64 +2,64 @@ format = 1
 
 %define {
 	non-matching {
-		%pattern {
+		%highlight {
 			regex = '[^:]+'
 			style = "error"
 		}
 	}
 }
 
-%pattern {
+%highlight {
 	# Username
 	regex = '^[^\s:]+'
 	style = "keyword"
 }
-%pattern {
+%highlight {
 	start = ':'
-	%pattern {
+	%highlight {
 		# Password
 		regex = '(?<=:)[^:\s]+'
 		style = "string"
 	}
-	%pattern { use = "non-matching" }
-	%pattern {
+	%highlight { use = "non-matching" }
+	%highlight {
 		start = ':'
-		%pattern {
+		%highlight {
 			# User ID
 			regex = '(?<=:)\d+'
 			style = "number"
 		}
-		%pattern { use = "non-matching" }
-		%pattern {
+		%highlight { use = "non-matching" }
+		%highlight {
 			start = ':'
-			%pattern {
+			%highlight {
 				# Group ID
 				regex = '(?<=:)\d+'
 				style = "number"
 			}
-			%pattern { use = "non-matching" }
-			%pattern {
+			%highlight { use = "non-matching" }
+			%highlight {
 				start = ':'
-				%pattern {
+				%highlight {
 					# Comment (GECOS)
 					regex = '[^:]+'
 					style = "comment"
 				}
-				%pattern {
+				%highlight {
 					start = ':'
-					%pattern {
+					%highlight {
 						# Home directory
 						regex = '[^:]+'
 						style = "variable"
 					}
-					%pattern {
+					%highlight {
 						start = ':'
-						%pattern {
+						%highlight {
 							# Command interpreter
 							regex = '[^:]+'
 							style = "misc"
 						}
-						%pattern {
+						%highlight {
 							start = ':'
 							end = '$'
 							style = "error"

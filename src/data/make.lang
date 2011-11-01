@@ -2,6 +2,6 @@ format = 1
 
 %include = "def/make.lang"
 
-%pattern {
+%highlight {
 	use = "make"
 }

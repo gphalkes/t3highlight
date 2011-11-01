@@ -50,8 +50,6 @@ extern "C" {
 #define T3_ERR_NO_SYNTAX (-94)
 /** Error code: a 'use' directive references a non-existing define. */
 #define T3_ERR_UNDEFINED_USE (-93)
-/** Error code: syntax highlighting file contains recursive defines. */
-#define T3_ERR_RECURSIVE_DEFINITION (-92)
 /*@}*/
 
 /** @name Flags for ::t3_highlight_load. */

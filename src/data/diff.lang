@@ -2,27 +2,27 @@ format = 1
 
 %define {
 	context-diff {
-		%pattern {
+		%highlight {
 			start = '^\*{3} .*'
-			%pattern {
+			%highlight {
 				regex = '^-{3} .*'
 				style = "addition"
 			}
-			%pattern {
-				start = '^\*{15}'
-				%pattern {
+			%highlight {
+				start = '^\*{15}$'
+				%highlight {
 					start = '^\*{3} .*'
 					end = '^(?=-{3}|[^-! ])'
-					%pattern {
+					%highlight {
 						regex = '^[-!].*'
 						style = "deletion"
 					}
 					delim-style = "deletion"
 				}
-				%pattern {
+				%highlight {
 					start = '^-{3} .*'
 					end = '^(?=[^+! ])'
-					%pattern {
+					%highlight {
 						regex = '^[+!].*'
 						style = "addition"
 					}
@@ -36,19 +36,19 @@ format = 1
 	}
 
 	unified-diff {
-		%pattern {
+		%highlight {
 			start = '^-{3} .*'
-			%pattern {
+			%highlight {
 				start = '^\+{3} .*'
-				%pattern {
+				%highlight {
 					regex = '^@@.*@@$'
 					style = "keyword"
 				}
-				%pattern {
+				%highlight {
 					regex = '^-.*'
 					style = "deletion"
 				}
-				%pattern {
+				%highlight {
 					regex = '^\+.*'
 					style = "addition"
 				}
@@ -61,21 +61,21 @@ format = 1
 	}
 
 	traditional-diff {
-		%pattern {
+		%highlight {
 			start = '^\d+(?:,\d+)?[acd]\d+(?:,\d+)?$'
-			%pattern {
+			%highlight {
 				regex = '^\d+(?:,\d+)?[acd]\d+(?:,\d+)?$'
 				style = "keyword"
 			}
-			%pattern {
+			%highlight {
 				regex = '^>.*'
 				style = "addition"
 			}
-			%pattern {
+			%highlight {
 				regex = '^<.*'
 				style = "deletion"
 			}
-			%pattern {
+			%highlight {
 				regex = '^-{3}$'
 				#style = "keyword"
 			}
@@ -85,14 +85,14 @@ format = 1
 	}
 }
 
-%pattern { use = "context-diff" }
-%pattern { use = "unified-diff" }
-%pattern { use = "traditional-diff" }
-%pattern {
+%highlight { use = "context-diff" }
+%highlight { use = "unified-diff" }
+%highlight { use = "traditional-diff" }
+%highlight {
 	regex = '^diff .*'
 	style = "string"
 }
-%pattern {
+%highlight {
 	regex = '^\w.*'
 	style = "misc"
 }

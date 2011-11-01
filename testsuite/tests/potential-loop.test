@@ -1,27 +1,27 @@
 format = 1
 
-%pattern {
+%highlight {
 	start = "(?=a)|b"
 	end = "(?=a)|b"
-	%pattern {
+	%highlight {
 		regex = "c"
 	}
 	style = "keyword"
 	delim-style = "comment"
 }
-%pattern {
+%highlight {
 	start = "(?=a)|b"
 	end = "(?=a)|b"
-	%pattern {
+	%highlight {
 		regex = "c"
 	}
 	style = "string"
 	delim-style = "misc"
 }
-%pattern {
+%highlight {
 	start = "(?=a)|b"
 	end = "(?=a)|b"
-	%pattern {
+	%highlight {
 		regex = "c"
 	}
 	style = "string"

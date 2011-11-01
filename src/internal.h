@@ -26,16 +26,16 @@ typedef struct {
 	pcre_extra *extra;
 	int next_state, /* Values: NO_CHANGE, EXIT_STATE or a value >= 0. */
 		attribute_idx;
-} pattern_t;
+} highlight_t;
 
 typedef struct {
-	VECTOR(pattern_t, patterns);
+	VECTOR(highlight_t, highlights);
 	int attribute_idx;
 } state_t;
 
 typedef struct {
 	int parent;
-	int pattern;
+	int highlight;
 } state_mapping_t;
 
 struct t3_highlight_t {

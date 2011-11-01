@@ -2,4 +2,4 @@ format = 1
 
 %include = "def/c.lang"
 
-%pattern { use = "c" }
+%highlight { use = "c" }

@@ -2,7 +2,7 @@
 
 %define {
 	cxx-keywords {
-		%pattern {
+		%highlight {
 			regex = '\b(?:and_eq|and|alignas|alignof|asm|auto|bitand|bitor|bool|' +
 				'break|case|catch|char16_t|char32_t|char|class|compl|constexpr|' +
 				'const_cast|const|continue|decltype|default|delete|double|' +
@@ -18,14 +18,14 @@
 	}
 
 	cxx {
-		%pattern { use = "cxx-keywords" }
-		%pattern {
+		%highlight { use = "cxx-keywords" }
+		%highlight {
 			start = '\b(?:U|u8?)"'
-			%pattern { use = "unicode-string-escape" }
-			%pattern { use = "string-escape" }
+			%highlight { use = "unicode-string-escape" }
+			%highlight { use = "string-escape" }
 			end = '"|(?:\G|[^\\])\K$'
 			style = "string"
 		}
-		%pattern { use = "c-base" }
+		%highlight { use = "c-base" }
 	}
 }
