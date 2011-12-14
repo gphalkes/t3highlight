@@ -42,7 +42,7 @@ format = 1
 	name = "Python 3"
 	name-regex = "^(?i)python ?3$"
 	#file-regex = "(?i)\.py$"
-	lang-file = "python.lang"
+	lang-file = "python3.lang"
 }
 
 %lang {
