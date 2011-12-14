@@ -192,7 +192,7 @@ static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, i
 		pcre_free(pcre);
 		if (pcre_result >= 0) {
 			t3_highlight_t *result = t3_highlight_load(t3_config_get_string(t3_config_get(ptr, "lang-file")),
-				map_style, map_style_data, flags| T3_HIGHLIGHT_USE_PATH, error);
+				map_style, map_style_data, flags | T3_HIGHLIGHT_USE_PATH, error);
 			t3_config_delete(map);
 			return result;
 		}

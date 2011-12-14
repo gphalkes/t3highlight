@@ -15,8 +15,7 @@ Prerequisites and installation
 ==============================
 
 libt3highlight requires the GNU libtool utility to be compiled. Furthermore, it
-requires libpcre (version 8.00 or higher) and libt3config (version 0.2.0 or
-higher).
+requires libpcre and libt3config (version 0.2.0 or higher).
 
 There are two ways in which to compile libt3highlight:
 

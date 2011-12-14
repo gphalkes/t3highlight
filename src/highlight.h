@@ -15,7 +15,7 @@
 #define T3_HIGHLIGHT_H
 
 #include <t3config/config.h>
-#include "highlight_api.h"
+#include <t3highlight/highlight_api.h>
 
 /** @defgroup t3highlight_other Functions, constants and enums. */
 /** @addtogroup t3highlight_other */
