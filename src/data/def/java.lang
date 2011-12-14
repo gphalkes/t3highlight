@@ -1,5 +1,3 @@
-%include = "def/number.lang"
-
 %define {
 	java-escape {
 		%highlight {
@@ -56,6 +54,13 @@
 			style = "string"
 		}
 
-		%highlight { use = "java-number" }
+		%highlight {
+			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+|[-+]?\d+)[lL]?\b'
+			style = "number"
+		}
+		%highlight {
+			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+[pP][-+]?\d+[dDfF]?|(?:\d+\.\d*|\.\d+)(?:[eE][-+]?\d+)?[dDfF]?|\d+[eE][-+]?\d+[dDfF]?|\d+[dDfF])'
+			style = "number"
+		}
 	}
 }

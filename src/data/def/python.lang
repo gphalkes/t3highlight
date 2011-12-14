@@ -1,0 +1,251 @@
+%define {
+	python-unknown-string-escape {
+		%highlight {
+			regex = '\\.'
+			style = "string"
+		}
+	}
+	python-string-escape {
+		%highlight {
+			regex = '\\(?:x[0-9a-fA-F]{2}|[0-7]{1,3}|[\\''"abfnrtv])'
+			style = "string-escape"
+		}
+	}
+	python-unicode-string-escape {
+		%highlight {
+			regex = '\\(?:N\{[^{}''"]+\}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})'
+			style = "string-escape"
+		}
+	}
+	python-comment {
+		%highlight {
+			start = '#'
+			end = '$'
+			style = "comment"
+		}
+	}
+	python-float-and-img-const {
+		%highlight {
+			regex = '(?<![^-+\W])(?:(?:\d+\.\d*|\.\d+)(?:[eE][-+]?\d+)?|\d+[eE][-+]?\d+)[jJ]?'
+			style = "number"
+		}
+		%highlight {
+			regex = '[0-9]+[jJ]'
+			style = "number"
+		}
+	}
+
+	python {
+		%highlight { use = "python-comment" }
+		%highlight {
+			regex = '\b(?:None|and|del|from|not|while|as|elif|global|or|with|' +
+				'assert|else|if|pass|yield|break|except|import|print|class|' +
+				'exec|in|raise|continue|finally|is|return|def|for|lambda|try)\b'
+			style = "keyword"
+		}
+		# Different types of string literals in python. Using either single or
+		# double quotes, and possibly triple quoted variants. Different prefixes
+		# influence which string escapes are recognised.
+		%highlight {
+			start = '(?i)\b[ub]?r"""'
+			%highlight { use = "python-unknown-string-escape" }
+			end = '"""'
+			style = "string"
+		}
+		%highlight {
+			start = "(?i)\b[ub]?r""'"
+			%highlight { use = "python-unknown-string-escape" }
+			end = "'"""
+			style = "string"
+		}
+		%highlight {
+			start = '(?i)\b[ub]?r"'
+			%highlight { use = "python-unknown-string-escape" }
+			end = '"|(?:\G|[^\\])\K$'
+			style = "string"
+		}
+		%highlight {
+			start = "(?i)\b[ub]?r'"
+			%highlight { use = "python-unknown-string-escape" }
+			end = "'|(?:\G|[^\\])\K$"
+			style = "string"
+		}
+
+		%highlight {
+			start = '\b[uU]"""'
+			%highlight { use = "python-unicode-string-escape" }
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = '"""'
+			style = "string"
+		}
+		%highlight {
+			start = "\b[uU]'''"
+			%highlight { use = "python-unicode-string-escape" }
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = "'''"
+			style = "string"
+		}
+		%highlight {
+			start = '\b[uU]"'
+			%highlight { use = "python-unicode-string-escape" }
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = '"|(?:\G|[^\\])\K$'
+			style = "string"
+		}
+		%highlight {
+			start = "\b[uU]'"
+			%highlight { use = "python-unicode-string-escape" }
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = "'|(?:\G|[^\\])\K$"
+			style = "string"
+		}
+
+		%highlight {
+			start = '(?i:\bb)?"""'
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = '"""'
+			style = "string"
+		}
+		%highlight {
+			start = "(?i:\bb)?'''"
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = "'''"
+			style = "string"
+		}
+		%highlight {
+			start = '(?i:\bb)?"'
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = '"|(?:\G|[^\\])\K$'
+			style = "string"
+		}
+		%highlight {
+			start = "(?i:\bb)?'"
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = "'|(?:\G|[^\\])\K$"
+			style = "string"
+		}
+
+		# Integer literals
+		%highlight {
+			regex = '(?<![^-+\W])(?:[1-9][0-9]*|0[oO]?[0-7]+|0[xX][0-9a-fA-F]+|0[bB][01]+|0)[lL]?'
+			style = "number"
+		}
+		%highlight { use = "python-float-and-img-const" }
+	}
+
+	python3 {
+		%highlight { use = "python-comment" }
+		%highlight {
+			regex = '\b(?:False|class|finally|is|return|None|continue|for|' +
+				'lambda|try|True|def|from|nonlocal|while|and|del|global|not|' +
+				'with|as|elif|if|or|yield|assert|else|import|pass|break|' +
+				'except|in|raise|None)\b'
+			style = "keyword"
+		}
+
+		# Different types of string literals in python. Using either single or
+		# double quotes, and possibly triple quoted variants. Different prefixes
+		# influence which string escapes are recognised.
+		%highlight {
+			start = '(?i)\bb?r"""'
+			%highlight { use = "python-unknown-string-escape" }
+			end = '"""'
+			style = "string"
+		}
+		%highlight {
+			start = "(?i)\bb?r""'"
+			%highlight { use = "python-unknown-string-escape" }
+			end = "'"""
+			style = "string"
+		}
+		%highlight {
+			start = '(?i)\bb?r"'
+			%highlight { use = "python-unknown-string-escape" }
+			end = '"|(?:\G|[^\\])\K$'
+			style = "string"
+		}
+		%highlight {
+			start = "(?i)\bb?r'"
+			%highlight { use = "python-unknown-string-escape" }
+			end = "'|(?:\G|[^\\])\K$"
+			style = "string"
+		}
+
+		%highlight {
+			start = '\b[bB]"""'
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = '"""'
+			style = "string"
+		}
+		%highlight {
+			start = "\b[bB]'''"
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = "'''"
+			style = "string"
+		}
+		%highlight {
+			start = '\b[bB]"'
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = '"|(?:\G|[^\\])\K$'
+			style = "string"
+		}
+		%highlight {
+			start = "\b[bB]'"
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = "'|(?:\G|[^\\])\K$"
+			style = "string"
+		}
+
+		%highlight {
+			start = '"""'
+			%highlight { use = "python-unicode-string-escape" }
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = '"""'
+			style = "string"
+		}
+		%highlight {
+			start = "'''"
+			%highlight { use = "python-unicode-string-escape" }
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = "'''"
+			style = "string"
+		}
+		%highlight {
+			start = '"'
+			%highlight { use = "python-unicode-string-escape" }
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = '"|(?:\G|[^\\])\K$'
+			style = "string"
+		}
+		%highlight {
+			start = "'"
+			%highlight { use = "python-unicode-string-escape" }
+			%highlight { use = "python-string-escape" }
+			%highlight { use = "python-unknown-string-escape" }
+			end = "'|(?:\G|[^\\])\K$"
+			style = "string"
+		}
+
+		# Integer literals
+		%highlight {
+			regex = '(?<![^-+\W])(?:[1-9][0-9]*|0[oO][0-7]+|0[xX][0-9a-fA-F]+|0[bB][01]+|0)'
+			style = "number"
+		}
+		%highlight { use = "python-float-and-img-const" }
+	}
+}

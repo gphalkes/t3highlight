@@ -33,6 +33,19 @@ format = 1
 	lang-file = "sh.lang"
 }
 %lang {
+	name = "Python"
+	name-regex = "^(?i)python$"
+	file-regex = "(?i)\.py$"
+	lang-file = "python.lang"
+}
+%lang {
+	name = "Python 3"
+	name-regex = "^(?i)python ?3$"
+	#file-regex = "(?i)\.py$"
+	lang-file = "python.lang"
+}
+
+%lang {
 	name = "T3 Highlight Language Definition"
 	name-regex = "^(?i)lang$"
 	file-regex = "\.lang$"

@@ -356,7 +356,8 @@ static void match_internal(match_context_t *context) {
 
 		if (pcre_exec(context->state->highlights.data[j].regex, context->state->highlights.data[j].extra,
 				context->line, context->size, context->match->end, options, context->ovector,
-				sizeof(context->ovector) / sizeof(context->ovector[0])) >= 0 && context->ovector[0] < context->best_start)
+				sizeof(context->ovector) / sizeof(context->ovector[0])) >= 0 && (context->ovector[0] < context->best_start ||
+				(context->ovector[0] == context->best_start && context->ovector[1] > context->best_end)))
 		{
 			context->best = &context->state->highlights.data[j];
 			context->best_start = context->ovector[0];
