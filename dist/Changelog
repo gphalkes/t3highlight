@@ -1,2 +1,10 @@
+Version 0.1.2:
+	New features:
+	- Added python and python3 language definitions.
+
+	Bug fixes:
+	- Improved floating point constant matching for Java and C/C++.
+	- Use longest match instead of first match as tie breaker.
+
 Version 0.1.1:
 	Initial release
