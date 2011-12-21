@@ -21,8 +21,8 @@
 		%highlight { use = "cxx-keywords" }
 		%highlight {
 			start = '\b(?:U|u8?)"'
-			%highlight { use = "unicode-string-escape" }
-			%highlight { use = "string-escape" }
+			%highlight { use = "c-unicode-string-escape" }
+			%highlight { use = "c-string-escape" }
 			end = '"|(?:\G|[^\\])\K$'
 			style = "string"
 		}

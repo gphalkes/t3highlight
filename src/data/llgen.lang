@@ -20,7 +20,7 @@ format = 1
 # slightly different definition of \x
 %highlight {
 	start = '"'
-	%highlight { use = "string-escape" }
+	%highlight { use = "c-string-escape" }
 	end = '"'
 	style = "string"
 }
