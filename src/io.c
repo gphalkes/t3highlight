@@ -133,6 +133,7 @@ t3_highlight_lang_t *t3_highlight_list(int *error) {
 		retval[count].name = t3_config_take_string(t3_config_get(ptr, "name"));
 		retval[count].lang_file = t3_config_take_string(t3_config_get(ptr, "lang-file"));
 	}
+	t3_config_delete(map);
 
 	retval[count].name = NULL;
 	retval[count].lang_file = NULL;
