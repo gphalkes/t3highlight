@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 }
 EOF
 
-	pkgconfig libpcre LIBPCRE test_link || {
+	pkgconfig libpcre LIBPCRE test_link PKGCONFIG_REQUIRES_PRIVATE || {
 		check_message "Checking for pcre-config..."
 		echo "Running: pcre-config --cflags" >> config.log
 		if pcre-config --cflags >> config.log 2>&1 ; then
@@ -36,6 +36,7 @@ EOF
 			if test_link "libpcre compile" "TESTFLAGS=`pcre-config --cflags`" "TESTLIBS=`pcre-config --libs`" ; then
 				LIBPCRE_FLAGS="`pcre-config --cflags`"
 				LIBPCRE_LIBS="`pcre-config --libs`"
+				PKGCONFIG_LIBS_PRIVATE="${PKGCONFIG_LIBS_PRIVATE} ${LIBPCRE_LIBS}"
 				true
 			fi
 		else
@@ -54,9 +55,16 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 EOF
-	pkgconfig libt3config/0.2 LIBT3CONFIG test_link || \
+	pkgconfig libt3config/0.2 LIBT3CONFIG test_link PKGCONFIG_REQUIRES || \
 		error "!! Can not find libt3config. libt3config is required to compile libt3highlight."
 
+	PKGCONFIG_DESC="Syntax highlighting library"
+	PKGCONFIG_VERSION="<VERSION>"
+	PKGCONFIG_URL="http://os.ghalkes.nl/t3/libt3highlight.html"
+	PKGCONFIG_CFLAGS="-I${includedir}/t3/highlight"
+	PKGCONFIG_LIBS="-lt3highlight"
+
+	gen_pkgconfig libt3highlight
 	create_makefile "CONFIGFLAGS=${CONFIGFLAGS} ${LIBPCRE_FLAGS} ${LIBT3CONFIG_FLAGS}" \
 		"CONFIGLIBS=${CONFIGLIBS} ${LIBPCRE_LIBS} ${LIBT3CONFIG_LIBS}"
 }

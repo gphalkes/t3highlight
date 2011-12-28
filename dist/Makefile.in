@@ -57,7 +57,7 @@ SILENTLDLT=@echo '[LDLT]' $@ ;
 
 OBJECTS=<OBJECTS>
 
-all: src/libt3highlight.la libt3highlight.pc
+all: src/libt3highlight.la
 
 .PHONY: all clean dist-clean install uninstall
 .SUFFIXES: .c .o .lo .la .mo .po
@@ -74,14 +74,6 @@ dist-clean: clean
 
 src/libt3highlight.la: $(OBJECTS)
 	$(SILENTLDLT) $(LIBTOOL) $(SILENCELT) --mode=link --tag=CC $(CC) -shared -version-info <VERSIONINFO> $(CFLAGS) $(LDFLAGS) -o $@ $(OBJECTS) $(LDLIBS) $(CONFIGLIBS) $(GETTEXTLIBS) -rpath $(libdir)
-
-libt3highlight.pc: libt3highlight.pc.in
-	@{ echo '/^prefix=/c\' ; echo 'prefix=$(prefix)' ; } > .sedscript
-	@LIBDIR=$(libdir); if [ "$${LIBDIR#$(prefix)}" != "$${LIBDIR}" ] ; then LIBDIR="\$${prefix}$${LIBDIR#$(prefix)}" ; fi ; \
-		{ echo '/^libdir=/c\' ; echo "libdir=$${LIBDIR}" ; } >> .sedscript
-	@INCLUDEDIR=$(includedir); if [ "$${INCLUDEDIR#$(prefix)}" != "$${INCLUDEDIR}" ] ; then INCLUDEDIR="\$${prefix}$${INCLUDEDIR#$(prefix)}" ; fi ; \
-		{ echo '/^includedir=/c\' ; echo "includedir=$${INCLUDEDIR}" ; } >> .sedscript
-	sed -f .sedscript $< > $@
 
 # Macros to make DESTDIR support more readable
 _libdir=$(DESTDIR)$(libdir)
