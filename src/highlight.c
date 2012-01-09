@@ -163,6 +163,7 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 	if (!compile_highlight(regex, &nest_action, context->flags, error))
 		return t3_false;
 
+	nest_action.dynamic = NULL;
 	nest_action.attribute_idx = action->attribute_idx;
 	if (!VECTOR_RESERVE(context->highlight->states.data[action->next_state].highlights))
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
@@ -194,6 +195,7 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 			context->highlight->states.data[idx].attribute_idx :
 			context->map_style(context->map_style_data, t3_config_get_string(style));
 
+		action.dynamic = NULL;
 		if ((regex = t3_config_get(highlights, "regex")) != NULL) {
 			if (!compile_highlight(regex, &action, context->flags, error))
 				return t3_false;
@@ -208,6 +210,8 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 
 			if (!compile_highlight(regex, &action, context->flags, error))
 				return t3_false;
+
+			action.dynamic = t3_config_take_string(t3_config_get(highlights, "extract"));
 
 			/* Create new state to which start will switch. */
 			action.next_state = context->highlight->states.used;
@@ -286,6 +290,7 @@ return_error:
 static void free_highlight(highlight_t *highlight) {
 	pcre_free(highlight->regex);
 	pcre_free(highlight->extra);
+	free(highlight->dynamic);
 }
 
 static void free_state(state_t *state) {
@@ -320,6 +325,7 @@ static int find_state(t3_highlight_match_t *match, int highlight) {
 		return 0;
 	VECTOR_LAST(match->mapping).parent = match->state;
 	VECTOR_LAST(match->mapping).highlight = highlight;
+	VECTOR_LAST(match->mapping).dynamic = NULL;
 	return match->mapping.used - 1;
 }
 
@@ -423,9 +429,19 @@ t3_highlight_match_t *t3_highlight_new_match(const t3_highlight_t *highlight) {
 	return result;
 }
 
+static void free_dynamic(state_mapping_t *mapping) {
+	if (mapping->dynamic == NULL)
+		return;
+	free(mapping->dynamic->extracted);
+	pcre_free(mapping->dynamic->regex);
+	pcre_free(mapping->dynamic->extra);
+	free(mapping->dynamic);
+}
+
 void t3_highlight_free_match(t3_highlight_match_t *match) {
 	if (match == NULL)
 		return;
+	VECTOR_ITERATE(match->mapping, free_dynamic);
 	VECTOR_FREE(match->mapping);
 	free(match);
 }
