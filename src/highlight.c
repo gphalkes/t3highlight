@@ -59,7 +59,9 @@ typedef struct {
 	state_t *state;
 	int ovector[30],
 		best_start,
-		best_end;
+		best_end,
+		extract_start,
+		extract_end;
 	highlight_t *best;
 	int options;
 	int recursion_depth;
@@ -136,12 +138,12 @@ return_error:
 	return NULL;
 }
 
-static t3_bool compile_highlight(t3_config_t *highlight, highlight_t *action, int flags, int *error) {
+static t3_bool compile_highlight(const char *highlight, full_pcre_t *action, int flags, int *error) {
 	const char *error_message;
 	int error_offset, local_error;
 	const char *study_error;
 
-	if ((action->regex = pcre_compile2(t3_config_get_string(highlight), flags & T3_HIGHLIGHT_UTF8 ? PCRE_UTF8 : 0,
+	if ((action->regex = pcre_compile2(highlight, flags & T3_HIGHLIGHT_UTF8 ? PCRE_UTF8 : 0,
 			&local_error, &error_message, &error_offset, NULL)) == NULL)
 	{
 		if (error != NULL)
@@ -160,10 +162,32 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 	highlight_t nest_action;
 	nest_action.next_state = next_state;
 
-	if (!compile_highlight(regex, &nest_action, context->flags, error))
-		return t3_false;
-
 	nest_action.dynamic = NULL;
+	if (action->dynamic != NULL && next_state == EXIT_STATE) {
+		char *regex_with_define;
+		t3_bool result;
+
+		/* Create the full regex pattern, including a fake define for the named
+		   back reference, and try to compile the pattern. */
+		if ((regex_with_define = malloc(strlen(t3_config_get_string(regex)) + strlen(action->dynamic->name) + 18)) == NULL)
+			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		sprintf(regex_with_define, "(?(DEFINE)(?<%s>))%s", action->dynamic->name, t3_config_get_string(regex));
+		result = compile_highlight(regex_with_define, &nest_action.regex, context->flags, error);
+		free(regex_with_define);
+		if (!result)
+			return t3_false;
+		pcre_free(nest_action.regex.regex);
+		pcre_free(nest_action.regex.extra);
+		nest_action.regex.regex = NULL;
+		nest_action.regex.extra = NULL;
+		/* Save the regular expression, because we need it to build the actual regex once the
+		   start pattern is matched. */
+		action->dynamic->pattern = t3_config_take_string(regex);
+	} else {
+		if (!compile_highlight(t3_config_get_string(regex), &nest_action.regex, context->flags, error))
+			return t3_false;
+	}
+
 	nest_action.attribute_idx = action->attribute_idx;
 	if (!VECTOR_RESERVE(context->highlight->states.data[action->next_state].highlights))
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
@@ -197,21 +221,34 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 
 		action.dynamic = NULL;
 		if ((regex = t3_config_get(highlights, "regex")) != NULL) {
-			if (!compile_highlight(regex, &action, context->flags, error))
+			if (!compile_highlight(t3_config_get_string(regex), &action.regex, context->flags, error))
 				return t3_false;
 
 			action.attribute_idx = style_attr_idx;
 			action.next_state = NO_CHANGE;
 		} else if ((regex = t3_config_get(highlights, "start")) != NULL) {
 			t3_config_t *sub_highlights;
+			char *dynamic;
 
 			action.attribute_idx = (style = t3_config_get(highlights, "delim-style")) == NULL ?
 				style_attr_idx : context->map_style(context->map_style_data, t3_config_get_string(style));
 
-			if (!compile_highlight(regex, &action, context->flags, error))
+			if (!compile_highlight(t3_config_get_string(regex), &action.regex, context->flags, error))
 				return t3_false;
 
-			action.dynamic = t3_config_take_string(t3_config_get(highlights, "extract"));
+			if ((dynamic = t3_config_take_string(t3_config_get(highlights, "extract"))) != NULL) {
+				if ((action.dynamic = malloc(sizeof(dynamic_highlight_t))) == NULL) {
+					free(dynamic);
+					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+				}
+				action.dynamic->name = dynamic;
+				action.dynamic->pattern = NULL;
+
+				if (action.dynamic->name[strspn(action.dynamic->name,
+						"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")] != 0)
+					//FIXME: this should be more precise
+					RETURN_ERROR(T3_ERR_INVALID_REGEX);
+			}
 
 			/* Create new state to which start will switch. */
 			action.next_state = context->highlight->states.used;
@@ -245,8 +282,8 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 
 			/* regex = NULL signifies that this is a link to another state. We
 			   also have to set extra to NULL, to prevent segfaults on free. */
-			action.regex = NULL;
-			action.extra = NULL;
+			action.regex.regex = NULL;
+			action.regex.extra = NULL;
 
 			/* Lookup the name in the use_map. If the definition was already
 			   compiled before, we don't have to do it again, but we can simply
@@ -284,13 +321,22 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 	return t3_true;
 
 return_error:
+	if (action.dynamic != NULL) {
+		free(action.dynamic->name);
+		free(action.dynamic->pattern);
+		free(action.dynamic);
+	}
 	return t3_false;
 }
 
 static void free_highlight(highlight_t *highlight) {
-	pcre_free(highlight->regex);
-	pcre_free(highlight->extra);
-	free(highlight->dynamic);
+	pcre_free(highlight->regex.regex);
+	pcre_free(highlight->regex.extra);
+	if (highlight->dynamic != NULL) {
+		free(highlight->dynamic->name);
+		free(highlight->dynamic->pattern);
+		free(highlight->dynamic);
+	}
 }
 
 static void free_state(state_t *state) {
@@ -307,7 +353,9 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 	free(highlight);
 }
 
-static int find_state(t3_highlight_match_t *match, int highlight) {
+static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highlight_t *dynamic,
+		const char *dynamic_line, int dynamic_length)
+{
 	size_t i;
 
 	if (highlight == EXIT_STATE)
@@ -317,7 +365,14 @@ static int find_state(t3_highlight_match_t *match, int highlight) {
 
 	/* Check if the state is already mapped. */
 	for (i = match->state + 1; i < match->mapping.used; i++) {
-		if (match->mapping.data[i].parent == match->state && match->mapping.data[i].highlight == highlight)
+		if (match->mapping.data[i].parent == match->state && match->mapping.data[i].highlight == highlight &&
+				/* Either neither is a match with dynamic back reference, or both are.
+				   For safety we ensure that the found state actually has information
+				   about a dynamic back reference. */
+				(dynamic == NULL ||
+				(dynamic != NULL && match->mapping.data[i].dynamic != NULL &&
+				dynamic_length == match->mapping.data[i].dynamic->extracted_length &&
+				memcmp(dynamic_line, match->mapping.data[i].dynamic->extracted, dynamic_length) == 0)))
 			return i;
 	}
 
@@ -325,7 +380,74 @@ static int find_state(t3_highlight_match_t *match, int highlight) {
 		return 0;
 	VECTOR_LAST(match->mapping).parent = match->state;
 	VECTOR_LAST(match->mapping).highlight = highlight;
+
 	VECTOR_LAST(match->mapping).dynamic = NULL;
+	if (dynamic != NULL) {
+		int replace_count = 0, i;
+		char *pattern, *patptr;
+		dynamic_state_t *new_dynamic;
+
+		for (i = 0; i < dynamic_length; i++) {
+			if (dynamic_line[i] == 0 || (dynamic_line[i] == '\\' && i + 1 < dynamic_length && dynamic_line[i + 1] == 'E'))
+				replace_count++;
+		}
+		/* Build the following pattern:
+		   (?(DEFINE)(?<%s>\Q%s\E))%s
+		   Note that the pattern between \Q and \E must be escaped for 0 bytes and \E.
+		*/
+
+		/* 22 bytes for fixed prefix and 0 byte, dynamic_length for the matched text,
+		   5 * replace_count for replacing 0 bytes and the \ in any \E's in the matched text,
+		   the length of the name of the pattern to insert and the length of the original
+		   regular expression to be inserted. */
+		if ((pattern = malloc(21 + dynamic_length + replace_count * 5 + strlen(dynamic->name) + strlen(dynamic->pattern))) == NULL) {
+			/* Undo VECTOR_RESERVE performed above. */
+			match->mapping.used--;
+			return 0;
+		}
+		if ((new_dynamic = malloc(sizeof(dynamic_state_t))) == NULL) {
+			/* Undo VECTOR_RESERVE performed above. */
+			match->mapping.used--;
+			free(pattern);
+			return 0;
+		}
+		if ((new_dynamic->extracted = malloc(dynamic_length)) == NULL) {
+			/* Undo VECTOR_RESERVE performed above. */
+			match->mapping.used--;
+			free(new_dynamic);
+			free(pattern);
+			return 0;
+		}
+		new_dynamic->extracted_length = dynamic_length;
+		memcpy(new_dynamic->extracted, dynamic_line, dynamic_length);
+
+		sprintf(pattern, "(?(DEFINE)(?<%s>\\Q", dynamic->name);
+		patptr = pattern + strlen(pattern);
+		for (i = 0; i < dynamic_length; i++) {
+			if (dynamic_line[i] == 0 || (dynamic_line[i] == '\\' && i + 1 < dynamic_length && dynamic_line[i + 1] == 'E')) {
+				*patptr++ = '\\';
+				*patptr++ = 'E';
+				*patptr++ = '\\';
+				*patptr++ = dynamic_line[i] == 0 ? '0' : '\\';
+				*patptr++ = '\\';
+				*patptr++ = 'Q';
+			} else {
+				*patptr++ = dynamic_line[i];
+			}
+		}
+		strcpy(patptr, "\\E))");
+		strcat(patptr, dynamic->pattern);
+		if (!compile_highlight(pattern, &new_dynamic->regex, 0, NULL)) {
+			/* Undo VECTOR_RESERVE performed above. */
+			match->mapping.used--;
+			free(new_dynamic->extracted);
+			free(new_dynamic);
+			free(pattern);
+			return 0;
+		}
+		VECTOR_LAST(match->mapping).dynamic = new_dynamic;
+		free(pattern);
+	}
 	return match->mapping.used - 1;
 }
 
@@ -335,32 +457,37 @@ static void match_internal(match_context_t *context) {
 	context->recursion_depth++;
 
 	for (j = 0; j < context->state->highlights.used; j++) {
-		int options;
+		full_pcre_t *regex;
+		int options = context->options;
 
-		/* If the regex member == NULL, this highlight is actually a pointer to
-		   another state which we should search here ("use"). */
-		if (context->state->highlights.data[j].regex == NULL) {
-			/* Don't keep on going into use definitions. At level 50, we probably
-			   ended up in a cycle, so just stop it. */
-			if (context->recursion_depth > 50)
+		/* If the regex member == NULL, this highlight is either a pointer to
+		   another state which we should search here ("use"), or it is an end
+		   pattern with a dynamic back reference. */
+		if (context->state->highlights.data[j].regex.regex == NULL) {
+			if (context->state->highlights.data[j].next_state >= 0) {
+				/* Don't keep on going into use definitions. At level 50, we probably
+				   ended up in a cycle, so just stop it. */
+				if (context->recursion_depth > 50)
+					continue;
+				state_t *save_state = context->state;
+				context->state = &context->match->highlight->states.data[context->state->highlights.data[j].next_state];
+				match_internal(context);
+				context->state = save_state;
 				continue;
-			state_t *save_state = context->state;
-			context->state = &context->match->highlight->states.data[context->state->highlights.data[j].next_state];
-			match_internal(context);
-			context->state = save_state;
-			continue;
+			}
+			regex = &context->match->mapping.data[context->match->state].dynamic->regex;
+		} else {
+			regex = &context->state->highlights.data[j].regex;
+			/* For items that do not change state, we do not want an empty match
+			   ever (makes no progress). Furthermore, start highlights have to make
+			   progress, to ensure that we do not end up in an infinite loop of
+			   state entry and exit, or nesting.
+			*/
+			if (context->state->highlights.data[j].next_state == NO_CHANGE || context->state->highlights.data[j].next_state >= 0)
+				options |= PCRE_NOTEMPTY;
 		}
 
-		options = context->options;
-		/* For items that do not change state, we do not want an empty match
-		   ever (makes no progress). Furthermore, start highlights have to make
-		   progress, to ensure that we do not end up in an infinite loop of
-		   state entry and exit, or nesting.
-		*/
-		if (context->state->highlights.data[j].next_state == NO_CHANGE || context->state->highlights.data[j].next_state >= 0)
-			options |= PCRE_NOTEMPTY;
-
-		if (pcre_exec(context->state->highlights.data[j].regex, context->state->highlights.data[j].extra,
+		if (pcre_exec(regex->regex, regex->extra,
 				context->line, context->size, context->match->end, options, context->ovector,
 				sizeof(context->ovector) / sizeof(context->ovector[0])) >= 0 && (context->ovector[0] < context->best_start ||
 				(context->ovector[0] == context->best_start && context->ovector[1] > context->best_end)))
@@ -368,6 +495,17 @@ static void match_internal(match_context_t *context) {
 			context->best = &context->state->highlights.data[j];
 			context->best_start = context->ovector[0];
 			context->best_end = context->ovector[1];
+			if (context->best->dynamic != NULL) {
+				int string_number = pcre_get_stringnumber(context->best->regex.regex, context->best->dynamic->name);
+				if (string_number == PCRE_ERROR_NOSUBSTRING || string_number > 10) {
+					context->extract_start = 0;
+					context->extract_end = 0;
+				} else {
+					context->extract_start = context->ovector[string_number * 2];
+					context->extract_end = context->ovector[string_number * 2 + 1];
+				}
+			}
+
 		}
 	}
 
@@ -393,7 +531,8 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 	if (context.best != NULL) {
 		match->match_start = context.best_start;
 		match->end = context.best_end;
-		match->state = find_state(match, context.best->next_state);
+		match->state = find_state(match, context.best->next_state, context.best->dynamic,
+			line + context.extract_start, context.extract_end - context.extract_start);
 		match->match_attribute = context.best->attribute_idx;
 		return t3_true;
 	}
@@ -433,8 +572,8 @@ static void free_dynamic(state_mapping_t *mapping) {
 	if (mapping->dynamic == NULL)
 		return;
 	free(mapping->dynamic->extracted);
-	pcre_free(mapping->dynamic->regex);
-	pcre_free(mapping->dynamic->extra);
+	pcre_free(mapping->dynamic->regex.regex);
+	pcre_free(mapping->dynamic->regex.extra);
 	free(mapping->dynamic);
 }
 

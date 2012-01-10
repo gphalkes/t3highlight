@@ -24,8 +24,16 @@
 typedef struct {
 	pcre *regex;
 	pcre_extra *extra;
-	char *dynamic; /* Either the name of the named subpattern to extract (regex != NULL),
-		or the regular expression to match (regex == NULL). */
+} full_pcre_t;
+
+typedef struct {
+	char *name;
+	char *pattern;
+} dynamic_highlight_t;
+
+typedef struct {
+	full_pcre_t regex;
+	dynamic_highlight_t *dynamic; /* Only set for start patterns. */
 	int next_state, /* Values: NO_CHANGE, EXIT_STATE or a value >= 0. */
 		attribute_idx;
 } highlight_t;
@@ -36,10 +44,9 @@ typedef struct {
 } state_t;
 
 typedef struct {
+	full_pcre_t regex;
 	char *extracted;
 	int extracted_length;
-	pcre *regex;
-	pcre_extra *extra;
 } dynamic_state_t;
 
 typedef struct {
