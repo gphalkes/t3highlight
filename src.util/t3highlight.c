@@ -39,9 +39,7 @@ static int option_verbose;
 static const char *option_language;
 static const char *option_style;
 static const char *option_input;
-#ifdef DEBUG
 static const char *option_language_file;
-#endif
 
 /** Alert the user of a fatal error and quit.
     @param fmt The format string for the message. See fprintf(3) for details.

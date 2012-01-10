@@ -12,8 +12,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 SOURCES.t3highlight := t3highlight.c escapes.c
-LDFLAGS.t3highlight := -L../src/.libs
-LDLIBS.t3highlight := -lt3highlight
+LDFLAGS.t3highlight := -L../src/.libs -Lt3config/.libs
+LDLIBS.t3highlight := -lt3highlight -lt3config
 CFLAGS.t3highlight += -I.objects -DDATADIR='"$(CURDIR)/data"'
 
 TARGETS := t3highlight
@@ -34,5 +34,9 @@ t3highlight: | lib
 
 lib:
 	@$(MAKE) -q -C ../src libt3highlight.la || $(MAKE) -C ../src libt3highlight.la
+
+links:
+	@[ -L t3config ] || ln -s ../../config/src t3config
+
 
 .PHONY: links

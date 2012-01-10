@@ -26,6 +26,9 @@ types {
 			end {
 				type = "string"
 			}
+			extract {
+				type = "string"
+			}
 			style {
 				type = "string"
 			}
@@ -49,6 +52,7 @@ types {
 		%constraint = "{'style' is only valid when either 'start' or 'regex' is used} start | regex | !style"
 		%constraint = "{'delim-style' can oly occur together with 'start'} start | !delim-style"
 		%constraint = "{'nested' can only occur together with 'start'} start | !nested"
+		%constraint = "{'extract' can oly occur together with 'start' and 'end'} (start & end) | !extract"
 	}
 	definition {
 		type = "section"

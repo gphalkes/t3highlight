@@ -24,6 +24,16 @@
 typedef struct {
 	pcre *regex;
 	pcre_extra *extra;
+} full_pcre_t;
+
+typedef struct {
+	char *name;
+	char *pattern;
+} dynamic_highlight_t;
+
+typedef struct {
+	full_pcre_t regex;
+	dynamic_highlight_t *dynamic; /* Only set for start patterns. */
 	int next_state, /* Values: NO_CHANGE, EXIT_STATE or a value >= 0. */
 		attribute_idx;
 } highlight_t;
@@ -34,8 +44,15 @@ typedef struct {
 } state_t;
 
 typedef struct {
+	full_pcre_t regex;
+	char *extracted;
+	int extracted_length;
+} dynamic_state_t;
+
+typedef struct {
 	int parent;
 	int highlight;
+	dynamic_state_t *dynamic;
 } state_mapping_t;
 
 struct t3_highlight_t {
