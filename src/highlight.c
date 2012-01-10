@@ -437,7 +437,7 @@ static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highli
 		}
 		strcpy(patptr, "\\E))");
 		strcat(patptr, dynamic->pattern);
-		if (!compile_highlight(pattern, &new_dynamic->regex, 0, NULL)) {
+		if (!compile_highlight(pattern, &new_dynamic->regex, match->highlight->flags, NULL)) {
 			/* Undo VECTOR_RESERVE performed above. */
 			match->mapping.used--;
 			free(new_dynamic->extracted);
