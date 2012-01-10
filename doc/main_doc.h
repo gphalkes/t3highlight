@@ -131,7 +131,7 @@ where a plus sign must appear before the newline after each substring.
 @section inclusion File inclusion
 
 To make it easier to reuse (parts of) highlighting description files, other
-files can be included. To include a file, use <tt>@%include "file.lang"</tt>.
+files can be included. To include a file, use <tt>@%include = "file.lang"</tt>.
 Either absolute path names may be used, or paths relative to the include
 directories. The include directories are the .libt3highlight subdirectory of
 the user's home directory and the default libt3highlight data directory
@@ -208,6 +208,31 @@ number of) backslashes before it.
 	nested = yes
 }
 @endverbatim
+
+@subsubsection dynamic_endpat Dynamic end patterns
+
+Sometimes a state is delimited by a symbol that is not known ahead of time.
+Examples of these are Shell here-docs, perl strings using q/qq/m/s etc.
+operators, and Lua comments. To accomodate these situations, it is possible to
+use a named subpattern in the @c start pattern, which can be extracted for use
+in the @c end pattern. To make use of this, the state definition should contain
+the key @c extract, to tell libt3highlight the name of the substring to be
+extracted. For example, here is a section of the here-doc definition for the
+Shell language:
+
+@verbatim
+%highlight {
+	start = '<<\s*(?<delim>\w+)'
+	extract = "delim"
+	end = '^(?&delim)$'
+	style = "string"
+}
+@endverbatim
+
+This uses the PCRE named sub-pattern syntax, as described in the pcrepattern(3)
+man page. Note that this is a relatively expensive operation, because the
+@c end pattern has to be created on the fly. It is therefore inadvisable to use
+this for patterns which can also be written using fixed patterns.
 
 @subsection use_definition Using predefined highlights.
 

@@ -125,13 +125,13 @@
 			style = "string"
 		}
 		%highlight {
-			start = '<<\s*(["''])(?<delim>\w+)\1'
+			start = '<<\s*(["''])(?<delim>[^"'']+)\1'
 			extract = "delim"
 			end = '^(?&delim)$'
 			style = "string"
 		}
 		%highlight {
-			start = '<<-?\s*(["''])(?<delim>\w+)\1'
+			start = '<<-?\s*(["''])(?<delim>[^"'']+)\1'
 			extract = "delim"
 			end = '^\t*(?&delim)$'
 			style = "string"
