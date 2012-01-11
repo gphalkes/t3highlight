@@ -289,12 +289,19 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 
 				parent_action.dynamic = &parent_dynamic;
 
-				#warning FIXME: implement style and delim-style
 				for (on_entry = t3_config_get(on_entry, NULL), idx = 0; on_entry != NULL;
 						on_entry = t3_config_get_next(on_entry), idx++)
 				{
 					action.dynamic->on_entry[idx].state = context->highlight->states.used;
 					parent_action.next_state = action.dynamic->on_entry[idx].state;
+
+					if ((style = t3_config_get(on_entry, "style")) != NULL)
+						parent_action.attribute_idx = style_attr_idx =
+							context->map_style(context->map_style_data, t3_config_get_string(style));
+
+					if ((style = t3_config_get(on_entry, "delim-style")) != NULL)
+						parent_action.attribute_idx = context->map_style(context->map_style_data, t3_config_get_string(style));
+
 					if (!VECTOR_RESERVE(context->highlight->states))
 						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 					VECTOR_LAST(context->highlight->states) = null_state;
