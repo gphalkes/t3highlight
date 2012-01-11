@@ -49,6 +49,10 @@ types {
 				type = "int"
 				%constraint = "{exit value must be between 1 and 1000 inclusive} % >= 1 & % <= 1000"
 			}
+			on-entry {
+				type = "list"
+				item-type = "on-entry"
+			}
 		}
 		%constraint = "{highlight must include exactly one of 'regex', 'start' or 'use'} #(regex, start, use) = 1"
 		%constraint = "{'end' can only occur together with 'start'} start | !end"
@@ -57,7 +61,35 @@ types {
 		%constraint = "{'delim-style' can oly occur together with 'start'} start | !delim-style"
 		%constraint = "{'nested' can only occur together with 'start'} start | !nested"
 		%constraint = "{'extract' can oly occur together with 'start' and 'end'} (start & end) | !extract"
+		%constraint = "{'on-entry' can only occur together with 'start'} start | !on-entry"
 	}
+
+	on-entry {
+		type = "section"
+		allowed-keys {
+			end {
+				type = "string"
+			}
+			style {
+				type = "string"
+			}
+			highlight {
+				type = "list"
+				item-type = "highlight"
+			}
+			delim-style {
+				type = "string"
+			}
+			use {
+				type = "string"
+			}
+			exit {
+				type = "int"
+				%constraint = "{exit value must be between 1 and 1000 inclusive} % >= 1 & % <= 1000"
+			}
+		}
+	}
+
 	definition {
 		type = "section"
 		allowed-keys {

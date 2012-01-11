@@ -29,6 +29,8 @@ typedef struct {
 typedef struct {
 	char *name;
 	char *pattern;
+	int *on_entry;
+	int on_entry_cnt;
 } dynamic_highlight_t;
 
 typedef struct {
