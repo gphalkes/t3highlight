@@ -159,7 +159,7 @@ static t3_bool match_name(const t3_config_t *config, const void *data) {
 }
 
 static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *regex, int next_state,
-		const highlight_t *action, int add_to_state, int *error)
+		const highlight_t *action, int *error)
 {
 	highlight_t nest_action;
 	nest_action.next_state = next_state;
@@ -192,20 +192,20 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 	}
 
 	nest_action.attribute_idx = action->attribute_idx;
-	if (!VECTOR_RESERVE(context->highlight->states.data[add_to_state].highlights))
+	if (!VECTOR_RESERVE(context->highlight->states.data[action->next_state].highlights))
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 
 	/* Find the highlight entry, starting after the end entry. If it does not exist,
 	   the list of highlights was specified first. */
 	for ( ; regex != NULL && strcmp(t3_config_get_name(regex), "highlight") != 0; regex = t3_config_get_next(regex)) {}
 
-	if (regex == NULL && context->highlight->states.data[add_to_state].highlights.used > 0) {
-		VECTOR_LAST(context->highlight->states.data[add_to_state].highlights) = nest_action;
+	if (regex == NULL && context->highlight->states.data[action->next_state].highlights.used > 0) {
+		VECTOR_LAST(context->highlight->states.data[action->next_state].highlights) = nest_action;
 	} else {
-		memmove(context->highlight->states.data[add_to_state].highlights.data + 1,
-			context->highlight->states.data[add_to_state].highlights.data,
-			(context->highlight->states.data[add_to_state].highlights.used - 1) * sizeof(highlight_t));
-		context->highlight->states.data[add_to_state].highlights.data[0] = nest_action;
+		memmove(context->highlight->states.data[action->next_state].highlights.data + 1,
+			context->highlight->states.data[action->next_state].highlights.data,
+			(context->highlight->states.data[action->next_state].highlights.used - 1) * sizeof(highlight_t));
+		context->highlight->states.data[action->next_state].highlights.data[0] = nest_action;
 	}
 	return t3_true;
 return_error:
@@ -283,12 +283,18 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 			}
 
 			if (on_entry != NULL) {
+				highlight_t parent_action = action;
+				dynamic_highlight_t parent_dynamic = *action.dynamic;
 				int idx;
+
+				parent_action.dynamic = &parent_dynamic;
+
 				#warning FIXME: implement style and delim-style
 				for (on_entry = t3_config_get(on_entry, NULL), idx = 0; on_entry != NULL;
 						on_entry = t3_config_get_next(on_entry), idx++)
 				{
 					action.dynamic->on_entry[idx].state = context->highlight->states.used;
+					parent_action.next_state = action.dynamic->on_entry[idx].state;
 					if (!VECTOR_RESERVE(context->highlight->states))
 						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 					VECTOR_LAST(context->highlight->states) = null_state;
@@ -304,11 +310,11 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 						int return_state = NO_CHANGE - t3_config_get_int(t3_config_get(on_entry, "exit"));
 						if (return_state == NO_CHANGE)
 							return_state = EXIT_STATE;
-						if (!add_delim_highlight(context, regex, return_state, &action, action.dynamic->on_entry[idx].state, error))
+						if (!add_delim_highlight(context, regex, return_state, &parent_action, error))
 							goto return_error;
 						else
-							action.dynamic->on_entry[idx].end_pattern = action.dynamic->pattern;
-						action.dynamic->pattern = NULL;
+							action.dynamic->on_entry[idx].end_pattern = parent_action.dynamic->pattern;
+						parent_action.dynamic->pattern = NULL;
 					}
 				}
 			}
@@ -320,13 +326,12 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 				int return_state = NO_CHANGE - t3_config_get_int(t3_config_get(highlights, "exit"));
 				if (return_state == NO_CHANGE)
 					return_state = EXIT_STATE;
-				if (!add_delim_highlight(context, regex, return_state, &action, action.next_state, error))
+				if (!add_delim_highlight(context, regex, return_state, &action, error))
 					goto return_error;
 			}
 
 			if (t3_config_get_bool(t3_config_get(highlights, "nested")) &&
-					!add_delim_highlight(context, t3_config_get(highlights, "start"), action.next_state,
-					&action, action.next_state, error))
+					!add_delim_highlight(context, t3_config_get(highlights, "start"), action.next_state, &action, error))
 				goto return_error;
 		} else if ((use = t3_config_get(highlights, "use")) != NULL) {
 			size_t i;
