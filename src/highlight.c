@@ -174,12 +174,13 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 		if ((regex_with_define = malloc(strlen(t3_config_get_string(regex)) + strlen(action->dynamic->name) + 18)) == NULL)
 			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 		sprintf(regex_with_define, "(?(DEFINE)(?<%s>))%s", action->dynamic->name, t3_config_get_string(regex));
+		nest_action.regex.extra = NULL;
 		result = compile_highlight(regex_with_define, &nest_action.regex, context->flags, error);
 		free(regex_with_define);
-		if (!result)
-			return t3_false;
 		pcre_free(nest_action.regex.regex);
 		pcre_free(nest_action.regex.extra);
+		if (!result)
+			return t3_false;
 		nest_action.regex.regex = NULL;
 		nest_action.regex.extra = NULL;
 		/* Save the regular expression, because we need it to build the actual regex once the
@@ -221,6 +222,8 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 			context->highlight->states.data[idx].attribute_idx :
 			context->map_style(context->map_style_data, t3_config_get_string(style));
 
+		action.regex.regex = NULL;
+		action.regex.extra = NULL;
 		action.dynamic = NULL;
 		if ((regex = t3_config_get(highlights, "regex")) != NULL) {
 			if (!compile_highlight(t3_config_get_string(regex), &action.regex, context->flags, error))
@@ -386,6 +389,8 @@ return_error:
 		}
 		free(action.dynamic);
 	}
+	pcre_free(action.regex.regex);
+	pcre_free(action.regex.extra);
 	return t3_false;
 }
 
