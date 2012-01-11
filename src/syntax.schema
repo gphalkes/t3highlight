@@ -45,9 +45,13 @@ types {
 			nested {
 				type = "bool"
 			}
+			exit {
+				type = "int"
+				%constraint = "{exit value must be between 1 and 1000 inclusive} % >= 1 & % <= 1000"
+			}
 		}
 		%constraint = "{highlight must include exactly one of 'regex', 'start' or 'use'} #(regex, start, use) = 1"
-		%constraint = "{'start' and 'end' must always appear together} start ^ !end"
+		%constraint = "{'end' can only occur together with 'start'} start | !end"
 		%constraint = "{'highlight' can only occur together with 'start'} start | !highlight"
 		%constraint = "{'style' is only valid when either 'start' or 'regex' is used} start | regex | !style"
 		%constraint = "{'delim-style' can oly occur together with 'start'} start | !delim-style"

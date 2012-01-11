@@ -163,7 +163,7 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 	nest_action.next_state = next_state;
 
 	nest_action.dynamic = NULL;
-	if (action->dynamic != NULL && next_state == EXIT_STATE) {
+	if (action->dynamic != NULL && next_state <= EXIT_STATE) {
 		char *regex_with_define;
 		t3_bool result;
 
@@ -225,7 +225,7 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 				return t3_false;
 
 			action.attribute_idx = style_attr_idx;
-			action.next_state = NO_CHANGE;
+			action.next_state = NO_CHANGE - t3_config_get_int(t3_config_get(highlights, "exit"));
 		} else if ((regex = t3_config_get(highlights, "start")) != NULL) {
 			t3_config_t *sub_highlights;
 			char *dynamic;
@@ -266,8 +266,12 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 			/* If the highlight specifies an end regex, create an extra action for that and paste that
 			   to in the list of sub-highlights. Depending on whether end is specified before or after
 			   the highlight list, it will be pre- or appended. */
-			if ((regex = t3_config_get(highlights, "end")) != NULL)
-				add_delim_highlight(context, regex, EXIT_STATE, &action, error);
+			if ((regex = t3_config_get(highlights, "end")) != NULL) {
+				int return_state = NO_CHANGE - t3_config_get_int(t3_config_get(highlights, "exit"));
+				if (return_state == NO_CHANGE)
+					return_state = EXIT_STATE;
+				add_delim_highlight(context, regex, return_state, &action, error);
+			}
 
 			if (t3_config_get_bool(t3_config_get(highlights, "nested")))
 				add_delim_highlight(context, t3_config_get(highlights, "start"), action.next_state, &action, error);
@@ -358,8 +362,13 @@ static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highli
 {
 	size_t i;
 
-	if (highlight == EXIT_STATE)
-		return match->mapping.data[match->state].parent;
+	if (highlight <= EXIT_STATE) {
+		int return_state = match->state;
+		while (highlight < EXIT_STATE && return_state > 0)
+			return_state = match->mapping.data[return_state].parent;
+		return return_state > 0 ? match->mapping.data[return_state].parent : 0;
+	}
+
 	if (highlight == NO_CHANGE)
 		return match->state;
 

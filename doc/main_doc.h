@@ -18,7 +18,7 @@ href="modules.html">API documentation</a>.
 
 /** @page users_doc General information
 
-@section location Location of highlighting description files.
+@section location Location of Highlighting Description Files.
 
 The highlighting description files that come with libt3highlight are stored in
 libt3highlight data directory. This is usually
@@ -30,7 +30,7 @@ Furthermore, libt3highlight also searches the .libt3highlight directory of the
 user's home directory. This allows users to easily develop their own
 highlighting description files.
 
-@section map The map file.
+@section map The Map File.
 
 To associate the correct syntax highlighting description file with a source
 file, libt3highlight uses a special map file named <tt>lang.map</tt>. This file
@@ -83,7 +83,7 @@ format = 1
 */
 
 
-/** @page syntax Syntax of highlighting description files.
+/** @page syntax Syntax of Highlighting Description Files.
 
 @section syntax_introduction Introduction
 
@@ -98,7 +98,7 @@ most part, the syntax of the files will be self-explanatory, but if you need
 more details, you can find them in <a
 href="http://os.ghalkes.nl/t3/doc/t3config">the libt3config documentation</a>.
 
-@section structure Overall structure.
+@section structure Overall Structure.
 
 A complete highlighting description file for libt3highlight consists of a
 file format specifier, which must have the value @c 1, an optional list of
@@ -128,7 +128,7 @@ string accross multiple lines, use string concatenation using the plus sign,
 where a plus sign must appear before the newline after each substring.
 
 
-@section inclusion File inclusion
+@section inclusion File Inclusion
 
 To make it easier to reuse (parts of) highlighting description files, other
 files can be included. To include a file, use <tt>@%include = "file.lang"</tt>.
@@ -140,13 +140,13 @@ the user's home directory and the default libt3highlight data directory
 files should not contain a @c format key. Only files intended to be used as
 complete language definitions should include the @c format key.
 
-@section highlight_definitions Highlight definitions.
+@section highlight_definitions Highlight Definitions.
 
 A highlight definition can have three forms: a single matching item using the
 @c regex key, a state definition using the @c start and @c end keys, and a
 reference to a named highlight using the @c use key.
 
-@subsection single_regex Single regular expression.
+@subsection single_regex Single Regular Expression.
 
 To define items like keywords and other simple items which can be described
 using a single regular expression, a highlight can be defined using the @c regex
@@ -162,16 +162,16 @@ key. The style can be selected using the @c style key. For example:
 will ensure that the words @c int, @c float and @c bool will be styled as
 keywords.
 
-@subsection state_definition State definitions.
+@subsection state_definition State Definitions.
 
 A state definition uses the @c start and @c end regular-expression keys. Once
 the @c start regular expression is matched, everything up to and including the
-first text matching the @c end regular expression is styled using the style
-selected with the @c style key. If the text matching the @c start and @c end
-regexes must be styled differently from the rest of the text, the
-<code>delim-style</code> key can be used. The @c start regex is not allowed
-to match the empty string. Although it is legal to write regexes which would
-match the empty string, only the first non-empty match is considered.
+first text matching the (optional) @c end regular expression is styled using
+the style selected with the @c style key. If the text matching the @c start and
+@c end regexes must be styled differently from the rest of the text, the
+<code>delim-style</code> key can be used. The @c start regex is not allowed to
+match the empty string. Although it is legal to write regexes which would match
+the empty string, only the first non-empty match is considered.
 
 A state definition can also have sub-highlights. This is done by simply adding
 @c @%highlight sections inside the highlight definition. If the sub-highlights
@@ -209,7 +209,7 @@ number of) backslashes before it.
 }
 @endverbatim
 
-@subsubsection dynamic_endpat Dynamic end patterns
+@subsubsection dynamic_endpat Dynamic @c end Patterns
 
 Sometimes a state is delimited by a symbol that is not known ahead of time.
 Examples of these are Shell here-docs, perl strings using q/qq/m/s etc.
@@ -234,7 +234,15 @@ man page. Note that this is a relatively expensive operation, because the
 @c end pattern has to be created on the fly. It is therefore inadvisable to use
 this for patterns which can also be written using fixed patterns.
 
-@subsection use_definition Using predefined highlights.
+@subsubsection state_exit State Exit
+
+Sometimes it is desirable to exit from more than one state, or to have more than
+one @c end pattern. To this end, each highlight is allowed to have a @c exit
+key, which specifies how many states to exit. The default for @c end patterns is
+one, and for non-state highlights it is zero. By setting the @c exit key to a
+one for a non-state highlight, you effectively create an extra @c end pattern.
+
+@subsection use_definition Using Predefined Highlights.
 
 It is possible to create named highlights. These must be defined by creating one
 or more @c @%define sections. The @c @%define sections must contain named
@@ -273,7 +281,7 @@ can be used as follows:
 There is no check for multiple highlights with the same name, and only the first
 defined highlight with a certain name is used.
 
-@section style_names Style names.
+@section style_names Style Names.
 
 As shown in the previous section, the style to be used for highlighting items
 in the text is determined by a string value. Although the names are not
@@ -309,11 +317,11 @@ This list may be extended in the future. However, because libt3highlight is
 also used for highlighting in environments where the display possibilities are
 limited, the number of styles will remain small.
 
-@section tips_and_tricks Tips and tricks.
+@section tips_and_tricks Tips and Tricks.
 
 This section lists useful tips and tricks for writing highlight files.
 
-@subsection define_lang Using the whole language as a named definition.
+@subsection define_lang Using the Whole Language as a Named Definition.
 
 To make it easier to embed a complete language into another, it is useful to
 write the whole language definition as a named highlight definition. This
@@ -322,7 +330,7 @@ includes the definition file and a single highlight definition to use the named
 highlight, should be created. See the definition of the C language in
 <tt>c.lang</tt> as an example.
 
-@subsection c_string C-style strings.
+@subsection c_string C-style Strings.
 
 The difficulty in C-style strings, is that they can be continued on the next
 line by including a backslash as the last character on the line. However, it
