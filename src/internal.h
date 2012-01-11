@@ -27,9 +27,14 @@ typedef struct {
 } full_pcre_t;
 
 typedef struct {
+	char *end_pattern;
+	int state;
+} on_entry_info_t;
+
+typedef struct {
 	char *name;
 	char *pattern;
-	int *on_entry;
+	on_entry_info_t *on_entry;
 	int on_entry_cnt;
 } dynamic_highlight_t;
 

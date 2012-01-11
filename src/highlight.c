@@ -249,9 +249,12 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 				action.dynamic->on_entry = NULL;
 
 				if (on_entry != NULL) {
+					int i;
 					action.dynamic->on_entry_cnt = t3_config_get_length(on_entry);
-					if ((action.dynamic->on_entry = malloc(sizeof(int) * action.dynamic->on_entry_cnt)) == NULL)
+					if ((action.dynamic->on_entry = malloc(sizeof(on_entry_info_t) * action.dynamic->on_entry_cnt)) == NULL)
 						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+					for (i = 0; i < action.dynamic->on_entry_cnt; i++)
+						action.dynamic->on_entry[i].end_pattern = NULL;
 				}
 
 				if (dynamic != NULL) {
@@ -282,13 +285,13 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 				for (on_entry = t3_config_get(on_entry, NULL), idx = 0; on_entry != NULL;
 						on_entry = t3_config_get_next(on_entry), idx++)
 				{
-					action.dynamic->on_entry[idx] = context->highlight->states.used;
+					action.dynamic->on_entry[idx].state = context->highlight->states.used;
 					if (!VECTOR_RESERVE(context->highlight->states))
 						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 					VECTOR_LAST(context->highlight->states) = null_state;
 					VECTOR_LAST(context->highlight->states).attribute_idx = style_attr_idx;
 					if ((sub_highlights = t3_config_get(on_entry, "highlight")) != NULL) {
-						if (!init_state(context, sub_highlights, action.dynamic->on_entry[idx], error))
+						if (!init_state(context, sub_highlights, action.dynamic->on_entry[idx].state, error))
 							goto return_error;
 					}
 					/* If the highlight specifies an end regex, create an extra action for that and paste that
@@ -298,8 +301,11 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 						int return_state = NO_CHANGE - t3_config_get_int(t3_config_get(on_entry, "exit"));
 						if (return_state == NO_CHANGE)
 							return_state = EXIT_STATE;
-						if (!add_delim_highlight(context, regex, return_state, &action, action.dynamic->on_entry[idx], error))
+						if (!add_delim_highlight(context, regex, return_state, &action, action.dynamic->on_entry[idx].state, error))
 							goto return_error;
+						else
+							action.dynamic->on_entry[idx].end_pattern = action.dynamic->pattern;
+						action.dynamic->pattern = NULL;
 					}
 				}
 			}
@@ -372,7 +378,12 @@ return_error:
 	if (action.dynamic != NULL) {
 		free(action.dynamic->name);
 		free(action.dynamic->pattern);
-		free(action.dynamic->on_entry);
+		if (action.dynamic->on_entry != NULL) {
+			int i;
+			for (i = 0; i < action.dynamic->on_entry_cnt; i++)
+				free(action.dynamic->on_entry[i].end_pattern);
+			free(action.dynamic->on_entry);
+		}
 		free(action.dynamic);
 	}
 	return t3_false;
@@ -384,7 +395,12 @@ static void free_highlight(highlight_t *highlight) {
 	if (highlight->dynamic != NULL) {
 		free(highlight->dynamic->name);
 		free(highlight->dynamic->pattern);
-		free(highlight->dynamic->on_entry);
+		if (highlight->dynamic->on_entry != NULL) {
+			int i;
+			for (i = 0; i < highlight->dynamic->on_entry_cnt; i++)
+				free(highlight->dynamic->on_entry[i].end_pattern);
+			free(highlight->dynamic->on_entry);
+		}
 		free(highlight->dynamic);
 	}
 }
@@ -404,7 +420,7 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 }
 
 static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highlight_t *dynamic,
-		const char *dynamic_line, int dynamic_length)
+		const char *dynamic_line, int dynamic_length, const char *dynamic_pattern)
 {
 	size_t i;
 
@@ -455,7 +471,7 @@ static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highli
 		   5 * replace_count for replacing 0 bytes and the \ in any \E's in the matched text,
 		   the length of the name of the pattern to insert and the length of the original
 		   regular expression to be inserted. */
-		if ((pattern = malloc(21 + dynamic_length + replace_count * 5 + strlen(dynamic->name) + strlen(dynamic->pattern))) == NULL) {
+		if ((pattern = malloc(21 + dynamic_length + replace_count * 5 + strlen(dynamic->name) + strlen(dynamic_pattern))) == NULL) {
 			/* Undo VECTOR_RESERVE performed above. */
 			match->mapping.used--;
 			return 0;
@@ -491,7 +507,7 @@ static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highli
 			}
 		}
 		strcpy(patptr, "\\E))");
-		strcat(patptr, dynamic->pattern);
+		strcat(patptr, dynamic_pattern);
 		if (!compile_highlight(pattern, &new_dynamic->regex, match->highlight->flags, NULL)) {
 			/* Undo VECTOR_RESERVE performed above. */
 			match->mapping.used--;
@@ -587,12 +603,14 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 		match->match_start = context.best_start;
 		match->end = context.best_end;
 		match->state = find_state(match, context.best->next_state, context.best->dynamic,
-			line + context.extract_start, context.extract_end - context.extract_start);
+			line + context.extract_start, context.extract_end - context.extract_start,
+			context.best->dynamic != NULL ? context.best->dynamic->pattern : NULL);
 		if (context.best->dynamic != NULL && context.best->dynamic->on_entry != NULL) {
 			int i;
 			for (i = 0; i < context.best->dynamic->on_entry_cnt; i++) {
-				match->state = find_state(match, context.best->dynamic->on_entry[i], context.best->dynamic,
-					line + context.extract_start, context.extract_end - context.extract_start);
+				match->state = find_state(match, context.best->dynamic->on_entry[i].state, context.best->dynamic,
+					line + context.extract_start, context.extract_end - context.extract_start,
+					context.best->dynamic->on_entry[i].end_pattern);
 			}
 		}
 		match->match_attribute = context.best->attribute_idx;
