@@ -5,7 +5,7 @@ format = 1
 
 %highlight {
 	regex = '(?<!\w)(?:%include|%highlight|%define|start|end|regex|use|style|' +
-		'delim-style|nested|true|false|yes|no|format|name)'
+		'delim-style|nested|%on-entry|exit|extract|true|false|yes|no|format|name)'
 	style = "keyword"
 }
 %highlight {

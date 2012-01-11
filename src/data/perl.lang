@@ -1,0 +1,310 @@
+format = 1
+
+%define {
+	perl-comment {
+		%highlight {
+			start = '#'
+			end = '$'
+			style = "comment"
+		}
+	}
+	perl-escape {
+		%highlight {
+			regex = '\\(?:x(?:[\da-fA-F]{2}|\{[\da-fA-F]+\})|[0-3][0-7]{0,2}|c.|N\{(?:U\+[\da-fA-F]{4}|[\w\s]+)\}|.)'
+			style = "string-escape"
+		}
+	}
+
+	perl-nested-curly {
+		%highlight {
+			start = '\{'
+			%highlight { use = "perl-escape" }
+			end = '\}'
+			nested = yes
+			style = "string"
+		}
+	}
+	perl-nested-parenthesis {
+		%highlight {
+			start = '\('
+			%highlight { use = "perl-escape" }
+			end = '\)'
+			nested = yes
+			style = "string"
+		}
+	}
+	perl-nested-block {
+		%highlight {
+			start = '\['
+			%highlight { use = "perl-escape" }
+			end = '\]'
+			nested = yes
+			style = "string"
+		}
+	}
+	perl-nested-angle {
+		%highlight {
+			start = '\<'
+			%highlight { use = "perl-escape" }
+			end = '\>'
+			nested = yes
+			style = "string"
+		}
+	}
+
+	perl-second-quote {
+		%highlight {
+			start = '(?<delim>[^({[<\s#])'
+			extract = "delim"
+			%highlight { use = "perl-escape" }
+			end = "(?&delim)[a-z]*"
+			exit = 3
+			style = "string"
+		}
+
+		%highlight {
+			start = '\{'
+			%highlight { use = "perl-escape" }
+			%highlight { use = "perl-nested-curly" }
+			end = '\}[a-z]*'
+			exit = 3
+			style = "string"
+		}
+		%highlight {
+			start = '\('
+			%highlight { use = "perl-escape" }
+			%highlight { use = "perl-nested-parenthesis" }
+			end = '\)[a-z]*'
+			exit = 3
+			style = "string"
+		}
+		%highlight {
+			start = '\['
+			%highlight { use = "perl-escape" }
+			%highlight { use = "perl-nested-block" }
+			end = '\][a-z]*'
+			exit = 3
+			style = "string"
+		}
+		%highlight {
+			start = '\<'
+			%highlight { use = "perl-escape" }
+			%highlight { use = "perl-nested-angle" }
+			end = '\>[a-z]*'
+			exit = 3
+			style = "string"
+		}
+	}
+}
+
+%highlight { use = "perl-comment" }
+
+# Here begins the Perl quoting insanity. Perl makes life extremely difficult for
+# highlighters, because any character is allowed as a quote character, and there
+# are also four types of bracketing quotes ( () {} [] and <> ). And as if that
+# wasn't difficult enough to handle, for the s and tr/y operators which have to
+# quoted strings, the second string is quoted independently if the first string
+# uses a bracketing quote. Also, in some variants the full range of escape
+# sequences is available, while in others only \\ and \<closing quote character>
+# are recognised.
+
+# And then we haven't even touched upon the here-docs, which are allowed
+# practically anywhere, even inside quoted strings. And of course you can use
+# more than one per line.
+
+# In the patterns below, we try our best to highlight everything correctly, but
+# there are some things which are just impossible. The here-docs do not work
+# inside quoted strings, and multiple here-docs on line are not supported.
+# Also, we make no distinction in escaping interpretation.
+
+%highlight {
+	start = '\b(?:q|qq|qx)#'
+	%highlight { use = "perl-escape" }
+	end = '#'
+	style = "string"
+}
+
+%highlight {
+	start = '\b(?:q|qq|qx|qw)\b'
+	%highlight { use = "perl-comment" }
+	%highlight {
+		start = "(?<delim>[^({[<\s#])"
+		extract = "delim"
+		%highlight { use = "perl-escape" }
+		end = '(?&delim)'
+		exit = 2
+		style = "string"
+	}
+	%highlight {
+		start = '\{'
+		%highlight { use = "perl-escape" }
+		%highlight { use = "perl-nested-curly" }
+		end = '\}'
+		exit = 2
+		style = "string"
+	}
+	%highlight {
+		start = '\('
+		%highlight { use = "perl-escape" }
+		%highlight { use = "perl-nested-parenthesis" }
+		end = '\)'
+		exit = 2
+		style = "string"
+	}
+	%highlight {
+		start = '\['
+		%highlight { use = "perl-escape" }
+		%highlight { use = "perl-nested-block" }
+		end = '\]'
+		exit = 2
+		style = "string"
+	}
+	%highlight {
+		start = '\<'
+		%highlight { use = "perl-escape" }
+		%highlight { use = "perl-nested-angle" }
+		end = '\>'
+		exit = 2
+		style = "string"
+	}
+	delim-style = "string"
+}
+
+%highlight {
+	start = '\b(?:m|qr)#'
+	%highlight { use = "perl-escape" }
+	end = '#[a-z]*'
+	style = "string"
+}
+
+%highlight {
+	start = '\b(?:m|qr)\b'
+	%highlight { use = "perl-comment" }
+	%highlight {
+		start = "(?<delim>[^({[<\s#])"
+		extract = "delim"
+		%highlight { use = "perl-escape" }
+		end = '(?&delim)[a-z]*'
+		exit = 2
+		style = "string"
+	}
+	%highlight {
+		start = '\{'
+		%highlight { use = "perl-escape" }
+		%highlight { use = "perl-nested-curly" }
+		end = '\}[a-z]*'
+		exit = 2
+		style = "string"
+	}
+	%highlight {
+		start = '\('
+		%highlight { use = "perl-escape" }
+		%highlight { use = "perl-nested-parenthesis" }
+		end = '\)[a-z]*'
+		exit = 2
+		style = "string"
+	}
+	%highlight {
+		start = '\['
+		%highlight { use = "perl-escape" }
+		%highlight { use = "perl-nested-block" }
+		end = '\][a-z]*'
+		exit = 2
+		style = "string"
+	}
+	%highlight {
+		start = '\<'
+		%highlight { use = "perl-escape" }
+		%highlight { use = "perl-nested-angle" }
+		end = '\>[a-z]*'
+		exit = 2
+		style = "string"
+	}
+	delim-style = "string"
+}
+
+
+%highlight {
+	start = "'"
+	%highlight { use = "perl-escape" }
+	end = "'"
+	style = "string"
+}
+
+%highlight {
+	start = '"'
+	%highlight { use = "perl-escape" }
+	end = '"'
+	style = "string"
+}
+
+%highlight {
+	start = '\b(:?s|tr|y)\b'
+	%highlight { use = "perl-comment" }
+	%highlight {
+		start = "(?<delim>[^({[<\s#])"
+		extract = "delim"
+		%highlight { use = "perl-escape" }
+		%on-entry {
+			%highlight { use = "perl-escape" }
+			end = '(?&delim)'
+		}
+		end = '(?&delim)[a-z]*'
+		exit = 2
+		style = "string"
+	}
+
+	%highlight {
+		start = '\{'
+		%on-entry {
+			%highlight { use = "perl-escape" }
+			%highlight { use = "perl-nested-curly" }
+			end = '\}'
+		}
+
+		%highlight { use = "perl-comment" }
+		%highlight { use = "perl-second-quote" }
+		style = "string"
+	}
+
+	%highlight {
+		start = '\('
+		%on-entry {
+			%highlight { use = "perl-escape" }
+			%highlight { use = "perl-nested-parenthesis" }
+			end = '\)'
+		}
+
+		%highlight { use = "perl-comment" }
+		%highlight { use = "perl-second-quote" }
+		style = "string"
+	}
+
+	%highlight {
+		start = '\['
+		%on-entry {
+			%highlight { use = "perl-escape" }
+			%highlight { use = "perl-nested-block" }
+			end = '\]'
+		}
+
+		%highlight { use = "perl-comment" }
+		%highlight { use = "perl-second-quote" }
+		style = "string"
+	}
+
+	%highlight {
+		start = '\<'
+		%on-entry {
+			%highlight { use = "perl-escape" }
+			%highlight { use = "perl-nested-angle" }
+			end = '\>'
+		}
+
+		%highlight { use = "perl-comment" }
+		%highlight { use = "perl-second-quote" }
+		style = "string"
+	}
+
+	delim-style = "keyword"
+}

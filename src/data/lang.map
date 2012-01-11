@@ -44,6 +44,12 @@ format = 1
 	#file-regex = "(?i)\.py$"
 	lang-file = "python3.lang"
 }
+%lang {
+	name = "Perl"
+	name-regex = "^(?i)perl$"
+	file-regex = "(?i)\.pl$"
+	lang-file = "perl.lang"
+}
 
 %lang {
 	name = "T3 Highlight Language Definition"

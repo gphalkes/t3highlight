@@ -242,6 +242,39 @@ key, which specifies how many states to exit. The default for @c end patterns is
 one, and for non-state highlights it is zero. By setting the @c exit key to a
 one for a non-state highlight, you effectively create an extra @c end pattern.
 
+@subsubsection on_entry Pushing Additional States on Matching @c start
+
+To match complex state based elements libt3highlight provides an extra feature.
+When a @c start pattern is matched, additional states can be put on the stack.
+These additional states can then be used to for example allow an item to be
+matched once, without leaving the state that was started. An example of where
+this is useful is the Perl s operator. The s operator allows any character to
+be used as a delimiter, although commonly the '/' character is used. However,
+this character is used three times, to delimit two different strings. For
+example <tt>s/abc/def/</tt>. To match this, an extra state can be used:
+
+@verbatim
+%highlight {
+	start = '\bs(?<delim>.)'
+	extract = "delim"
+	%on-entry {
+		end = '(?&delim)'
+	}
+	end = '(?&delim)'
+	style = 'string'
+}
+@endverbatim
+
+Note that the @c on-entry key is a list of states, which will be pushed onto
+the stack. Thus the last element in the @c on-entry list will be active after the
+@c start pattern matched.
+
+In an @c on-entry element, the @c end, @c highlight, @c style, @c delim-stlye,
+@c exit and @c use entries are valid. Their meaning is the same as for normal
+state definitions. The @c end pattern may be a dynamic pattern, using the named
+sub-pattern that was extracted from the @c start pattern that caused the @c
+on-entry state to be created.
+
 @subsection use_definition Using Predefined Highlights.
 
 It is possible to create named highlights. These must be defined by creating one
