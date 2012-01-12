@@ -55,7 +55,7 @@
 		}
 
 		%highlight {
-			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+|[-+]?\d+)[lL]?\b'
+			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+|\d+)[lL]?\b'
 			style = "number"
 		}
 		%highlight {

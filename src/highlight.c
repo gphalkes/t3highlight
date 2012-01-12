@@ -442,8 +442,8 @@ static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highli
 	size_t i;
 
 	if (highlight <= EXIT_STATE) {
-		int return_state = match->state;
-		while (highlight < EXIT_STATE && return_state > 0)
+		int return_state;
+		for (return_state = match->state; highlight < EXIT_STATE && return_state > 0; highlight++)
 			return_state = match->mapping.data[return_state].parent;
 		return return_state > 0 ? match->mapping.data[return_state].parent : 0;
 	}
