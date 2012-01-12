@@ -1,5 +1,3 @@
-format = 1
-
 %define {
 	perl-comment {
 		%highlight {
@@ -387,28 +385,30 @@ format = 1
 			delim-style = "keyword"
 		}
 	}
-}
 
-%highlight { use = "perl-base" }
-%highlight {
-	start = '^=\w+'
-	end = '^=cut(?:\s.*)'
-	style = "comment-keyword"
-}
-
-%highlight {
-	start = '__(?:END|DATA)__'
-	style = "misc"
-}
-
-%highlight {
-	start = "<<(['""`]?)(?<delim>\w+)\1"
-	extract = "delim"
-	%on-entry {
+	perl {
 		%highlight { use = "perl-base" }
-		end = '$'
-		style = "normal"
+		%highlight {
+			start = '^=\w+'
+			end = '^=cut(?:\s.*)'
+			style = "comment-keyword"
+		}
+
+		%highlight {
+			start = '__(?:END|DATA)__'
+			style = "misc"
+		}
+
+		%highlight {
+			start = "<<(['""`]?)(?<delim>\w+)\1"
+			extract = "delim"
+			%on-entry {
+				%highlight { use = "perl-base" }
+				end = '$'
+				style = "normal"
+			}
+			end = "^(?&delim)$"
+			style = "string"
+		}
 	}
-	end = "^(?&delim)$"
-	style = "string"
 }

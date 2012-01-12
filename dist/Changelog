@@ -3,10 +3,11 @@ Version 0.1.4:
 	- Added dynamic 'end' patterns, which allows the 'end' pattern to be
 	  dependent on the text matched by the 'start' pattern.
 	- Allowed 'end' and other patterns to specify how many states to exit. This
-	  allows multiple 'end'-like patterns and error patterns.
+	  also allows multiple 'end'-like patterns and error patterns.
 	- Added the possibility to push extra states on the stack on matching a
 	  'start' pattern. This allows more state based handling of the input.
 	- Added perl language definition.
+	- Added HTML language definition (HTML 4.0.1/XHTML 1.0).
 	- Improved the handling of here-docs in the shell language.
 
 Version 0.1.3:
