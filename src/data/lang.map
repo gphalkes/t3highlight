@@ -50,6 +50,12 @@ format = 1
 	file-regex = "(?i)\.pl$"
 	lang-file = "perl.lang"
 }
+%lang {
+	name = "(X)HTML"
+	name-regex = "^(?i)(?:\(x\)|x)?html$"
+	file-regex = "(?i)\.(?:x?html|htm)$"
+	lang-file = "html.lang"
+}
 
 %lang {
 	name = "T3 Highlight Language Definition"

@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 EOF
-	pkgconfig libt3config/0.2 LIBT3CONFIG test_link PKGCONFIG_REQUIRES || \
+	pkgconfig libt3config/0.2.4 LIBT3CONFIG test_link PKGCONFIG_REQUIRES || \
 		error "!! Can not find libt3config. libt3config is required to compile libt3highlight."
 
 	PKGCONFIG_DESC="Syntax highlighting library"

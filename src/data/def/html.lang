@@ -1,0 +1,147 @@
+#FIXME: HTML5 changes: http://dev.w3.org/html5/html4-differences/
+#	- new attributes
+#	- new elements
+#	- svg and mathml inlining
+
+%define {
+	html-escape {
+		%highlight {
+			regex = '&(?:\w+|#\d+|#x[\da-fA-F]+);'
+			style = "string-escape"
+		}
+	}
+
+	html-attribute {
+		%highlight {
+			start = '"'
+			%highlight { use = 'html-escape' }
+			end = '"'
+			style = "string"
+		}
+		%highlight {
+			start = "'"
+			%highlight { use = 'html-escape' }
+			end = "'"
+			style = "string"
+		}
+		%highlight {
+			regex = '\b\d+\b'
+			style = "number"
+		}
+		%highlight {
+			regex = '[^\s/>=''"]+|/(?!>)'
+			style = 'error'
+		}
+	}
+
+	html-base {
+		%highlight {
+			regex = '&(?:\w+|#\d+|#x[\da-fA-F]+);'
+			style = "number"
+		}
+
+		%highlight {
+			start = '</(?=[a-zA-Z])'
+			%highlight {
+				regex = '(?<=</)(?i)\b(?:a(?:bbr|cronym|ddress|pplet)?|b(?:' +
+					'do|ig|lockquote|ody|utton)?|caption|center|checkbox|' +
+					'cite|code|colgroup|dd|del|dfn|dir|div|dl|dt|em|fieldset|' +
+					'file|font|form|frameset|h[1-6]|head|hidden|html|i(?:frame|' +
+					'mage|ns)?|kbd|label|legend|li|map|menu|' +
+					'noframes|noscript|object|ol|optgroup|option|p(?:' +
+					'assword|re)?|q|radio|reset|s(?:amp|cript|elect|mall|pan|trike|' +
+					'trong|tyle|ub(?:mit)?|up)?|table|tbody|td|text(?:area)?|tfoot|' +
+					'th(?:ead)?|title|tr|tt|ul?|var)\b'
+				style = 'keyword'
+			}
+			%highlight {
+				regex = '[^\s>]+'
+				style = 'error'
+			}
+			end = '>'
+			delim-style = 'keyword'
+		}
+
+		%highlight {
+			start = '<!--'
+			end = '-->'
+			style = 'comment'
+		}
+
+		%highlight {
+			start = '<!DOCTYPE\b'
+			%highlight {
+				regex = '(?i)\b(?:HTML|PUBLIC)\b'
+				style = 'misc'
+			}
+			%highlight { use = 'html-attribute' }
+			end = '>'
+			style = 'misc'
+		}
+
+		%highlight {
+			start = '<\?xml\b'
+			%highlight {
+				regex = '(?i)\b(?:version|encoding)\b'
+				style = 'misc'
+			}
+			%highlight { use = 'html-attribute' }
+			end = '\?>'
+			style = 'misc'
+		}
+
+		%highlight {
+			start = '<(?=[a-zA-Z])'
+			%highlight {
+				start = '(?<=<)(?i)\b(?:a(?:bbr|cronym|ddress|pplet|rea)?|b(?:ase(?:font)?|' +
+					'do|ig|lockquote|ody|r|utton)?|caption|center|checkbox|' +
+					'cite|code|col(?:group)?|dd|del|dfn|dir|div|dl|dt|em|fieldset|' +
+					'file|font|form|frame(?:set)?|h[1-6]|head|hidden|hr|html|i(?:frame|' +
+					'mage|mg|nput|ns|sindex)?|kbd|label|legend|li(?:nk)?|map|menu|' +
+					'meta|noframes|noscript|object|ol|optgroup|option|p(?:aram|' +
+					'assword|re)?|q|radio|reset|s(?:amp|cript|elect|mall|pan|trike|' +
+					'trong|tyle|ub(?:mit)?|up)?|table|tbody|td|text(?:area)?|tfoot|' +
+					'th(?:ead)?|title|tr|tt|ul?|var)\b'
+				%highlight {
+					regex = '(?i)\b(?:abbr|accept(?:-charset)?|accesskey|action|align|' +
+						'alink|alt|archive|axis|background|bgcolor|border|cellpadding|' +
+						'cellspacing|char(?:off|set)?|checked|cite|class(?:id)?|clear|' +
+						'code(?:base|type)?|color|cols(?:pan)?|compact|content|coords|' +
+						'data|datetime|declare|defer|dir|disabled|enctype|event|face|for|' +
+						'frame(?:border)?|headers|height|href(?:lang)?|hspace|http-equiv|' +
+						'id|ismap|label|lang(?:uage)?|link|longdesc|marginheight|' +
+						'marginwidth|maxlength|media|method|multiple|name|nohref|noresize|' +
+						'noshade|nowrap|object|on(?:blur|change|click|dblclick|focus|' +
+						'key(?:down|press|up)|load|mouse(?:down|move|out|over|up)|reset|' +
+						'select|submit|unload)|profile|prompt|readonly|rel|rev|rows(?:pan)?|' +
+						'rules|scheme|scope|scrolling|selected|shape|size|span|src|standby|' +
+						'start|style|summary|tabindex|target|text|title|type|usemap|valign|' +
+						'value(?:type)?|version|vlink|vspace|width|xml(?:ns|:lang))\b'
+					style = 'variable'
+				}
+				%highlight { use = 'html-attribute' }
+				end = '/?>'
+				exit = 2
+				delim-style = 'keyword'
+			}
+
+			%highlight { use = 'html-attribute' }
+			end = '/?>'
+			delim-style = 'keyword'
+		}
+
+		%highlight {
+			start = '<'
+			%highlight {
+				start = "'"
+				end = "'"
+			}
+			%highlight {
+				start = '"'
+				end = '"'
+			}
+			end = '>'
+			style = 'error'
+		}
+	}
+}
