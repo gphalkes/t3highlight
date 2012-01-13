@@ -156,8 +156,8 @@
 
 		# In the patterns below, we try our best to highlight everything correctly, but
 		# there are some things which are just impossible. The here-docs do not work
-		# inside quoted strings, and multiple here-docs on line are not supported.
-		# Also, we make no distinction in escaping interpretation.
+		# inside quoted strings, and multiple here-docs on line are only partially
+		# supported (see below). Also, we make no distinction in escaping interpretation.
 
 		%highlight {
 			start = '\b(?:q|qq|qx|qw)\b'
@@ -399,11 +399,26 @@
 			style = "misc"
 		}
 
+		# Start a here-doc.
 		%highlight {
 			start = "<<(['""`]?)(?<delim>\w+)\1"
 			extract = "delim"
 			%on-entry {
+				# We still have to finish the line, so we include perl-base, but
+				# without the here-doc and __END__/__DATA__ support.
 				%highlight { use = "perl-base" }
+				# We fake support for multiple here-docs here, by jumping out of this state
+				# when we find another here-doc. That way, the new here-doc will be
+				# matched by the outer state again, thus restarting the search for the
+				# here-doc end marker with the marker of the new here-doc. Assuming that
+				# the previous here-doc does not contain the marker for the new here-doc,
+				# this will actually simulate multiple here-docs on a single line.
+				%highlight {
+					regex = "(?=<<(['""`]?)(?<delim>\w+)\1)"
+					exit = 2
+				}
+				# At the end of the line, we need to start parsing the here-doc.
+				# That is what the enclosing state does.
 				end = '$'
 				style = "normal"
 			}
