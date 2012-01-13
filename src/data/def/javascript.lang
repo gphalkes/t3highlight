@@ -1,0 +1,79 @@
+%define {
+	javascript-string-escape {
+		%highlight {
+			regex = '\\(?:[''"\\bfnrtv]|x[\da-fA-F]{2}|u[\da-fA-F]{4})'
+			style = "string-escape"
+		}
+	}
+
+	javascript {
+		%highlight {
+			start = '/\*'
+			end = '\*/'
+			style = "comment"
+		}
+		%highlight {
+			start = '//'
+			end = '(?<!\\)$'
+			style = "comment"
+		}
+
+		%highlight {
+			start = '(?:\bL)?"'
+			%highlight { use = "javascript-string-escape" }
+			end = '"|(?:\G|[^\\])\K$'
+			style = "string"
+		}
+		%highlight {
+			start = "(?:\bL)?'"
+			%highlight { use = "javascript-string-escape" }
+			end = "'|(?:\G|[^\\])\K$"
+			style = "string"
+		}
+
+		#FIXME: For now we have a hack about where regular expressions are allowed.
+		# This should be fixed to be more accurate.
+		%highlight {
+			start = '[=(:]'
+			%highlight {
+				start = '/(?=[^*\\/[])'
+				%highlight { regex = '\\.' }
+				%highlight {
+					start = '\['
+					%highlight { regex = '\\.' }
+					end = ']'
+				}
+				# The end pattern here is not correct according to the specification.
+				# However, the only characters allowed after a regular expression
+				# literal are ASCII letters anyway, so anything else we just ignore.
+				end = '$|/\w*'
+				style = "string"
+			}
+			end = '(?![\s=(:])'
+		}
+
+		%highlight {
+			regex = '\b(?:break|case|catch|continue|debugger|default|delete|do|else|finally|' +
+				'for|function|if|in(:?stanceof)?|new|return|switch|this|throw|try|typeof|' +
+				'var|void|while|with|null|true|false)\b'
+			style = "keyword"
+		}
+		# Use of the FutureReservedWords should yield an error
+		%highlight {
+			regex = '\b(?:class|const|enum|export|extends|import|super|implements|interface|' +
+				'let|package|private|protected|public|static|yield)\b'
+			style = "error"
+		}
+
+		# Integer constants
+		%highlight {
+			regex = '(?<![^-+\W])(?:0[xX][\da-fA-F]+|\d+)\b'
+			style = "number"
+		}
+		# Floating point constants
+		%highlight {
+			regex = '(?<![^-+\W])(?:\d+\.\d*|\.\d+)(?:[eE][-+]?\d+)?|\d+[eE][-+]?\d+'
+			style = "number"
+		}
+	}
+}

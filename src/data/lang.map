@@ -56,6 +56,12 @@ format = 1
 	file-regex = "(?i)\.(?:x?html|htm)$"
 	lang-file = "html.lang"
 }
+%lang {
+	name = "JavaScript"
+	name-regex = "^(?i)(?:java|ecma)script$"
+	file-regex = "(?i)\.js$"
+	lang-file = "javascript.lang"
+}
 
 %lang {
 	name = "T3 Highlight Language Definition"
