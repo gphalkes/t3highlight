@@ -1,6 +1,8 @@
 #FIXME: HTML5 changes: http://dev.w3.org/html5/html4-differences/
 #	- svg and mathml inlining
 
+%include = "def/javascript.lang"
+
 %define {
 	html-escape {
 		%highlight {
@@ -48,6 +50,39 @@
 		%highlight {
 			regex = '[^\s/>=''"]+|/(?!>)'
 			style = 'error'
+		}
+	}
+
+	html-named-attributes {
+		%highlight {
+			regex = '(?i)\b(?:abbr|accept(?:-charset)?|accesskey|action|align|' +
+				'alink|alt|archive|aria-[-\w]+|async|auto(?:complete|focus)|axis|' +
+				'background|bgcolor|border|cellpadding|cellspacing|char(?:off|' +
+				'set)?|checked|cite|class(?:id)?|clear|code(?:base|type)?|color|' +
+				'cols(?:pan)?|compact|content(?:editable)?|contextmenu|coords|' +
+				'data(?:-[-\w]+)?|datetime|declare|defer|dir(?:name)?|disabled|' +
+				'draggable|dropzone|enctype|event|face|for(?:m(?:action|enctype|' +
+				'method|novalidate|target)?)?|frame(?:border)?|headers|height|' +
+				'hidden|href(?:lang)?|hspace|http-equiv|id|ismap|label|' +
+				'lang(?:uage)?|link|longdesc|manifest|margin(?:height|width)|' +
+				'max(?:length)?|media|method|min|multiple|name|nohref|noresize|' +
+				'noshade|novalidate|nowrap|object|on(?:abort|afterprint|' +
+				'before(?:print|unload)|blur|canplay(?:through)?|change|click|' +
+				'contextmenu|cuechange|dblclick|drag(?:end|enter|leave|over|' +
+				'start)?|drop|durationchange|emptied|ended|error|focus|' +
+				'hashchange|input|invalid|key(?:down|press|up)|load(?:eddata|' +
+				'edmetadata|start)?|message|mouse(?:down|move|out|over|up|' +
+				'wheel)|offline|online|page(?:hide|show)|pause|play(?:ing)?|' +
+				'popstate|progress|ratechange|reset|resize|scroll|seek(?:ed|' +
+				'ing)|select|show|stalled|storage|submit|suspend|timeupdate|' +
+				'unloadvolumechange|waiting)|pattern|placeholder|profile|' +
+				'prompt|readonly|rel|required|rev(?:ersed)?|role|rows(?:pan)?|' +
+				'rules|sandbox|scheme|scoped?|scrolling|seamless|selected|' +
+				'shape|sizes?|span|spellcheck|src(?:doc)?|standby|start|' +
+				'step|style|summary|tabindex|target|text|title|type|usemap|' +
+				'valign|value(?:type)?|version|vlink|vspace|width|wrap|' +
+				'xml(?:ns|:lang|:space|:base))\b'
+			style = 'variable'
 		}
 	}
 
@@ -132,6 +167,19 @@
 		%highlight {
 			start = '<(?=[a-zA-Z])'
 			%highlight {
+				start = '(?<=<)(?i)\bscript\b'
+				%highlight { use = "html-named-attributes" }
+				%highlight { use = "html-attribute" }
+				%highlight {
+					start = '>'
+					%highlight { use = "javascript" }
+					end = "(?i)(?=</script>)"
+					exit = 3
+					delim-style = 'keyword'
+				}
+				delim-style = 'keyword'
+			}
+			%highlight {
 				start = '(?<=<)(?i)\b(?:a(?:bbr|cronym|ddress|pplet|rea|rticle|side|' +
 					'udio)?|b(?:ase(?:font)?|do|di|ig|lockquote|ody|r|utton)?|canvas|' +
 					'caption|center|checkbox|cite|code|col(?:group)?|command|datalist|' +
@@ -141,39 +189,10 @@
 					'sindex)?|kbd|keygen|label|legend|li(?:nk)?|map|mark|menu|meta|' +
 					'meter|nav|noframes|noscript|object|ol|optgroup|option|output|' +
 					'p(?:aram|assword|re|rogress)?|q|radio|reset|rp|rt|ruby|s(?:amp|' +
-					'cript|ection|elect|mall|ource|pan|trike|trong|tyle|ub(?:mit)?|' +
+					'ection|elect|mall|ource|pan|trike|trong|tyle|ub(?:mit)?|' +
 					'ummary|up)?|table|tbody|td|text(?:area)?|tfoot|th(?:ead)?|time|' +
 					'title|tr(?:ack)?|tt|ul?|var|video|wbr)\b'
-				%highlight {
-					regex = '(?i)\b(?:abbr|accept(?:-charset)?|accesskey|action|align|' +
-						'alink|alt|archive|aria-[-\w]+|async|auto(?:complete|focus)|axis|' +
-						'background|bgcolor|border|cellpadding|cellspacing|char(?:off|' +
-						'set)?|checked|cite|class(?:id)?|clear|code(?:base|type)?|color|' +
-						'cols(?:pan)?|compact|content(?:editable)?|contextmenu|coords|' +
-						'data(?:-[-\w]+)?|datetime|declare|defer|dir(?:name)?|disabled|' +
-						'draggable|dropzone|enctype|event|face|for(?:m(?:action|enctype|' +
-						'method|novalidate|target)?)?|frame(?:border)?|headers|height|' +
-						'hidden|href(?:lang)?|hspace|http-equiv|id|ismap|label|' +
-						'lang(?:uage)?|link|longdesc|manifest|margin(?:height|width)|' +
-						'max(?:length)?|media|method|min|multiple|name|nohref|noresize|' +
-						'noshade|novalidate|nowrap|object|on(?:abort|afterprint|' +
-						'before(?:print|unload)|blur|canplay(?:through)?|change|click|' +
-						'contextmenu|cuechange|dblclick|drag(?:end|enter|leave|over|' +
-						'start)?|drop|durationchange|emptied|ended|error|focus|' +
-						'hashchange|input|invalid|key(?:down|press|up)|load(?:eddata|' +
-						'edmetadata|start)?|message|mouse(?:down|move|out|over|up|' +
-						'wheel)|offline|online|page(?:hide|show)|pause|play(?:ing)?|' +
-						'popstate|progress|ratechange|reset|resize|scroll|seek(?:ed|' +
-						'ing)|select|show|stalled|storage|submit|suspend|timeupdate|' +
-						'unloadvolumechange|waiting)|pattern|placeholder|profile|' +
-						'prompt|readonly|rel|required|rev(?:ersed)?|role|rows(?:pan)?|' +
-						'rules|sandbox|scheme|scoped?|scrolling|seamless|selected|' +
-						'shape|sizes?|span|spellcheck|src(?:doc)?|standby|start|' +
-						'step|style|summary|tabindex|target|text|title|type|usemap|' +
-						'valign|value(?:type)?|version|vlink|vspace|width|wrap|' +
-						'xml(?:ns|:lang|:space|:base))\b'
-					style = 'variable'
-				}
+				%highlight { use = "html-named-attributes" }
 				%highlight { use = 'html-attribute' }
 				end = '/?>'
 				exit = 2
