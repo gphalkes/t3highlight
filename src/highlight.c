@@ -571,7 +571,7 @@ static void match_internal(match_context_t *context) {
 			   progress, to ensure that we do not end up in an infinite loop of
 			   state entry and exit, or nesting.
 			*/
-			if (context->state->highlights.data[j].next_state == NO_CHANGE || context->state->highlights.data[j].next_state >= 0)
+			if (context->state->highlights.data[j].next_state >= NO_CHANGE)
 				options |= PCRE_NOTEMPTY;
 		}
 

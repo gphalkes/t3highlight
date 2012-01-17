@@ -163,7 +163,7 @@
 			start = '\b(?:q|qq|qx|qw)\b'
 			%on-entry {
 				%highlight {
-					start = '\G#'
+					start = '#'
 					end = '#'
 					exit = 3
 					style = "string"
@@ -218,7 +218,7 @@
 			start = '\b(?:m|qr)\b'
 			%on-entry {
 				%highlight {
-					start = '\G#'
+					start = '#'
 					end = '#'
 					exit = 3
 					style = "string"
