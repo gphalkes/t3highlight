@@ -61,13 +61,21 @@
 		%highlight {
 			start = '(?i)\b[ub]?r"'
 			%highlight { use = "python-unknown-string-escape" }
-			end = '"|(?:\G|[^\\])\K$'
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = '"|$'
 			style = "string"
 		}
 		%highlight {
 			start = "(?i)\b[ub]?r'"
 			%highlight { use = "python-unknown-string-escape" }
-			end = "'|(?:\G|[^\\])\K$"
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = "'|$"
 			style = "string"
 		}
 
@@ -92,7 +100,11 @@
 			%highlight { use = "python-unicode-string-escape" }
 			%highlight { use = "python-string-escape" }
 			%highlight { use = "python-unknown-string-escape" }
-			end = '"|(?:\G|[^\\])\K$'
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = '"|$'
 			style = "string"
 		}
 		%highlight {
@@ -100,7 +112,11 @@
 			%highlight { use = "python-unicode-string-escape" }
 			%highlight { use = "python-string-escape" }
 			%highlight { use = "python-unknown-string-escape" }
-			end = "'|(?:\G|[^\\])\K$"
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = "'|$"
 			style = "string"
 		}
 
@@ -122,14 +138,22 @@
 			start = '(?i:\bb)?"'
 			%highlight { use = "python-string-escape" }
 			%highlight { use = "python-unknown-string-escape" }
-			end = '"|(?:\G|[^\\])\K$'
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = '"|$'
 			style = "string"
 		}
 		%highlight {
 			start = "(?i:\bb)?'"
 			%highlight { use = "python-string-escape" }
 			%highlight { use = "python-unknown-string-escape" }
-			end = "'|(?:\G|[^\\])\K$"
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = "'|$"
 			style = "string"
 		}
 
@@ -169,13 +193,21 @@
 		%highlight {
 			start = '(?i)\bb?r"'
 			%highlight { use = "python-unknown-string-escape" }
-			end = '"|(?:\G|[^\\])\K$'
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = '"|$'
 			style = "string"
 		}
 		%highlight {
 			start = "(?i)\bb?r'"
 			%highlight { use = "python-unknown-string-escape" }
-			end = "'|(?:\G|[^\\])\K$"
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = "'|$"
 			style = "string"
 		}
 
@@ -197,14 +229,22 @@
 			start = '\b[bB]"'
 			%highlight { use = "python-string-escape" }
 			%highlight { use = "python-unknown-string-escape" }
-			end = '"|(?:\G|[^\\])\K$'
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = '"|$'
 			style = "string"
 		}
 		%highlight {
 			start = "\b[bB]'"
 			%highlight { use = "python-string-escape" }
 			%highlight { use = "python-unknown-string-escape" }
-			end = "'|(?:\G|[^\\])\K$"
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = "'|$"
 			style = "string"
 		}
 
@@ -229,7 +269,11 @@
 			%highlight { use = "python-unicode-string-escape" }
 			%highlight { use = "python-string-escape" }
 			%highlight { use = "python-unknown-string-escape" }
-			end = '"|(?:\G|[^\\])\K$'
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = '"|$'
 			style = "string"
 		}
 		%highlight {
@@ -237,7 +281,11 @@
 			%highlight { use = "python-unicode-string-escape" }
 			%highlight { use = "python-string-escape" }
 			%highlight { use = "python-unknown-string-escape" }
-			end = "'|(?:\G|[^\\])\K$"
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = "'|$"
 			style = "string"
 		}
 

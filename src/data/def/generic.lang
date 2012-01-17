@@ -13,7 +13,11 @@
 	dqs-wce {
 		%highlight {
 			start = '"'
-			end = '"|(?:\G|[^\\])\K$'
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = '"|$'
 			style = "string"
 		}
 	}
@@ -22,7 +26,11 @@
 	sqs-wce {
 		%highlight {
 			start = "'"
-			end = "'|(?:\G|[^\\])\K$"
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = "'|$"
 			style = "string"
 		}
 	}

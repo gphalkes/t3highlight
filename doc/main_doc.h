@@ -92,10 +92,12 @@ following sections the syntax of the highlighting description files is
 detailed. libt3highlight uses the <a href="http://pcre.org">PCRE library</a>
 for regular expression matching. See the documentation of the PCRE library
 (either the local pcrepattern manpage, or the online documentation) for details
-on the regular expression syntax. Furthermore, libt3highlight uses the
-libt3config library for storing the highlighting description files. For the
-most part, the syntax of the files will be self-explanatory, but if you need
-more details, you can find them in <a
+on the regular expression syntax. All features of the PCRE library are available,
+with the exception of the @\\G assertion.
+
+libt3highlight uses the libt3config library for storing the highlighting
+description files. For the most part, the syntax of the files will be
+self-explanatory, but if you need more details, you can find them in <a
 href="http://os.ghalkes.nl/t3/doc/t3config">the libt3config documentation</a>.
 
 @section structure Overall Structure.
@@ -373,7 +375,7 @@ difficulty is that the highlighting should stop at the end of the line if it is
 not preceeded by a backslash.
 
 The first step is to create a state started by a double-quote character. In
-this state we define a highlight to match escape-sequences. Finally we have to
+this state we define a highlight to match escape-sequences. We also have to
 create an end regex. This consists of either a double-quote, or the end of
 line. However, the end of line must only match if the last character before the
 end of the line is not a backslash. But we must also take into account the fact
@@ -381,22 +383,28 @@ that there may not be any character left on the line. We could use a lookbehind
 assertion, but that would also match a backslash we have already matched
 previously using the sub-highlight.
 
-Instead, we use the @\G operator from PCRE, which allows us to match the point
-where the last match finished. So we write our regex to match either @\G
-followed by the end of the line, or any character except for a backslash
-followed by the end of the line. As a finishing touch, we indicate that
-anything before the end of the line should not be reported as part of the
-matching text (using @\K), to ensure that if we later decide to add a @c
-delim-style, it will not style the last character before the end of the line.
+Instead, we create an extra state, started by backslash followed by the end of
+the line. This state is then exited when the new line is started:
 
 @verbatim
 %highlight {
 	start = '"'
 	%highlight {
 		regex = '\\.'
+		style = "string-escape"
 	}
-	end = '"|(?:\G|[^\\])\K$'
+	%highlight {
+		start = '\\$'
+		end = '^'
+	}
+	end = '"|$'
 	style = "string"
 }
+
+@note in versions before 0.1.4 a single pattern could be written using the PCRE
+@\G assertion. However, due to a change in the matching process for optimization
+purposes, this assertion will be true at every point in the input. Therefore, it
+is no longer usable.
+
 @endverbatim
 */

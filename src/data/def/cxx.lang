@@ -23,7 +23,11 @@
 			start = '\b(?:U|u8?)"'
 			%highlight { use = "c-unicode-string-escape" }
 			%highlight { use = "c-string-escape" }
-			end = '"|(?:\G|[^\\])\K$'
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = '"|$'
 			style = "string"
 		}
 		%highlight { use = "c-base" }

@@ -81,7 +81,11 @@
 		%highlight {
 			start = '(?:\bL)?"'
 			%highlight { use = "c-string-escape" }
-			end = '"|(?:\G|[^\\])\K$'
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = '"|$'
 			style = "string"
 		}
 
@@ -89,7 +93,11 @@
 		%highlight {
 			start = "(?:\bL)?'"
 			%highlight { use = "c-string-escape" }
-			end = "'|(?:\G|[^\\])\K$"
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = "'|$"
 			style = "string"
 		}
 

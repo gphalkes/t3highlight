@@ -58,7 +58,6 @@ typedef struct {
 	size_t size;
 	state_t *state;
 	int ovector[30],
-		best_start,
 		best_end,
 		extract_start,
 		extract_end;
@@ -143,7 +142,7 @@ static t3_bool compile_highlight(const char *highlight, full_pcre_t *action, int
 	int error_offset, local_error;
 	const char *study_error;
 
-	if ((action->regex = pcre_compile2(highlight, flags & T3_HIGHLIGHT_UTF8 ? PCRE_UTF8 : 0,
+	if ((action->regex = pcre_compile2(highlight, (flags & T3_HIGHLIGHT_UTF8 ? PCRE_UTF8 : 0) | PCRE_ANCHORED,
 			&local_error, &error_message, &error_offset, NULL)) == NULL)
 	{
 		if (error != NULL)
@@ -576,12 +575,10 @@ static void match_internal(match_context_t *context) {
 		}
 
 		if (pcre_exec(regex->regex, regex->extra,
-				context->line, context->size, context->match->end, options, context->ovector,
-				sizeof(context->ovector) / sizeof(context->ovector[0])) >= 0 && (context->ovector[0] < context->best_start ||
-				(context->ovector[0] == context->best_start && context->ovector[1] > context->best_end)))
+				context->line, context->size, context->match->match_start, options, context->ovector,
+				sizeof(context->ovector) / sizeof(context->ovector[0])) >= 0 && context->ovector[1] > context->best_end)
 		{
 			context->best = &context->state->highlights.data[j];
-			context->best_start = context->ovector[0];
 			context->best_end = context->ovector[1];
 			if (context->best->dynamic != NULL && context->best->dynamic->name != NULL) {
 				int string_number = pcre_get_stringnumber(context->best->regex.regex, context->best->dynamic->name);
@@ -607,31 +604,33 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 	context.size = size;
 	context.state = &match->highlight->states.data[match->mapping.data[match->state].highlight];
 	context.best = NULL;
-	context.best_start = INT_MAX;
+	context.best_end = -1;
 	context.options = match->highlight->flags & T3_HIGHLIGHT_UTF8_NOCHECK ? PCRE_NO_UTF8_CHECK : 0;
 	context.recursion_depth = 0;
 
 	match->start = match->end;
 	match->begin_attribute = context.state->attribute_idx;
 
-	match_internal(&context);
+	#warning FIXME: need to step by UTF-8 codepoint instead of byte
+	for (match->match_start = match->end; match->match_start <= size; match->match_start++) {
+		match_internal(&context);
 
-	if (context.best != NULL) {
-		match->match_start = context.best_start;
-		match->end = context.best_end;
-		match->state = find_state(match, context.best->next_state, context.best->dynamic,
-			line + context.extract_start, context.extract_end - context.extract_start,
-			context.best->dynamic != NULL ? context.best->dynamic->pattern : NULL);
-		if (context.best->dynamic != NULL && context.best->dynamic->on_entry != NULL) {
-			int i;
-			for (i = 0; i < context.best->dynamic->on_entry_cnt; i++) {
-				match->state = find_state(match, context.best->dynamic->on_entry[i].state, context.best->dynamic,
-					line + context.extract_start, context.extract_end - context.extract_start,
-					context.best->dynamic->on_entry[i].end_pattern);
+		if (context.best != NULL) {
+			match->end = context.best_end;
+			match->state = find_state(match, context.best->next_state, context.best->dynamic,
+				line + context.extract_start, context.extract_end - context.extract_start,
+				context.best->dynamic != NULL ? context.best->dynamic->pattern : NULL);
+			if (context.best->dynamic != NULL && context.best->dynamic->on_entry != NULL) {
+				int i;
+				for (i = 0; i < context.best->dynamic->on_entry_cnt; i++) {
+					match->state = find_state(match, context.best->dynamic->on_entry[i].state, context.best->dynamic,
+						line + context.extract_start, context.extract_end - context.extract_start,
+						context.best->dynamic->on_entry[i].end_pattern);
+				}
 			}
+			match->match_attribute = context.best->attribute_idx;
+			return t3_true;
 		}
-		match->match_attribute = context.best->attribute_idx;
-		return t3_true;
 	}
 
 	match->match_start = size;
