@@ -19,5 +19,5 @@ src.util/valgrind.log
 src/highlight_api.h
 src/highlight_errors.h
 
-testsuite/work
-testsuite/testlog*
+testsuite/highlight/work
+testsuite/highlight/testlog*
