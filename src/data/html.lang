@@ -2,4 +2,4 @@ format = 1
 
 %include = "def/html.lang"
 
-%highlight { use = 'html-base' }
+%highlight { use = 'html' }

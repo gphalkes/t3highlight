@@ -1,31 +1,64 @@
 #FIXME: HTML5 changes: http://dev.w3.org/html5/html4-differences/
 #	- svg and mathml inlining
+#	- css inlining
 
 %include = "def/javascript.lang"
 
 %define {
+	html-bare-escape {
+		%highlight {
+			regex = '&(?:A(?:Elig|acute|circ|grave|lpha|ring|tilde|uml)|Beta|C(?:' +
+				'cedil|hi)|D(?:agger|elta)|E(?:TH|acute|circ|grave|psilon|ta|uml)|' +
+				'Gamma|I(?:acute|circ|grave|ota|uml)|Kappa|Lambda|Mu|N(?:tilde|u)|' +
+				'O(?:Elig|acute|circ|grave|m(?:ega|icron)|slash|tilde|uml)|P(?:hi|' +
+				'i|rime|si)|Rho|S(?:caron|igma)|T(?:HORN|au|heta)|U(?:acute|circ|' +
+				'grave|psilon|uml)|Xi|Y(?:acute|uml)|Zeta|a(?:acute|c(?:irc|ute)|' +
+				'elig|grave|l(?:efsym|pha)|mp|n(?:d|g)|ring|symp|tilde|uml)|b(?:dquo|' +
+				'eta|rvbar|ull)|c(?:ap|cedil|e(?:dil|nt)|hi|irc|lubs|o(?:ng|py)|rarr|' +
+				'u(?:p|rren))|d(?:Arr|a(?:gger|rr)|e(?:g|lta)|i(?:ams|vide))|e(?:' +
+				'acute|circ|grave|m(?:pty|sp)|nsp|psilon|quiv|t(?:a|h)|u(?:ml|ro)|' +
+				'xist)|f(?:nof|orall|ra(?:c(?:1(?:2|4)|34)|sl))|g(?:amma|e|t)|h(?:' +
+				'Arr|arr|e(?:arts|llip))|i(?:acute|circ|excl|grave|mage|n(?:fin|t)|' +
+				'ota|quest|sin|uml)|kappa|l(?:Arr|a(?:mbda|ng|quo|rr)|ceil|dquo|e|' +
+				'floor|o(?:wast|z)|rm|s(?:aquo|quo)|t)|m(?:acr|dash|i(?:cro|ddot|' +
+				'nus)|u)|n(?:abla|bsp|dash|e|i|ot(?:in)?|sub|tilde|u)|o(?:acute|circ|' +
+				'elig|grave|line|m(?:ega|icron)|plus|r(?:d(?:f|m))?|slash|ti(?:lde|' +
+				'mes)|uml)|p(?:ar(?:a|t)|er(?:mil|p)|hi|i(?:v)?|lusmn|ound|r(?:ime|' +
+				'o(?:d|p))|si)|quot|r(?:Arr|a(?:dic|ng|quo|rr)|ceil|dquo|e(?:al|g)|' +
+				'floor|ho|lm|s(?:aquo|quo))|s(?:bquo|caron|dot|ect|hy|i(?:gma(?:f)?|' +
+				'm)|pades|u(?:b(?:e)?|m|p(?:1|2|3|e)?)|zlig)|t(?:au|h(?:e(?:re4|' +
+				'ta(?:sym)?)|insp|orn)|i(?:lde|mes)|rade)|u(?:Arr|a(?:cute|rr)|circ|' +
+				'grave|ml|psi(?:h|lon)|uml)|weierp|xi|y(?:acute|en|uml)|z(?:eta|' +
+				'w(?:j|nj)));'
+			style = "number"
+		}
+	}
+
 	html-escape {
 		%highlight {
-			regex = '&(?:(?:AE|ae)lig|[aA]acute|[aA]circ|[aA]grave|[aA]lpha|[aA]ring|' +
-				'[aA]tilde|[aA]uml|[bB]eta|[cC]cedil|[cC]hi|[dD]agger|[dD]elta|ETH|' +
-				'[eE]acute|[eE]circ|[eE]grave|Epsilon|[eE]ta|[eE]uml|[gG]amma|' +
-				'[iI]acute|[iI]circ|[iI]grave|[iI]ota|[iI]uml|[kK]appa|[lL]ambda|' +
-				'[mM]u|[nN]tilde|[nN]u|(?:OE|oe)lig|[oO]acute|[oO]circ|[oO]grave|' +
-				'[oO]mega|[oO]micron|[oO]slash|[oO]tilde|[oO]uml|[pP]hi|Pi|[pP]rime|' +
-				'[pP]si|[rR]ho|[sS]caron|Sigma|THORN|[tT]au|Theta|[uU]acute|' +
-				'[uU]circ|[uU]grave|[u]Upsilon|[uU]uml|[xX]i|[yY]acute|[yY]uml|' +
-				'[zZ]eta|acute|alefsym|amp|an[dg]|asymp|bdquo|brvbar|bull|cap|' +
-				'cedil|cent|circ|clubs|cong|copy|crarr|cup|curren|d[aA]rr|deg|' +
-				'diams|divide|empty|emsp|ensp|epsilon|equiv|eth||euro|exist|fnof|' +
-				'forall|frac12|frac14|frac34|frasl|ge|gt|hArr|harr|hearts|hellip|' +
-				'iexcl|image|infin|int|iquest|isin|kaa|lArr|lang|laquo|larr|lceil|' +
-				'ldquo|le|lfloor|lowast|loz|lrm|lsaquo|lsquo|lt|macr|mdash|micro|' +
-				'middot|minus|nabla|nbsp|ndash|ne|ni|not(?:in)?|nsub|oline|oplus|' +
-				'or(?:df|dm)?|otimes|para|part|permil|perp|piv?|plusmn|pound|pro[dp]|' +
-				'quot|rArr|radic|rang|raquo|rarr|rceil|rdquo|real|reg|rfloor|rlm|' +
-				'rsa?quo|sbquo|sdot|sect|shy|sigmaf?|sim|spades|sube?|sum|' +
-				'sup[123e]?|szlig|there4|theta(?:sym)?|thinsp|thorn|tilde|times|' +
-				'trade|u[aA]rr|uml|upsih|weierp|yen|zwn?j|#\d+|#x[\da-fA-F]+);'
+			regex = '&(?:A(?:Elig|acute|circ|grave|lpha|ring|tilde|uml)|Beta|C(?:' +
+				'cedil|hi)|D(?:agger|elta)|E(?:TH|acute|circ|grave|psilon|ta|uml)|' +
+				'Gamma|I(?:acute|circ|grave|ota|uml)|Kappa|Lambda|Mu|N(?:tilde|u)|' +
+				'O(?:Elig|acute|circ|grave|m(?:ega|icron)|slash|tilde|uml)|P(?:hi|' +
+				'i|rime|si)|Rho|S(?:caron|igma)|T(?:HORN|au|heta)|U(?:acute|circ|' +
+				'grave|psilon|uml)|Xi|Y(?:acute|uml)|Zeta|a(?:acute|c(?:irc|ute)|' +
+				'elig|grave|l(?:efsym|pha)|mp|n(?:d|g)|ring|symp|tilde|uml)|b(?:dquo|' +
+				'eta|rvbar|ull)|c(?:ap|cedil|e(?:dil|nt)|hi|irc|lubs|o(?:ng|py)|rarr|' +
+				'u(?:p|rren))|d(?:Arr|a(?:gger|rr)|e(?:g|lta)|i(?:ams|vide))|e(?:' +
+				'acute|circ|grave|m(?:pty|sp)|nsp|psilon|quiv|t(?:a|h)|u(?:ml|ro)|' +
+				'xist)|f(?:nof|orall|ra(?:c(?:1(?:2|4)|34)|sl))|g(?:amma|e|t)|h(?:' +
+				'Arr|arr|e(?:arts|llip))|i(?:acute|circ|excl|grave|mage|n(?:fin|t)|' +
+				'ota|quest|sin|uml)|kappa|l(?:Arr|a(?:mbda|ng|quo|rr)|ceil|dquo|e|' +
+				'floor|o(?:wast|z)|rm|s(?:aquo|quo)|t)|m(?:acr|dash|i(?:cro|ddot|' +
+				'nus)|u)|n(?:abla|bsp|dash|e|i|ot(?:in)?|sub|tilde|u)|o(?:acute|circ|' +
+				'elig|grave|line|m(?:ega|icron)|plus|r(?:d(?:f|m))?|slash|ti(?:lde|' +
+				'mes)|uml)|p(?:ar(?:a|t)|er(?:mil|p)|hi|i(?:v)?|lusmn|ound|r(?:ime|' +
+				'o(?:d|p))|si)|quot|r(?:Arr|a(?:dic|ng|quo|rr)|ceil|dquo|e(?:al|g)|' +
+				'floor|ho|lm|s(?:aquo|quo))|s(?:bquo|caron|dot|ect|hy|i(?:gma(?:f)?|' +
+				'm)|pades|u(?:b(?:e)?|m|p(?:1|2|3|e)?)|zlig)|t(?:au|h(?:e(?:re4|' +
+				'ta(?:sym)?)|insp|orn)|i(?:lde|mes)|rade)|u(?:Arr|a(?:cute|rr)|circ|' +
+				'grave|ml|psi(?:h|lon)|uml)|weierp|xi|y(?:acute|en|uml)|z(?:eta|' +
+				'w(?:j|nj)));'
 			style = "string-escape"
 		}
 	}
@@ -55,77 +88,54 @@
 
 	html-named-attributes {
 		%highlight {
-			regex = '(?i)(?<![\w-])(?:abbr|accept(?:-charset)?|accesskey|action|align|' +
-				'alink|alt|archive|aria-[-\w]+|async|auto(?:complete|focus)|axis|' +
-				'background|bgcolor|border|cellpadding|cellspacing|char(?:off|' +
-				'set)?|checked|cite|class(?:id)?|clear|code(?:base|type)?|color|' +
-				'cols(?:pan)?|compact|content(?:editable)?|contextmenu|coords|' +
-				'data(?:-[-\w]+)?|datetime|declare|defer|dir(?:name)?|disabled|' +
-				'draggable|dropzone|enctype|event|face|for(?:m(?:action|enctype|' +
-				'method|novalidate|target)?)?|frame(?:border)?|headers|height|' +
-				'hidden|href(?:lang)?|hspace|http-equiv|id|ismap|label|' +
-				'lang(?:uage)?|link|longdesc|manifest|margin(?:height|width)|' +
-				'max(?:length)?|media|method|min|multiple|name|nohref|noresize|' +
-				'noshade|novalidate|nowrap|object|on(?:abort|afterprint|' +
-				'before(?:print|unload)|blur|canplay(?:through)?|change|click|' +
-				'contextmenu|cuechange|dblclick|drag(?:end|enter|leave|over|' +
-				'start)?|drop|durationchange|emptied|ended|error|focus|' +
-				'hashchange|input|invalid|key(?:down|press|up)|load(?:eddata|' +
-				'edmetadata|start)?|message|mouse(?:down|move|out|over|up|' +
-				'wheel)|offline|online|page(?:hide|show)|pause|play(?:ing)?|' +
-				'popstate|progress|ratechange|reset|resize|scroll|seek(?:ed|' +
-				'ing)|select|show|stalled|storage|submit|suspend|timeupdate|' +
-				'unloadvolumechange|waiting)|pattern|placeholder|profile|' +
-				'prompt|readonly|rel|required|rev(?:ersed)?|role|rows(?:pan)?|' +
-				'rules|sandbox|scheme|scoped?|scrolling|seamless|selected|' +
-				'shape|sizes?|span|spellcheck|src(?:doc)?|standby|start|' +
-				'step|style|summary|tabindex|target|text|title|type|usemap|' +
-				'valign|value(?:type)?|version|vlink|vspace|width|wrap|' +
-				'xml(?:ns|:lang|:space|:base))(?![\w-])'
+			regex = '(?i)(?<![\w-])(?:a(?:bbr|c(?:ce(?:pt(?:-charset)?|sskey)|tion)|' +
+				'l(?:i(?:gn|nk)|t)|rchive|sync|uto(?:complete|focus|play)|xis)|b(?:' +
+				'ackground|gcolor|order)|c(?:ell(?:padding|spacing)|h(?:a(?:llenge|' +
+				'r(?:off|set)?)|ecked)|ite|l(?:ass(?:id)?|ear)|o(?:de(?:base|type)?|' +
+				'l(?:or|s(?:pan)?)|mpact|nt(?:e(?:nt(?:editable)?|xtmenu)|rols)|ords)|' +
+				'rossorigin)|d(?:at(?:a|etime)|e(?:clare|f(?:ault|er))|i(?:r(?:name)?|' +
+				'sabled)|r(?:aggable|opzone))|enctype|f(?:ace|or(?:m(?:action|enctype|' +
+				'method|novalidate|target)?)?|rame(?:border)?)|h(?:e(?:aders|ight)|' +
+				'i(?:dden|gh)|ref(?:lang)?|space|ttp-equiv)|i(?:con|d|smap)|k(?:' +
+				'eytype|ind)|l(?:a(?:bel|ng(?:uage)?)|i(?:nk|st)|o(?:ngdesc|op|w))|' +
+				'm(?:a(?:nifest|rgin(?:height|width)|x(?:length)?)|e(?:dia(?:group)?|' +
+				'thod)|in|u(?:ltiple|ted))|n(?:ame|o(?:href|resize|shade|validate|' +
+				'wrap))|o(?:bject|n(?:a(?:bort|fterprint)|b(?:efore(?:print|unload)|' +
+				'lur)|c(?:anplay(?:through)?|hange|lick|ontextmenu|uechange)|d(?:' +
+				'blclick|r(?:ag(?:en(?:d|ter)|leave|over|start)?|op)|urationchange)|' +
+				'e(?:mptied|nded|rror)|focus|hashchange|in(?:put|valid)|key(?:down|' +
+				'press|up)|load(?:ed(?:data|metadata)|start)?|m(?:essage|ouse(?:down|' +
+				'move|o(?:ut|ver)|up|wheel))|o(?:ffline|nline)|p(?:a(?:ge(?:hide|show)|' +
+				'use)|lay(?:ing)?|opstate|rogress)|r(?:atechange|es(?:et|ize))|' +
+				's(?:croll|e(?:ek(?:ed|ing)|lect)|how|t(?:alled|orage)|u(?:bmit|' +
+				'spend))|timeupdate|unload|volumechange|waiting)|p(?:en|timum))|p(?:' +
+				'attern|laceholder|oster|r(?:eload|o(?:file|mpt)))|r(?:adiogroup|e(?:' +
+				'adonly|l|quired|v(?:ersed)?)|ows(?:pan)?|ules)|s(?:andbox|c(?:heme|' +
+				'ope(?:d)?|rolling)|e(?:amless|lected)|hape|ize(?:s)?|p(?:an|ellcheck)|' +
+				'rc(?:doc|lang)?|t(?:a(?:ndby|rt)|ep|yle)|ummary)|t(?:a(?:bindex|rget)|' +
+				'ext|itle|ype(?:mustmatch)?)|usemap|v(?:al(?:ign|ue(?:type)?)|ersion|' +
+				'link|space)|w(?:idth|rap)|xml(?::(?:base|lang|space)|ns)(?![\w-])'
 			style = 'variable'
 		}
 	}
 
-	html-base {
-		%highlight {
-			regex = '&(?:(?:AE|ae)lig|[aA]acute|[aA]circ|[aA]grave|[aA]lpha|[aA]ring|' +
-				'[aA]tilde|[aA]uml|[bB]eta|[cC]cedil|[cC]hi|[dD]agger|[dD]elta|ETH|' +
-				'[eE]acute|[eE]circ|[eE]grave|Epsilon|[eE]ta|[eE]uml|[gG]amma|' +
-				'[iI]acute|[iI]circ|[iI]grave|[iI]ota|[iI]uml|[kK]appa|[lL]ambda|' +
-				'[mM]u|[nN]tilde|[nN]u|(?:OE|oe)lig|[oO]acute|[oO]circ|[oO]grave|' +
-				'[oO]mega|[oO]micron|[oO]slash|[oO]tilde|[oO]uml|[pP]hi|Pi|[pP]rime|' +
-				'[pP]si|[rR]ho|[sS]caron|Sigma|THORN|[tT]au|Theta|[uU]acute|' +
-				'[uU]circ|[uU]grave|[u]Upsilon|[uU]uml|[xX]i|[yY]acute|[yY]uml|' +
-				'[zZ]eta|acute|alefsym|amp|an[dg]|asymp|bdquo|brvbar|bull|cap|' +
-				'cedil|cent|circ|clubs|cong|copy|crarr|cup|curren|d[aA]rr|deg|' +
-				'diams|divide|empty|emsp|ensp|epsilon|equiv|eth||euro|exist|fnof|' +
-				'forall|frac12|frac14|frac34|frasl|ge|gt|hArr|harr|hearts|hellip|' +
-				'iexcl|image|infin|int|iquest|isin|kaa|lArr|lang|laquo|larr|lceil|' +
-				'ldquo|le|lfloor|lowast|loz|lrm|lsaquo|lsquo|lt|macr|mdash|micro|' +
-				'middot|minus|nabla|nbsp|ndash|ne|ni|not(?:in)?|nsub|oline|oplus|' +
-				'or(?:df|dm)?|otimes|para|part|permil|perp|piv?|plusmn|pound|pro[dp]|' +
-				'quot|rArr|radic|rang|raquo|rarr|rceil|rdquo|real|reg|rfloor|rlm|' +
-				'rsa?quo|sbquo|sdot|sect|shy|sigmaf?|sim|spades|sube?|sum|' +
-				'sup[123e]?|szlig|there4|theta(?:sym)?|thinsp|thorn|tilde|times|' +
-				'trade|u[aA]rr|uml|upsih|weierp|yen|zwn?j|#\d+|#x[\da-fA-F]+);'
-			style = "number"
-		}
+	html {
+		%highlight { use = "html-bare-escape" }
 
 		%highlight {
 			start = '</(?=[a-zA-Z])'
 			%highlight {
-				regex = '(?<=</)(?i)(?:a(?:bbr|cronym|ddress|pplet|rticle|' +
-					'side|udio)?|b(?:di|do|ig|lockquote|ody|utton)?|canvas|' +
-					'caption|center|checkbox|cite|code|colgroup|datalist|dd|' +
-					'del|details|dfn|dir|div|dl|dt|em|fieldset|fig(?:caption|' +
-					'ure)|file|font|footer|form|frameset|h[1-6]|head(?:er)?|' +
-					'hgroup|hidden|html|i(?:frame|mage|ns)?|kbd|label|legend|' +
-					'li|map|mark|menu|meter|nav|noframes|noscript|object|ol|' +
-					'optgroup|option|output|p(?:assword|re|rogress)?|q|radio|' +
-					'reset|ruby|rp|rt|s(?:amp|cript|ection|elect|mall|pan|' +
-					'trike|trong|tyle|ub(?:mit)?|ummary|up)?|table|tbody|td|' +
-					'text(?:area)?|tfoot|th(?:ead)?|time|title|tr|tt|ul?|var|' +
-					'video)(?![\w-])'
+				regex = '(?<=</)(?i)(?:a(?:bbr|cronym|ddress|pplet|rticle|side|udio)?|' +
+					'b(?:d(?:i|o)|ig|lockquote|ody|utton)?|c(?:a(?:nvas|ption)|enter|' +
+					'heckbox|ite|o(?:de|lgroup))|d(?:atalist|d|e(?:l|tails)|fn|i(?:' +
+					'r|v)|l|t)|em|f(?:i(?:eldset|g(?:caption|ure)|le)|o(?:nt|oter|' +
+					'rm)|rameset)|h(?:1|2|3|4|5|6|ead(?:er)?|group|idden|tml)|i(?:' +
+					'frame|mage|ns)?|kbd|l(?:abel|egend|i)|m(?:a(?:p|rk)|e(?:nu|' +
+					'ter))|n(?:av|o(?:frames|script))|o(?:bject|l|pt(?:group|ion)|' +
+					'utput)|p(?:assword|r(?:e|ogress))?|q|r(?:adio|eset|p|t|uby)|' +
+					's(?:amp|cript|e(?:ction|lect)|mall|pan|t(?:r(?:ike|ong)|yle)|' +
+					'u(?:b(?:mit)?|mmary|p))?|t(?:able|body|d|ext(?:area)?|foot|' +
+					'h(?:ead)?|i(?:me|tle)|r|t)|u(?:l)?|v(?:ar|ideo))(?![\w-])'
 				style = 'keyword'
 			}
 			%highlight {
@@ -145,7 +155,7 @@
 		%highlight {
 			start = '<!DOCTYPE(?![\w-])'
 			%highlight {
-				regex = '(?i)(?<![\w-])(?:HTML|PUBLIC)(?![\w-])'
+				regex = '(?i)(?<![\w-])(?:HTML|html|PUBLIC)(?![\w-])'
 				style = 'misc'
 			}
 			%highlight { use = 'html-attribute' }
@@ -165,33 +175,34 @@
 		}
 
 		%highlight {
-			start = '<(?=[a-zA-Z])'
+			start = '<(?i)script(?![\w-])'
+			%highlight { use = "html-named-attributes" }
+			%highlight { use = "html-attribute" }
 			%highlight {
-				start = '(?<=<)(?i)script(?![\w-])'
-				%highlight { use = "html-named-attributes" }
-				%highlight { use = "html-attribute" }
-				%highlight {
-					start = '>'
-					%highlight { use = "javascript" }
-					end = "(?i)(?=</script>)"
-					exit = 3
-					delim-style = 'keyword'
-				}
+				start = '>'
+				%highlight { use = "javascript" }
+				end = "(?i)(?=</script>)"
+				exit = 2
 				delim-style = 'keyword'
 			}
+			delim-style = 'keyword'
+		}
+
+		%highlight {
+			start = '<(?=[a-zA-Z])'
 			%highlight {
-				start = '(?<=<)(?i)(?:a(?:bbr|cronym|ddress|pplet|rea|rticle|side|' +
-					'udio)?|b(?:ase(?:font)?|do|di|ig|lockquote|ody|r|utton)?|canvas|' +
-					'caption|center|checkbox|cite|code|col(?:group)?|command|datalist|' +
-					'dd|del|details|dfn|dir|div|dl|dt|em(?:bed)?|fieldset|' +
-					'fig(?:caption|ure)|file|font|footer|form|frame(?:set)?|h[1-6]|' +
-					'head(?:er)?|hgroup|hidden|hr|html|i(?:frame|mage|mg|nput|ns|' +
-					'sindex)?|kbd|keygen|label|legend|li(?:nk)?|map|mark|menu|meta|' +
-					'meter|nav|noframes|noscript|object|ol|optgroup|option|output|' +
-					'p(?:aram|assword|re|rogress)?|q|radio|reset|rp|rt|ruby|s(?:amp|' +
-					'ection|elect|mall|ource|pan|trike|trong|tyle|ub(?:mit)?|' +
-					'ummary|up)?|table|tbody|td|text(?:area)?|tfoot|th(?:ead)?|time|' +
-					'title|tr(?:ack)?|tt|ul?|var|video|wbr)(?![\w-])'
+				start = '(?<=<)(?i)(?:a(?:bbr|cronym|ddress|pplet|r(?:ea|ticle)|' +
+					'side|udio)?|b(?:ase(?:font)?|d(?:i|o)|ig|lockquote|ody|r|utton)?|' +
+					'c(?:a(?:nvas|ption)|enter|ite|o(?:de|l(?:group)?|mmand))|d(?:' +
+					'atalist|d|e(?:l|tails)|fn|i(?:r|v)|l|t)|em(?:bed)?|f(?:i(?:' +
+					'eldset|g(?:caption|ure))|o(?:nt|oter|rm)|rame(?:set)?)|h(?:1|' +
+					'2|3|4|5|6|ead(?:er)?|group|r|tml)|i(?:frame|mg|n(?:put|s)|' +
+					'sindex)?|k(?:bd|eygen)|l(?:abel|egend|i(?:nk)?)|m(?:a(?:p|rk)|' +
+					'e(?:nu|t(?:a|er)))|n(?:av|o(?:frames|script))|o(?:bject|l|pt(?:' +
+					'group|ion)|utput)|p(?:aram|r(?:e|ogress))?|q|r(?:p|t|uby)|s(?:' +
+					'amp|e(?:ction|lect)|mall|ource|pan|t(?:r(?:ike|ong)|yle)|u(?:' +
+					'b|mmary|p))?|t(?:able|body|d|extarea|foot|h(?:ead)?|i(?:me|' +
+					'tle)|r(?:ack)?|t)|u(?:l)?|v(?:ar|ideo)|wbr)(?![\w-])'
 				%highlight { use = "html-named-attributes" }
 				%highlight { use = 'html-attribute' }
 				end = '/?>'
