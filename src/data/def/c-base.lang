@@ -101,6 +101,19 @@
 			style = "string"
 		}
 
+		# Unicode string literals
+		%highlight {
+			start = '\b(?:U|u8?)"'
+			%highlight { use = "c-unicode-string-escape" }
+			%highlight { use = "c-string-escape" }
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = '"|$'
+			style = "string"
+		}
+
 		# #include directives
 		%highlight {
 			start = '^\s*#\s*include'

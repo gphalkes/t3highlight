@@ -139,7 +139,7 @@
 		# Here begins the Perl quoting insanity. Perl makes life extremely difficult for
 		# highlighters, because any character is allowed as a quote character, and there
 		# are also four types of bracketing quotes ( () {} [] and <> ). And as if that
-		# wasn't difficult enough to handle, for the s and tr/y operators which have to
+		# wasn't difficult enough to handle, for the s and tr/y operators which have two
 		# quoted strings, the second string is quoted independently if the first string
 		# uses a bracketing quote. Also, in some variants the full range of escape
 		# sequences is available, while in others only \\ and \<closing quote character>

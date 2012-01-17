@@ -19,17 +19,6 @@
 
 	cxx {
 		%highlight { use = "cxx-keywords" }
-		%highlight {
-			start = '\b(?:U|u8?)"'
-			%highlight { use = "c-unicode-string-escape" }
-			%highlight { use = "c-string-escape" }
-			%highlight {
-				start = '\\$'
-				end = '^'
-			}
-			end = '"|$'
-			style = "string"
-		}
 		%highlight { use = "c-base" }
 	}
 }
