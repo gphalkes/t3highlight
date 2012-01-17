@@ -1,4 +1,4 @@
-Version 0.1.4:
+Version 0.2.0:
 	New features:
 	- Added dynamic 'end' patterns, which allows the 'end' pattern to be
 	  dependent on the text matched by the 'start' pattern.
@@ -14,6 +14,9 @@ Version 0.1.4:
 	  is therefore rendered useless.
 	- Implemented internal UTF-8 validity check, such that pcre_exec can be
 	  called with PCRE_NO_UTF8_CHECK. This greatly increases performance.
+
+	Bug fixes:
+	- Don't use \b to determine word boundaries when - is also a word character.
 
 Version 0.1.3:
 	Bug fixes:

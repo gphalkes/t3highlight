@@ -55,7 +55,7 @@
 
 	html-named-attributes {
 		%highlight {
-			regex = '(?i)\b(?:abbr|accept(?:-charset)?|accesskey|action|align|' +
+			regex = '(?i)(?<![\w-])(?:abbr|accept(?:-charset)?|accesskey|action|align|' +
 				'alink|alt|archive|aria-[-\w]+|async|auto(?:complete|focus)|axis|' +
 				'background|bgcolor|border|cellpadding|cellspacing|char(?:off|' +
 				'set)?|checked|cite|class(?:id)?|clear|code(?:base|type)?|color|' +
@@ -81,7 +81,7 @@
 				'shape|sizes?|span|spellcheck|src(?:doc)?|standby|start|' +
 				'step|style|summary|tabindex|target|text|title|type|usemap|' +
 				'valign|value(?:type)?|version|vlink|vspace|width|wrap|' +
-				'xml(?:ns|:lang|:space|:base))\b'
+				'xml(?:ns|:lang|:space|:base))(?![\w-])'
 			style = 'variable'
 		}
 	}
@@ -114,7 +114,7 @@
 		%highlight {
 			start = '</(?=[a-zA-Z])'
 			%highlight {
-				regex = '(?<=</)(?i)\b(?:a(?:bbr|cronym|ddress|pplet|rticle|' +
+				regex = '(?<=</)(?i)(?:a(?:bbr|cronym|ddress|pplet|rticle|' +
 					'side|udio)?|b(?:di|do|ig|lockquote|ody|utton)?|canvas|' +
 					'caption|center|checkbox|cite|code|colgroup|datalist|dd|' +
 					'del|details|dfn|dir|div|dl|dt|em|fieldset|fig(?:caption|' +
@@ -125,7 +125,7 @@
 					'reset|ruby|rp|rt|s(?:amp|cript|ection|elect|mall|pan|' +
 					'trike|trong|tyle|ub(?:mit)?|ummary|up)?|table|tbody|td|' +
 					'text(?:area)?|tfoot|th(?:ead)?|time|title|tr|tt|ul?|var|' +
-					'video)\b'
+					'video)(?![\w-])'
 				style = 'keyword'
 			}
 			%highlight {
@@ -143,9 +143,9 @@
 		}
 
 		%highlight {
-			start = '<!DOCTYPE\b'
+			start = '<!DOCTYPE(?![\w-])'
 			%highlight {
-				regex = '(?i)\b(?:HTML|PUBLIC)\b'
+				regex = '(?i)(?<![\w-])(?:HTML|PUBLIC)(?![\w-])'
 				style = 'misc'
 			}
 			%highlight { use = 'html-attribute' }
@@ -154,9 +154,9 @@
 		}
 
 		%highlight {
-			start = '<\?xml\b'
+			start = '<\?xml(?![\w-])'
 			%highlight {
-				regex = '(?i)\b(?:version|encoding)\b'
+				regex = '(?i)(?<![\w-])(?:version|encoding)(?![\w-])'
 				style = 'misc'
 			}
 			%highlight { use = 'html-attribute' }
@@ -167,7 +167,7 @@
 		%highlight {
 			start = '<(?=[a-zA-Z])'
 			%highlight {
-				start = '(?<=<)(?i)\bscript\b'
+				start = '(?<=<)(?i)script(?![\w-])'
 				%highlight { use = "html-named-attributes" }
 				%highlight { use = "html-attribute" }
 				%highlight {
@@ -180,7 +180,7 @@
 				delim-style = 'keyword'
 			}
 			%highlight {
-				start = '(?<=<)(?i)\b(?:a(?:bbr|cronym|ddress|pplet|rea|rticle|side|' +
+				start = '(?<=<)(?i)(?:a(?:bbr|cronym|ddress|pplet|rea|rticle|side|' +
 					'udio)?|b(?:ase(?:font)?|do|di|ig|lockquote|ody|r|utton)?|canvas|' +
 					'caption|center|checkbox|cite|code|col(?:group)?|command|datalist|' +
 					'dd|del|details|dfn|dir|div|dl|dt|em(?:bed)?|fieldset|' +
@@ -191,7 +191,7 @@
 					'p(?:aram|assword|re|rogress)?|q|radio|reset|rp|rt|ruby|s(?:amp|' +
 					'ection|elect|mall|ource|pan|trike|trong|tyle|ub(?:mit)?|' +
 					'ummary|up)?|table|tbody|td|text(?:area)?|tfoot|th(?:ead)?|time|' +
-					'title|tr(?:ack)?|tt|ul?|var|video|wbr)\b'
+					'title|tr(?:ack)?|tt|ul?|var|video|wbr)(?![\w-])'
 				%highlight { use = "html-named-attributes" }
 				%highlight { use = 'html-attribute' }
 				end = '/?>'

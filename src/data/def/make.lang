@@ -5,7 +5,7 @@
 				'sort|word|wordlist|words|firstword|lastword|dir|notdir|suffix|' +
 				'basename|addsuffix|addprefix|join|wildcard|realpath|abspath|' +
 				'if|or|and|foreach|call|value|eval|origin|flavor|error|warning|' +
-				'info)\b'
+				'info)(?![\w-])'
 			style = "misc"
 		}
 	}

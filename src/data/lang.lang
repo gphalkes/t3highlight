@@ -4,8 +4,8 @@ format = 1
 %highlight { use = "hash-comment" }
 
 %highlight {
-	regex = '(?<!\w)(?:%include|%highlight|%define|start|end|regex|use|style|' +
-		'delim-style|nested|%on-entry|exit|extract|true|false|yes|no|format|name)'
+	regex = '(?<![\w-])(?:%include|%highlight|%define|start|end|regex|use|style|' +
+		'delim-style|nested|%on-entry|exit|extract|true|false|yes|no|format|name)(?![\w-])'
 	style = "keyword"
 }
 %highlight {
