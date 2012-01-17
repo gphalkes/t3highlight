@@ -197,6 +197,12 @@ T3_HIGHLIGHT_API const char *t3_highlight_get_langfile(const t3_highlight_t *hig
 
     Note that both the pre-match section from 'begin' to 'start', and the match
     section from 'start' to 'end' may be empty.
+
+    @note when using a ::t3_highlight_t created using the T3_HIGHLIGHT_UTF8 flag,
+    the first call to ::t3_highlight_match will check the passed string for
+	UTF-8 validity (see ::t3_highlight_utf8check for details). If the test fails,
+    ::t3_false is returned and the @c start, @c match_start and @c end members
+    of the ::t3_highlight_match_t are set to -1.
 */
 T3_HIGHLIGHT_API t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *str, size_t size);
 
@@ -250,6 +256,19 @@ T3_HIGHLIGHT_API const char *t3_highlight_strerror(int error);
     differently depending on the available features.
 */
 T3_HIGHLIGHT_API long t3_highlight_get_version(void);
+
+/** Check that a string is valid UTF8.
+    Passing an invalid UTF-8 string to libt3highlight, when using a ::t3_highlight_t
+    created with the T3_HIGHLIGHT_UTF8 and T3_HIGHLIGHT_UTF8_NOCHECK flags, may
+    cause undefined behaviour. This function can be used to check the validity
+    of a string. It is used internally when only the T3_HIGHLIGHT_UTF8 flag is
+    passed.
+
+    UTF-8 validity is defined as a string consisting of UTF-8 encoded codepoints
+    up to and including U+10FFFF, with the exception of the range U+D800-U+DFFFF
+    (inclusive).
+*/
+T3_HIGHLIGHT_API t3_bool t3_highlight_utf8check(const char *line, size_t size);
 
 #ifdef __cplusplus
 } /* extern "C" */

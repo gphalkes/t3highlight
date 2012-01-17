@@ -224,7 +224,6 @@ static void highlight_file(const char *name, t3_highlight_t *highlight) {
 		fatal("Can't open '%s': %s\n", name, strerror(errno));
 
 	while ((chars_read = getline(&line, &n, input)) > 0) {
-		#warning FIXME: perform UTF-8 validity check.
 		if (line[chars_read - 1] == '\n')
 			chars_read--;
 
@@ -271,13 +270,13 @@ int main(int argc, char *argv[]) {
 	if (option_language == NULL && option_language_file == NULL && option_input == NULL) {
 		fatal("-l/--language or --language-file required for reading from standard input\n");
 	} else if (option_language_file != NULL) {
-		if ((highlight = t3_highlight_load(option_language_file, map_style, styles, T3_HIGHLIGHT_UTF8 | T3_HIGHLIGHT_UTF8_NOCHECK, &error)) == NULL)
+		if ((highlight = t3_highlight_load(option_language_file, map_style, styles, T3_HIGHLIGHT_UTF8, &error)) == NULL)
 			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
 	} else if (option_language != NULL) {
-		if ((highlight = t3_highlight_load_by_langname(option_language, map_style, styles, T3_HIGHLIGHT_UTF8 | T3_HIGHLIGHT_UTF8_NOCHECK, &error)) == NULL)
+		if ((highlight = t3_highlight_load_by_langname(option_language, map_style, styles, T3_HIGHLIGHT_UTF8, &error)) == NULL)
 			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
 	} else {
-		if ((highlight = t3_highlight_load_by_filename(option_input, map_style, styles, T3_HIGHLIGHT_UTF8 | T3_HIGHLIGHT_UTF8_NOCHECK, &error)) == NULL)
+		if ((highlight = t3_highlight_load_by_filename(option_input, map_style, styles, T3_HIGHLIGHT_UTF8, &error)) == NULL)
 			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
 	}
 

@@ -36,6 +36,7 @@ struct t3_highlight_match_t {
 	int state,
 		begin_attribute,
 		match_attribute;
+	t3_bool utf8_checked;
 };
 
 typedef struct {
@@ -62,7 +63,6 @@ typedef struct {
 		extract_start,
 		extract_end;
 	highlight_t *best;
-	int options;
 	int recursion_depth;
 } match_context_t;
 
@@ -545,7 +545,7 @@ static void match_internal(match_context_t *context) {
 
 	for (j = 0; j < context->state->highlights.used; j++) {
 		full_pcre_t *regex;
-		int options = context->options;
+		int options = PCRE_NO_UTF8_CHECK;
 
 		/* If the regex member == NULL, this highlight is either a pointer to
 		   another state which we should search here ("use"), or it is an end
@@ -597,22 +597,48 @@ static void match_internal(match_context_t *context) {
 	context->recursion_depth--;
 }
 
+static int step_utf8(char first) {
+	switch (first & 0xF0) {
+		case 0xF0:
+			return 4;
+		case 0xE0:
+			return 3;
+		case 0xC0:
+		case 0xD0:
+			return 2;
+		default:
+			return 1;
+	}
+}
+
 t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t size) {
 	match_context_t context;
+
+	if ((match->highlight->flags & (T3_HIGHLIGHT_UTF8 | T3_HIGHLIGHT_UTF8_NOCHECK)) == T3_HIGHLIGHT_UTF8 && !match->utf8_checked) {
+		if (!t3_highlight_utf8check(line, size)) {
+			match->state = 0;
+			match->begin_attribute = 0;
+			match->match_attribute = 0;
+			match->start = match->match_start = match->end = -1;
+			return t3_false;
+		}
+		match->utf8_checked = t3_true;
+	}
+
 	context.match = match;
 	context.line = line;
 	context.size = size;
 	context.state = &match->highlight->states.data[match->mapping.data[match->state].highlight];
 	context.best = NULL;
 	context.best_end = -1;
-	context.options = match->highlight->flags & T3_HIGHLIGHT_UTF8_NOCHECK ? PCRE_NO_UTF8_CHECK : 0;
 	context.recursion_depth = 0;
 
 	match->start = match->end;
 	match->begin_attribute = context.state->attribute_idx;
 
-	#warning FIXME: need to step by UTF-8 codepoint instead of byte
-	for (match->match_start = match->end; match->match_start <= size; match->match_start++) {
+	for (match->match_start = match->end; match->match_start <= size; match->match_start +=
+			(match->highlight->flags & T3_HIGHLIGHT_UTF8) ? step_utf8(line[match->match_start]) : 1)
+	{
 		match_internal(&context);
 
 		if (context.best != NULL) {
@@ -645,6 +671,7 @@ void t3_highlight_reset(t3_highlight_match_t *match, int state) {
 	match->begin_attribute = 0;
 	match->match_attribute = 0;
 	match->state = state;
+	match->utf8_checked = t3_false;
 }
 
 t3_highlight_match_t *t3_highlight_new_match(const t3_highlight_t *highlight) {
@@ -707,6 +734,7 @@ int t3_highlight_get_state(t3_highlight_match_t *match) {
 
 int t3_highlight_next_line(t3_highlight_match_t *match) {
 	match->end = 0;
+	match->utf8_checked = t3_false;
 	return match->state;
 }
 
