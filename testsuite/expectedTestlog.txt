@@ -1,4 +1,5 @@
 ==== Testcase ../tests/clang ====
+==== Testcase ../tests/c-string-unterminated ====
 ==== Testcase ../tests/double_recursion ====
 ==== Testcase ../tests/invalid_use ====
 ==== Testcase ../tests/nested ====

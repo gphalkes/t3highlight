@@ -104,14 +104,22 @@ format = 1
 		%highlight {
 			start = '(?:\bL)?"'
 			%highlight { use = "string-escape" }
-			end = '"|(?:\G|[^\\])\K$'
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = '"|$'
 			style = "string"
 		}
 
 		%highlight {
 			start = "(?:\bL)?'"
 			%highlight { use = "string-escape" }
-			end = "'|(?:\G|[^\\])\K$"
+			%highlight {
+				start = '\\$'
+				end = '^'
+			}
+			end = "'|$"
 			style = "string"
 		}
 
@@ -121,7 +129,11 @@ format = 1
 			%highlight { use = "cxx-comment" }
 			%highlight {
 				start = '"'
-				end = '"|(?<!\\)$'
+				%highlight {
+					start = '\\$'
+					end = '^'
+				}
+				end = '"|$'
 				style = "string"
 			}
 			%highlight {
@@ -619,18 +631,18 @@ long t3_highlight_get_version(void) {
 <comment>   You should have received a copy of the GNU General Public License</comment>
 <comment>   along with this program.  If not, see <http://www.gnu.org/licenses/>.</comment>
 <comment>*/</comment>
-<misc>#include</misc> <string></<string><string>stdlib.h/<string><string>>/<string>
-<misc>#include</misc> <string></<string><string>string.h/<string><string>>/<string>
-<misc>#include</misc> <string></<string><string>pcre.h/<string><string>>/<string>
-<misc>#include</misc> <string></<string><string>errno.h/<string><string>>/<string>
+<misc>#include</misc> <string><</string><string>stdlib.h</string><string>></string>
+<misc>#include</misc> <string><</string><string>string.h</string><string>></string>
+<misc>#include</misc> <string><</string><string>pcre.h</string><string>></string>
+<misc>#include</misc> <string><</string><string>errno.h</string><string>></string>
 
-<misc>#include</misc> <string>"/<string><string>highlight.h/<string><string>"/<string>
-<misc>#include</misc> <string>"/<string><string>highlight_errors.h/<string><string>"/<string>
-<misc>#include</misc> <string>"/<string><string>internal.h/<string><string>"/<string>
+<misc>#include</misc> <string>"</string><string>highlight.h</string><string>"</string>
+<misc>#include</misc> <string>"</string><string>highlight_errors.h</string><string>"</string>
+<misc>#include</misc> <string>"</string><string>internal.h</string><string>"</string>
 
 <misc>#ifdef</misc> USE_GETTEXT
-<misc>#include</misc> <string></<string><string>libintl.h/<string><string>>/<string>
-<misc>#define</misc> _(x) dgettext(<string>"/<string><string>LIBT3/<string><string>"/<string>, (x))
+<misc>#include</misc> <string><</string><string>libintl.h</string><string>></string>
+<misc>#define</misc> _(x) dgettext(<string>"</string><string>LIBT3</string><string>"</string>, (x))
 <misc>#else</misc>
 <misc>#define</misc> _(x) (x)
 <misc>#endif</misc>
@@ -649,7 +661,7 @@ long t3_highlight_get_version(void) {
 <keyword>static</keyword> <keyword>const</keyword> state_t null_state = { { NULL, <number>0</number>, <number>0</number> }, <number>0</number> };
 
 <keyword>static</keyword> <keyword>const</keyword> <keyword>char</keyword> syntax_schema[] = {
-<misc>#include</misc> <string>"/<string><string>syntax.bytes/<string><string>"/<string>
+<misc>#include</misc> <string>"</string><string>syntax.bytes</string><string>"</string>
 };
 
 <keyword>typedef</keyword> <keyword>struct</keyword> {
@@ -693,7 +705,7 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, <keyword>int</keyword> (*m
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 	VECTOR_INIT(result->states);
 
-	patterns = t3_config_get(syntax, <string>"/<string><string>pattern/<string><string>"/<string>);
+	patterns = t3_config_get(syntax, <string>"</string><string>pattern</string><string>"</string>);
 
 	<keyword>if</keyword> (!VECTOR_RESERVE(result->states))
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
@@ -743,7 +755,7 @@ return_error:
 }
 
 <keyword>static</keyword> t3_bool match_name(<keyword>const</keyword> t3_config_t *config, <keyword>void</keyword> *data) {
-	<keyword>return</keyword> strcmp(t3_config_get_string(t3_config_get(config, <string>"/<string><string>name/<string><string>"/<string>)), data) == <number>0</number>;
+	<keyword>return</keyword> strcmp(t3_config_get_string(t3_config_get(config, <string>"</string><string>name</string><string>"</string>)), data) == <number>0</number>;
 }
 
 <keyword>static</keyword> t3_bool add_delim_pattern(pattern_context_t *context, t3_config_t *regex, <keyword>int</keyword> next_state, <keyword>const</keyword> pattern_t *action, <keyword>int</keyword> *error) {
@@ -759,7 +771,7 @@ return_error:
 
 	<comment>/*</comment><comment> Find the pattern entry, starting after the end entry. If it does not exist,</comment>
 <comment>	   the list of patterns was specified first. </comment><comment>*/</comment>
-	<keyword>for</keyword> ( ; regex != NULL && strcmp(t3_config_get_name(regex), <string>"/<string><string>pattern/<string><string>"/<string>) != <number>0</number>; regex = t3_config_get_next(regex)) {}
+	<keyword>for</keyword> ( ; regex != NULL && strcmp(t3_config_get_name(regex), <string>"</string><string>pattern</string><string>"</string>) != <number>0</number>; regex = t3_config_get_next(regex)) {}
 
 	<keyword>if</keyword> (regex == NULL && context->highlight->states.data[action->next_state].patterns.used > <number>0</number>) {
 		VECTOR_LAST(context->highlight->states.data[action->next_state].patterns) = nest_action;
@@ -780,20 +792,20 @@ return_error:
 	<keyword>int</keyword> style_attr_idx;
 
 	<keyword>for</keyword> (patterns = t3_config_get(patterns, NULL); patterns != NULL; patterns = t3_config_get_next(patterns)) {
-		style_attr_idx = (style = t3_config_get(patterns, <string>"/<string><string>style/<string><string>"/<string>)) == NULL ?
+		style_attr_idx = (style = t3_config_get(patterns, <string>"</string><string>style</string><string>"</string>)) == NULL ?
 			context->highlight->states.data[idx].attribute_idx :
 			context->map_style(context->map_style_data, t3_config_get_string(style));
 
-		<keyword>if</keyword> ((regex = t3_config_get(patterns, <string>"/<string><string>regex/<string><string>"/<string>)) != NULL) {
+		<keyword>if</keyword> ((regex = t3_config_get(patterns, <string>"</string><string>regex</string><string>"</string>)) != NULL) {
 			<keyword>if</keyword> (!compile_pattern(regex, &action, context->flags, error))
 				<keyword>return</keyword> t3_false;
 
 			action.attribute_idx = style_attr_idx;
 			action.next_state = NO_CHANGE;
-		} <keyword>else</keyword> <keyword>if</keyword> ((regex = t3_config_get(patterns, <string>"/<string><string>start/<string><string>"/<string>)) != NULL) {
+		} <keyword>else</keyword> <keyword>if</keyword> ((regex = t3_config_get(patterns, <string>"</string><string>start</string><string>"</string>)) != NULL) {
 			t3_config_t *sub_patterns;
 
-			action.attribute_idx = (style = t3_config_get(patterns, <string>"/<string><string>delim-style/<string><string>"/<string>)) == NULL ?
+			action.attribute_idx = (style = t3_config_get(patterns, <string>"</string><string>delim-style</string><string>"</string>)) == NULL ?
 				style_attr_idx : context->map_style(context->map_style_data, t3_config_get_string(style));
 
 			<keyword>if</keyword> (!compile_pattern(regex, &action, context->flags, error))
@@ -807,7 +819,7 @@ return_error:
 			VECTOR_LAST(context->highlight->states).attribute_idx = style_attr_idx;
 
 			<comment>/*</comment><comment> Add sub-patterns to the new state, if they are specified. </comment><comment>*/</comment>
-			<keyword>if</keyword> ((sub_patterns = t3_config_get(patterns, <string>"/<string><string>pattern/<string><string>"/<string>)) != NULL) {
+			<keyword>if</keyword> ((sub_patterns = t3_config_get(patterns, <string>"</string><string>pattern</string><string>"</string>)) != NULL) {
 				<keyword>if</keyword> (!init_state(context, sub_patterns, action.next_state, error))
 					<keyword>return</keyword> t3_false;
 			}
@@ -815,15 +827,15 @@ return_error:
 			<comment>/*</comment><comment> If the pattern specifies an end regex, create an extra action for that and paste that</comment>
 <comment>			   to in the list of sub-patterns. Depending on whether end is specified before or after</comment>
 <comment>			   the pattern list, it will be pre- or appended. </comment><comment>*/</comment>
-			<keyword>if</keyword> ((regex = t3_config_get(patterns, <string>"/<string><string>end/<string><string>"/<string>)) != NULL)
+			<keyword>if</keyword> ((regex = t3_config_get(patterns, <string>"</string><string>end</string><string>"</string>)) != NULL)
 				add_delim_pattern(context, regex, EXIT_STATE, &action, error);
 
-			<keyword>if</keyword> (t3_config_get_bool(t3_config_get(patterns, <string>"/<string><string>nested/<string><string>"/<string>)))
-				add_delim_pattern(context, t3_config_get(patterns, <string>"/<string><string>start/<string><string>"/<string>), action.next_state, &action, error);
-		} <keyword>else</keyword> <keyword>if</keyword> ((use = t3_config_get(patterns, <string>"/<string><string>use/<string><string>"/<string>)) != NULL) {
+			<keyword>if</keyword> (t3_config_get_bool(t3_config_get(patterns, <string>"</string><string>nested</string><string>"</string>)))
+				add_delim_pattern(context, t3_config_get(patterns, <string>"</string><string>start</string><string>"</string>), action.next_state, &action, error);
+		} <keyword>else</keyword> <keyword>if</keyword> ((use = t3_config_get(patterns, <string>"</string><string>use</string><string>"</string>)) != NULL) {
 			size_t i;
 
-			t3_config_t *definition = t3_config_find(t3_config_get(context->syntax, <string>"/<string><string>define/<string><string>"/<string>),
+			t3_config_t *definition = t3_config_find(t3_config_get(context->syntax, <string>"</string><string>define</string><string>"</string>),
 				match_name, (<keyword>char</keyword> *) t3_config_get_string(use), NULL);
 
 			<keyword>if</keyword> (definition == NULL)
@@ -838,7 +850,7 @@ return_error:
 				RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 			VECTOR_LAST(context->use_stack) = t3_config_get_string(use);
 
-			<keyword>if</keyword> (!init_state(context, t3_config_get(definition, <string>"/<string><string>pattern/<string><string>"/<string>), idx, error))
+			<keyword>if</keyword> (!init_state(context, t3_config_get(definition, <string>"</string><string>pattern</string><string>"</string>), idx, error))
 				<keyword>return</keyword> t3_false;
 
 			<comment>/*</comment><comment> Pop name of latest use from stack. </comment><comment>*/</comment>
@@ -1035,15 +1047,15 @@ size_t t3_highlight_get_end(t3_highlight_match_t *match) {
 				<keyword>return</keyword> t3_config_strerror(error);
 			<keyword>return</keyword> t3_highlight_strerror_base(error);
 		<keyword>case</keyword> T3_ERR_INVALID_FORMAT:
-			<keyword>return</keyword> _(<string>"/<string><string>invalid file format/<string><string>"/<string>);
+			<keyword>return</keyword> _(<string>"</string><string>invalid file format</string><string>"</string>);
 		<keyword>case</keyword> T3_ERR_INVALID_REGEX:
-			<keyword>return</keyword> _(<string>"/<string><string>invalid regular expression/<string><string>"/<string>);
+			<keyword>return</keyword> _(<string>"</string><string>invalid regular expression</string><string>"</string>);
 		<keyword>case</keyword> T3_ERR_NO_SYNTAX:
-			<keyword>return</keyword> _(<string>"/<string><string>could not locate appropriate highlighting patterns/<string><string>"/<string>);
+			<keyword>return</keyword> _(<string>"</string><string>could not locate appropriate highlighting patterns</string><string>"</string>);
 		<keyword>case</keyword> T3_ERR_UNDEFINED_USE:
-			<keyword>return</keyword> _(<string>"/<string><string>'use' specifies undefined pattern/<string><string>"/<string>);
+			<keyword>return</keyword> _(<string>"</string><string>'use' specifies undefined pattern</string><string>"</string>);
 		<keyword>case</keyword> T3_ERR_RECURSIVE_DEFINITION:
-			<keyword>return</keyword> _(<string>"/<string><string>recursive pattern definition/<string><string>"/<string>);
+			<keyword>return</keyword> _(<string>"</string><string>recursive pattern definition</string><string>"</string>);
 	}
 }
 

@@ -598,13 +598,13 @@ static void match_internal(match_context_t *context) {
 }
 
 static int step_utf8(char first) {
-	switch (first & 0xF0) {
-		case 0xF0:
+	switch (first & 0xf0) {
+		case 0xf0:
 			return 4;
-		case 0xE0:
+		case 0xe0:
 			return 3;
-		case 0xC0:
-		case 0xD0:
+		case 0xc0:
+		case 0xd0:
 			return 2;
 		default:
 			return 1;

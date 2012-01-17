@@ -7,7 +7,7 @@ styles {
 	}
 	string {
 		start = '<string>'
-		end = '/<string>'
+		end = '</string>'
 	}
 	string-escape {
 		start = '<string-escape>'

@@ -1,0 +1,31 @@
+format = 1
+
+%highlight {
+	start = "'"
+	%highlight {
+		regex = "\\."
+		style = "string-escape"
+	}
+	%highlight {
+		start = "\\$"
+		end = '^'
+	}
+	end = "'|$"
+	style = "string"
+}
+
+#TEST
+'foo
+bar
+'
+bar
+'\\\
+foo' bar
+==
+<string>'</string><string>foo</string>
+bar
+<string>'</string>
+bar
+<string>'</string><string-escape>\\</string-escape><string>\</string>
+<string>foo</string><string>'</string> bar
+==

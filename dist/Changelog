@@ -12,6 +12,8 @@ Version 0.1.4:
 	- Changed the matching routine to use anchored matching, to speed up the
 	  matching process. As a result, the \G assertion matches everywhere, and
 	  is therefore rendered useless.
+	- Implemented internal UTF-8 validity check, such that pcre_exec can be
+	  called with PCRE_NO_UTF8_CHECK. This greatly increases performance.
 
 Version 0.1.3:
 	Bug fixes:
