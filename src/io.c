@@ -94,13 +94,12 @@ static t3_config_t *load_map(int flags, t3_highlight_error_t *error) {
 		goto return_error;
 
 	home_env = getenv("HOME");
-	if (home_env != NULL) {
+	if (home_env != NULL && home_env[0] != 0) {
 		char *tmp;
-		if ((tmp = malloc(strlen(home_env) + strlen(".libt3highlight/lang.map") + 2)) == NULL)
+		if ((tmp = malloc(strlen(home_env) + strlen("/.libt3highlight/lang.map") + 1)) == NULL)
 			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
 		strcpy(tmp, home_env);
-		strcat(tmp, "/");
-		strcat(tmp, ".libt3highlight/lang.map");
+		strcat(tmp, "/.libt3highlight/lang.map");
 		map = load_single_map(tmp, 0, NULL);
 		free(tmp);
 		if (map != NULL)
@@ -233,13 +232,12 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 
 	/* Setup path. */
 	home_env = getenv("HOME");
-	if (home_env != NULL) {
+	if (home_env != NULL && home_env[0] != 0) {
 		char *tmp;
-		if ((tmp = malloc(strlen(home_env) + strlen(".libt3highlight") + 2)) == NULL)
+		if ((tmp = malloc(strlen(home_env) + strlen("/.libt3highlight") + 1)) == NULL)
 			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
 		strcpy(tmp, home_env);
-		strcat(tmp, "/");
-		strcat(tmp, ".libt3highlight");
+		strcat(tmp, "/.libt3highlight");
 		path[0] = home_env = tmp;
 	}
 

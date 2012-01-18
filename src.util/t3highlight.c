@@ -17,6 +17,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <locale.h>
 #include <t3config/config.h>
 #include <t3highlight/highlight.h>
 
@@ -152,17 +153,27 @@ static char *expand_string(const char *str, t3_bool expand_escapes) {
 
 static style_def_t *load_style(const char *name) {
 	FILE *style_file;
-	t3_config_t *style_config, *styles, *ptr;
+	t3_config_t *style_config, *styles, *ptr, *normal;
 	t3_config_schema_t *schema;
 	t3_config_error_t config_error;
 
 	t3_bool expand_escapes = t3_false;
 	style_def_t *result;
-	const char *path[] = { DATADIR, NULL };
+	const char *path[] = { NULL, DATADIR, NULL };
+	const char *home_env;
 	int count;
 
-	//FIXME: search in appropriate dirs (DATADIR _and_ environment/user home)
-	if ((style_file = t3_config_open_from_path(path, name, 0)) == NULL)
+	home_env = getenv("HOME");
+	if (home_env != NULL && home_env[0] != 0) {
+		char *tmp;
+		if ((tmp = malloc(strlen(home_env) + strlen("/.libt3highlight") + 1)) == NULL)
+			fatal("Out of memory\n");
+		strcpy(tmp, home_env);
+		strcat(tmp, "/.libt3highlight");
+		path[0] = tmp;
+	}
+
+	if ((style_file = t3_config_open_from_path(path[0] == NULL ? path + 1 : path, name, 0)) == NULL)
 		fatal("Can't open '%s': %s\n", name, strerror(errno));
 
 	if ((style_config = t3_config_read_file(style_file, &config_error, NULL)) == NULL)
@@ -176,25 +187,31 @@ static style_def_t *load_style(const char *name) {
 	}
 
 	if (!t3_config_validate(style_config, schema, &config_error, T3_CONFIG_VERBOSE_ERROR)) {
-		//FIXME: print more information on what is wrong
-		fatal("Error reading style file: %s\n", "invalid format");
+		fatal("Error reading style file: %s:%d: %s%s%s\n", name, config_error.line_number,
+			t3_config_strerror(config_error.error), config_error.extra == NULL ? "" : ": ",
+			config_error.extra == NULL ? "" : config_error.extra);
 	}
 	t3_config_delete_schema(schema);
 
 	expand_escapes = t3_config_get_bool(t3_config_get(style_config, "expand-escapes"));
 	styles = t3_config_get(t3_config_get(style_config, "styles"), NULL);
+	normal = t3_config_unlink(styles, "normal");
 
-	//FIXME: implement special handling of "normal" style (must be style 0)
 	for (count = 0, ptr = styles; ptr != NULL; count++, ptr = t3_config_get_next(ptr)) {}
 
-	count += 2;
+	count += 2; /* One for normal state, and one for terminator. */
 
 	if ((result = malloc(sizeof(style_def_t) * count)) == NULL)
 		fatal("Out of memory\n");
 
 	result[0].tag = safe_strdup("normal");
-	result[0].start = safe_strdup("");
-	result[0].end = safe_strdup("");
+	if (normal == NULL) {
+		result[0].start = safe_strdup("");
+		result[0].end = safe_strdup("");
+	} else {
+		result[0].start = expand_string(t3_config_get_string(t3_config_get(normal, "start")), expand_escapes);
+		result[0].end = expand_string(t3_config_get_string(t3_config_get(normal, "end")), expand_escapes);
+	}
 
 	for (count = 1, ptr = styles; ptr != NULL; count++, ptr = t3_config_get_next(ptr)) {
 		result[count].tag = safe_strdup(t3_config_get_name(ptr));
@@ -203,6 +220,7 @@ static style_def_t *load_style(const char *name) {
 	}
 	result[count].tag = NULL;
 
+	t3_config_delete(normal);
 	t3_config_delete(style_config);
 
 	return result;
@@ -217,7 +235,6 @@ static void highlight_file(const char *name, t3_highlight_t *highlight) {
 	t3_highlight_match_t *match = t3_highlight_new_match(highlight);
 	t3_bool match_result;
 
-	//FIXME: use proper error message
 	if (match == NULL)
 		fatal("Out of memory\n");
 
@@ -258,8 +275,8 @@ int main(int argc, char *argv[]) {
 	t3_highlight_t *highlight;
 	t3_highlight_error_t error;
 	int i;
-	//FIXME: setlocale etc. for gettext
-	//FIXME: open style by file name only if so specified on the cli
+
+	setlocale(LC_ALL, "");
 
 	parse_args(argc, argv);
 
