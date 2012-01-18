@@ -1,9 +1,9 @@
-#FIXME: HTML5 changes: http://dev.w3.org/html5/html4-differences/
-#	- svg and mathml inlining
-#	- css inlining
+#TODO:
+# - css inlining
 
 %include = "def/javascript.lang"
 %include = "def/svg.lang"
+%include = "def/mathml.lang"
 
 %define {
 	html-bare-escape {
@@ -89,33 +89,36 @@
 
 	html-named-attributes {
 		%highlight {
-			regex = '(?i)(?<![\w:-])(?:a(?:bbr|c(?:ce(?:pt(?:-charset)?|sskey)|tion)|' +
-				'l(?:i(?:gn|nk)|t)|rchive|sync|uto(?:complete|focus|play)|xis)|b(?:' +
-				'ackground|gcolor|order)|c(?:ell(?:padding|spacing)|h(?:a(?:llenge|' +
-				'r(?:off|set)?)|ecked)|ite|l(?:ass(?:id)?|ear)|o(?:de(?:base|type)?|' +
-				'l(?:or|s(?:pan)?)|mpact|nt(?:e(?:nt(?:editable)?|xtmenu)|rols)|ords)|' +
-				'rossorigin)|d(?:at(?:a|etime)|e(?:clare|f(?:ault|er))|i(?:r(?:name)?|' +
-				'sabled)|r(?:aggable|opzone))|enctype|f(?:ace|or(?:m(?:action|enctype|' +
-				'method|novalidate|target)?)?|rame(?:border)?)|h(?:e(?:aders|ight)|' +
-				'i(?:dden|gh)|ref(?:lang)?|space|ttp-equiv)|i(?:con|d|smap)|k(?:' +
-				'eytype|ind)|l(?:a(?:bel|ng(?:uage)?)|i(?:nk|st)|o(?:ngdesc|op|w))|' +
-				'm(?:a(?:nifest|rgin(?:height|width)|x(?:length)?)|e(?:dia(?:group)?|' +
-				'thod)|in|u(?:ltiple|ted))|n(?:ame|o(?:href|resize|shade|validate|' +
-				'wrap))|o(?:bject|n(?:a(?:bort|fterprint)|b(?:efore(?:print|unload)|' +
-				'lur)|c(?:anplay(?:through)?|hange|lick|ontextmenu|uechange)|d(?:' +
-				'blclick|r(?:ag(?:en(?:d|ter)|leave|over|start)?|op)|urationchange)|' +
-				'e(?:mptied|nded|rror)|focus|hashchange|in(?:put|valid)|key(?:down|' +
-				'press|up)|load(?:ed(?:data|metadata)|start)?|m(?:essage|ouse(?:down|' +
-				'move|o(?:ut|ver)|up|wheel))|o(?:ffline|nline)|p(?:a(?:ge(?:hide|show)|' +
-				'use)|lay(?:ing)?|opstate|rogress)|r(?:atechange|es(?:et|ize))|' +
-				's(?:croll|e(?:ek(?:ed|ing)|lect)|how|t(?:alled|orage)|u(?:bmit|' +
-				'spend))|timeupdate|unload|volumechange|waiting)|p(?:en|timum))|p(?:' +
-				'attern|laceholder|oster|r(?:eload|o(?:file|mpt)))|r(?:adiogroup|e(?:' +
-				'adonly|l|quired|v(?:ersed)?)|ows(?:pan)?|ules)|s(?:andbox|c(?:heme|' +
-				'ope(?:d)?|rolling)|e(?:amless|lected)|hape|ize(?:s)?|p(?:an|ellcheck)|' +
-				'rc(?:doc|lang)?|t(?:a(?:ndby|rt)|ep|yle)|ummary)|t(?:a(?:bindex|rget)|' +
-				'ext|itle|ype(?:mustmatch)?)|usemap|v(?:al(?:ign|ue(?:type)?)|ersion|' +
-				'link|space)|w(?:idth|rap)|xml(?::(?:base|lang|space)|ns))(?![\w:-])'
+			regex = '(?<![\w:-])(?:a(?:bbr|c(?:ce(?:pt(?:-charset)?|sskey)|tion' +
+				')|l(?:i(?:gn|nk)|t)|rchive|sync|uto(?:complete|focus|play)|xis' +
+				')|b(?:ackground|gcolor|order)|c(?:ell(?:padding|spacing)|h(?:a' +
+				'(?:llenge|r(?:off|set)?)|ecked)|ite|l(?:ass(?:id)?|ear)|o(?:de' +
+				'(?:base|type)?|l(?:or|s(?:pan)?)|mpact|nt(?:e(?:nt(?:editable)' +
+				'?|xtmenu)|rols)|ords)|rossorigin)|d(?:at(?:a|etime)|e(?:clare|' +
+				'f(?:ault|er))|i(?:r(?:name)?|sabled)|r(?:aggable|opzone))|enct' +
+				'ype|f(?:ace|or(?:m(?:action|enctype|method|novalidate|target)?' +
+				')?|rame(?:border)?)|h(?:e(?:aders|ight)|i(?:dden|gh)|ref(?:lan' +
+				'g)?|space|ttp-equiv)|i(?:con|d|smap)|k(?:eytype|ind)|l(?:a(?:b' +
+				'el|ng(?:uage)?)|i(?:nk|st)|o(?:ngdesc|op|w))|m(?:a(?:nifest|rg' +
+				'in(?:height|width)|x(?:length)?)|e(?:dia(?:group)?|thod)|in|u(' +
+				'?:ltiple|ted))|n(?:ame|o(?:href|resize|shade|validate|wrap))|o' +
+				'(?:bject|n(?:a(?:bort|fterprint)|b(?:efore(?:print|unload)|lur' +
+				')|c(?:anplay(?:through)?|hange|lick|ontextmenu|uechange)|d(?:b' +
+				'lclick|r(?:ag(?:en(?:d|ter)|leave|over|start)?|op)|urationchan' +
+				'ge)|e(?:mptied|nded|rror)|focus|hashchange|in(?:put|valid)|key' +
+				'(?:down|press|up)|load(?:ed(?:data|metadata)|start)?|m(?:essag' +
+				'e|ouse(?:down|move|o(?:ut|ver)|up|wheel))|o(?:ffline|nline)|p(' +
+				'?:a(?:ge(?:hide|show)|use)|lay(?:ing)?|opstate|rogress)|r(?:at' +
+				'echange|es(?:et|ize))|s(?:croll|e(?:ek(?:ed|ing)|lect)|how|t(?' +
+				':alled|orage)|u(?:bmit|spend))|timeupdate|unload|volumechange|' +
+				'waiting)|p(?:en|timum))|p(?:attern|laceholder|oster|r(?:eload|' +
+				'o(?:file|mpt)))|r(?:adiogroup|e(?:adonly|l|quired|v(?:ersed)?)' +
+				'|o(?:le|ws(?:pan)?)|ules)|s(?:andbox|c(?:heme|ope(?:d)?|rollin' +
+				'g)|e(?:amless|lected)|hape|ize(?:s)?|p(?:an|ellcheck)|rc(?:doc' +
+				'|lang)?|t(?:a(?:ndby|rt)|ep|yle)|ummary)|t(?:a(?:bindex|rget)|' +
+				'ext|itle|ype(?:mustmatch)?)|usemap|v(?:al(?:ign|ue(?:type)?)|e' +
+				'rsion|link|space)|w(?:idth|rap)|xml(?::(?:base|lang|space)|ns)' +
+				')(?![\w:-])'
 			style = 'variable'
 		}
 	}
@@ -191,7 +194,7 @@
 				regex = '(?<![\w:-])xmlns(?::[\w-]+)?(?<![\w:-])'
 				style = 'variable'
 			}
-			%highlight { use = "html-named-attributes" }
+			%highlight { use = "svg-named-attributes" }
 			%highlight { use = "html-attribute" }
 			%highlight {
 				start = '>'
@@ -206,6 +209,32 @@
 					delim-style = 'keyword'
 				}
 				%highlight { use = "svg" }
+				delim-style = 'keyword'
+			}
+			delim-style = 'keyword'
+		}
+
+		%highlight {
+			start = '(?i)<math(?![\w-])'
+			%highlight {
+				regex = '(?<![\w:-])xmlns(?::[\w-]+)?(?<![\w:-])'
+				style = 'variable'
+			}
+			%highlight { use = "mathml-named-attributes" }
+			%highlight { use = "html-attribute" }
+			%highlight {
+				start = '>'
+				%highlight {
+					start = "(?i)</math"
+					%highlight {
+						regex = '[^\s>]+'
+						style = 'error'
+					}
+					end = '>'
+					exit = 3
+					delim-style = 'keyword'
+				}
+				%highlight { use = "mathml" }
 				delim-style = 'keyword'
 			}
 			delim-style = 'keyword'

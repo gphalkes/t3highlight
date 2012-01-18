@@ -1,12 +1,17 @@
 # HTML attributes, derived from http://www.w3.org/TR/html401/index/attributes.html
 # and http://dev.w3.org/html5/spec/section-index.html#attributes-1
 
+#%start (?<![\w:-])
+#%end (?![\w:-])
+
 # Add XHTML related attributes
 xmlns
 xml:lang
 xml:space
 xml:base
 version
+role
+
 
 abbr
 accept-charset

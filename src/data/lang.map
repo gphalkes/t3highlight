@@ -74,6 +74,12 @@ format = 1
 	file-regex = "(?i)\.xml$"
 	lang-file = "xml.lang"
 }
+%lang {
+	name = "MathML"
+	name-regex = "^(?i)mathml$"
+	file-regex = "(?i)\.mml$"
+	lang-file = "mathml.lang"
+}
 
 %lang {
 	name = "T3 Highlight Language Definition"

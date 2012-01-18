@@ -1,29 +1,55 @@
 #!/usr/bin/python
 
 import sys
+from cStringIO import StringIO
 
-words = set()
-for line in sys.stdin:
-	line = line.strip()
-	if len(line) == 0 or line[0] == '#':
-		continue
-	words.add(line.strip())
+pattern_file = StringIO()
 
-trie = {}
-for word in words:
-	curr_trie = trie
-	for char in word:
-		if char not in curr_trie:
-			curr_trie[char] = {}
-		curr_trie = curr_trie[char]
-	curr_trie[0] = None
+def main():
+	words = set()
+	start = "\\b"
+	end = "\\b"
+	type = "regex"
+	for line in sys.stdin:
+		line = line.strip()
+		if len(line) == 0:
+			continue
+		elif line.startswith('#%start '):
+			start = line[8:].lstrip()
+			continue
+		elif line.startswith('#%end '):
+			end = line[6:].lstrip()
+			continue
+		elif line.startswith('#%type '):
+			type = line[6:].lstrip()
+			continue
+		elif line[0] == '#':
+			continue
+		words.add(line.strip())
 
-#~ sys.stdout.write("#")
-#~ sorted_words = sorted(words)
-#~ for word in sorted_words:
-	#~ sys.stdout.write(" {0}".format(word))
-#~ print
-#~ print
+	trie = {}
+	for word in words:
+		curr_trie = trie
+		for char in word:
+			if char not in curr_trie:
+				curr_trie[char] = {}
+			curr_trie = curr_trie[char]
+		curr_trie[0] = None
+
+	pattern_file.write("{0} = '".format(type))
+	pattern_file.write(start)
+	write_trie(trie)
+	pattern_file.write(end)
+
+	pattern = pattern_file.getvalue()
+	sys.stdout.write("\t\t\t")
+	sys.stdout.write(pattern[0:72 - len(type)])
+	next_start = 72 - len(type)
+	while next_start < len(pattern):
+		sys.stdout.write("' +\n\t\t\t\t'")
+		sys.stdout.write(pattern[next_start:next_start + 62])
+		next_start += 62
+	print "'\n"
 
 def write_trie(trie):
 	if len(trie) == 0:
@@ -32,10 +58,10 @@ def write_trie(trie):
 		key, value = trie.items()[0]
 		if key == 0:
 			return
-		sys.stdout.write(key)
+		pattern_file.write(key)
 		write_trie(value)
 	else:
-		sys.stdout.write("(?:")
+		pattern_file.write("(?:")
 		sorted_trie = sorted(trie.iteritems())
 		first = False
 		optional = False
@@ -46,13 +72,13 @@ def write_trie(trie):
 			if not first:
 				first = True
 			else:
-				sys.stdout.write("|")
-			sys.stdout.write(key)
+				pattern_file.write("|")
+			pattern_file.write(key)
 			write_trie(value)
-		sys.stdout.write(")")
+		pattern_file.write(")")
 		if optional:
-			sys.stdout.write("?")
+			pattern_file.write("?")
 
+if __name__ == "__main__":
+	main()
 
-write_trie(trie)
-print

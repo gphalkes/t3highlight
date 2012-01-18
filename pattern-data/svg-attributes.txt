@@ -1,7 +1,10 @@
 # Attributes, derived from the list at http://www.w3.org/TR/SVG11/attindex.html
 
+#%start (?<![\w:-])
+#%end (?![\w:-])
+
 # Added xmlns regex (the regex will work in this case because there are no other
-# attributes which have xmlns as prefix
+# attributes which have xmlns as prefix)
 xmlns(?::[a-zA-Z0-9-]+)?
 
 accent-height

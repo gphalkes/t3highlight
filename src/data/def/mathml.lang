@@ -1,0 +1,138 @@
+%include = "def/xml.lang"
+
+%define {
+	mathml-named-attributes {
+		%highlight {
+			regex = '(?<![\w:-])(?:a(?:c(?:cent(?:under)?|tiontype)|l(?:ign(?:m' +
+				'entscope)?|t(?:img(?:-(?:height|valign|width))?)?))|ba(?:ckgro' +
+				'und|se)|c(?:d(?:group)?|haralign|los(?:e|ure)|ol(?:or|umn(?:al' +
+				'ign(?:ment)?|lines|spa(?:cing|n)|width))|rossout)|d(?:e(?:cima' +
+				'lpoint|finitionURL|pth)|i(?:r|splay(?:style)?))|e(?:dge|ncodin' +
+				'g)|f(?:ence|o(?:nt(?:family|style)|rm)|rame(?:spacing)?)|group' +
+				'align|h(?:eight|ref)|i(?:d|n(?:de(?:nt(?:align(?:first|last)?|' +
+				'shift(?:first)?|target)|x)|teger))|l(?:argeop|ength|ine(?:brea' +
+				'k(?:multchar|style)?|thickness)|o(?:cation|ngdivstyle)|space|t' +
+				'r)|m(?:a(?:th(?:background|color|size|variant)|xsize)|ediummat' +
+				'hspace|in(?:labelspacing|size)|o(?:nospaced|vablelimits)|sgrou' +
+				'p|y:(?:background|color))|n(?:ame|e(?:gative(?:mediummathspace' +
+				'|thi(?:ckmathspace|nmathspace)|very(?:thi(?:ckmathspace|nmaths' +
+				'pace)|verythi(?:ckmathspace|nmathspace)))|wline)|otation|umber' +
+				')|o(?:pen|rder|ther|verflow)|position|r(?:o(?:le|w(?:align|lin' +
+				'es|spa(?:cing|n)))|space)|s(?:c(?:hemaLocation|ript(?:level|mi' +
+				'nsize|size(?:multiplier)?))|e(?:lection|parator(?:s)?)|hift|id' +
+				'e|rc|t(?:ackalign|retchy)|ymmetric)|t(?:hi(?:ckmathspace|nmath' +
+				'space)|ype)|v(?:ery(?:thi(?:ckmathspace|nmathspace)|verythi(?:' +
+				'ckmathspace|nmathspace))|offset)|width|x(?:link:href|ml(?::(?:' +
+				'lang|space)|ns(?::[a-zA-Z0-9-]+)?)|ref|si:schemaLocation))(?![' +
+				'\w:-])'
+			style = 'variable'
+		}
+	}
+
+	mathml {
+		%highlight { use = "xml-bare-escape" }
+
+		%highlight {
+			start = '</(?:a(?:bs|n(?:d|notation(?:-xml)?)|pp(?:ly|rox)|r(?:c(?:c' +
+				'(?:o(?:s(?:h)?|t(?:h)?)|sc(?:h)?)|s(?:ec(?:h)?|in(?:h)?)|tan(?' +
+				':h)?)|g))|b(?:ind|var)|c(?:ar(?:d|tesianproduct)|bytes|e(?:ili' +
+				'ng|rror)|i|n|o(?:domain|mp(?:lexes|ose)|n(?:dition|jugate)|s(?' +
+				':h)?|t(?:h)?)|s(?:c(?:h)?|ymbol)?|url)|d(?:e(?:clare|gree|term' +
+				'inant)|i(?:ff|v(?:ergence|ide))|omain(?:ofapplication)?)|e(?:l' +
+				'|mptyset|q(?:uivalent)?|ulergamma|x(?:ists|p(?:onentiale)?))|f' +
+				'(?:a(?:ctor(?:ial|of)|lse)|loor|n|orall)|g(?:cd|eq|rad|t)|i(?:' +
+				'dent|m(?:ag(?:e|inary(?:i)?)|plies)|n(?:finity|t(?:e(?:gers|r(' +
+				'?:sect|val)))?|verse)?)|l(?:a(?:mbda|placian)|cm|eq|i(?:mit|st' +
+				')|n|o(?:g(?:base)?|wlimit)|t)|m(?:a(?:ction|lign(?:group|mark|' +
+				'scope)?|t(?:h|rix(?:row)?)|x)|e(?:an|dian|nclose|rror)|f(?:enc' +
+				'ed|rac(?:tion)?)|glyph|i(?:n(?:us)?)?|l(?:abeledtr|ongdiv)|mul' +
+				'tiscripts|n|o(?:de|ment(?:about)?|ver)?|p(?:added|hantom|rescr' +
+				'ipts)|ro(?:ot|w)|s(?:carr(?:ies|y)|group|line|pace|qrt|row|t(?' +
+				':ack|yle)|u(?:b(?:sup)?|p))?|t(?:able|d|ext|r)|under(?:over)?)' +
+				'|n(?:aturalnumbers|eq|o(?:ne|t(?:anumber|e|in|prsubset|subset)' +
+				'?))|o(?:r|therwise|uterproduct)|p(?:artialdiff|i(?:ece(?:wise)' +
+				'?)?|lus|ower|r(?:imes|oduct|subset))|quotient|r(?:ationals|e(?' +
+				':al(?:s)?|ln|m)|oot)|s(?:calarproduct|dev|e(?:c(?:h)?|lector|m' +
+				'antics|p|t(?:diff)?)|hare|in(?:h)?|u(?:bset|m))|t(?:an(?:h)?|e' +
+				'ndsto|imes|r(?:anspose|ue))|u(?:nion|plimit)|v(?:ariance|ector' +
+				'(?:product)?)|xor)(?![\w:-])'
+			%highlight {
+				regex = '[^\s>]+'
+				style = 'error'
+			}
+			end = '>'
+			delim-style = 'keyword'
+		}
+
+		%highlight { use = "xml-comment" }
+
+		%highlight {
+			start = '<!DOCTYPE(?![\w:-])'
+			%highlight {
+				regex = '(?i)(?<![\w:-])(?:mathml|PUBLIC)(?![\w:-])'
+				style = 'misc'
+			}
+			%highlight { use = 'xml-attribute' }
+			end = '>'
+			style = 'misc'
+		}
+
+		%highlight {
+			start = '<\?xml(?![\w:-])'
+			%highlight {
+				regex = '(?i)(?<![\w:-])(?:version|encoding|standalone)(?![\w:-])'
+				style = 'misc'
+			}
+			%highlight { use = 'xml-attribute' }
+			end = '\?>'
+			style = 'misc'
+		}
+
+		%highlight {
+			start = '<(?:a(?:bs|n(?:d|notation(?:-xml)?)|pp(?:ly|rox)|r(?:c(?:c' +
+				'(?:o(?:s(?:h)?|t(?:h)?)|sc(?:h)?)|s(?:ec(?:h)?|in(?:h)?)|tan(?' +
+				':h)?)|g))|b(?:ind|var)|c(?:ar(?:d|tesianproduct)|bytes|e(?:ili' +
+				'ng|rror)|i|n|o(?:domain|mp(?:lexes|ose)|n(?:dition|jugate)|s(?' +
+				':h)?|t(?:h)?)|s(?:c(?:h)?|ymbol)?|url)|d(?:e(?:clare|gree|term' +
+				'inant)|i(?:ff|v(?:ergence|ide))|omain(?:ofapplication)?)|e(?:l' +
+				'|mptyset|q(?:uivalent)?|ulergamma|x(?:ists|p(?:onentiale)?))|f' +
+				'(?:a(?:ctor(?:ial|of)|lse)|loor|n|orall)|g(?:cd|eq|rad|t)|i(?:' +
+				'dent|m(?:ag(?:e|inary(?:i)?)|plies)|n(?:finity|t(?:e(?:gers|r(' +
+				'?:sect|val)))?|verse)?)|l(?:a(?:mbda|placian)|cm|eq|i(?:mit|st' +
+				')|n|o(?:g(?:base)?|wlimit)|t)|m(?:a(?:ction|lign(?:group|mark|' +
+				'scope)?|t(?:h|rix(?:row)?)|x)|e(?:an|dian|nclose|rror)|f(?:enc' +
+				'ed|rac(?:tion)?)|glyph|i(?:n(?:us)?)?|l(?:abeledtr|ongdiv)|mul' +
+				'tiscripts|n|o(?:de|ment(?:about)?|ver)?|p(?:added|hantom|rescr' +
+				'ipts)|ro(?:ot|w)|s(?:carr(?:ies|y)|group|line|pace|qrt|row|t(?' +
+				':ack|yle)|u(?:b(?:sup)?|p))?|t(?:able|d|ext|r)|under(?:over)?)' +
+				'|n(?:aturalnumbers|eq|o(?:ne|t(?:anumber|e|in|prsubset|subset)' +
+				'?))|o(?:r|therwise|uterproduct)|p(?:artialdiff|i(?:ece(?:wise)' +
+				'?)?|lus|ower|r(?:imes|oduct|subset))|quotient|r(?:ationals|e(?' +
+				':al(?:s)?|ln|m)|oot)|s(?:calarproduct|dev|e(?:c(?:h)?|lector|m' +
+				'antics|p|t(?:diff)?)|hare|in(?:h)?|u(?:bset|m))|t(?:an(?:h)?|e' +
+				'ndsto|imes|r(?:anspose|ue))|u(?:nion|plimit)|v(?:ariance|ector' +
+				'(?:product)?)|xor)(?![\w:-])'
+
+			%highlight { use = "mathml-named-attributes" }
+			%highlight { use = 'xml-attribute' }
+			end = '/?>'
+			delim-style = 'keyword'
+		}
+
+		%highlight {
+			start = '<'
+			%highlight {
+				start = "'"
+				end = "'"
+			}
+			%highlight {
+				start = '"'
+				end = '"'
+			}
+			end = '>'
+			style = 'error'
+		}
+	}
+}
+
+

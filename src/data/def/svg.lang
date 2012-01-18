@@ -73,9 +73,9 @@
 		%highlight { use = "xml-comment" }
 
 		%highlight {
-			start = '<!DOCTYPE(?![\w-])'
+			start = '<!DOCTYPE(?![\w:-])'
 			%highlight {
-				regex = '(?i)(?<![\w-])(?:svg|PUBLIC)(?![\w-])'
+				regex = '(?i)(?<![\w:-])(?:svg|PUBLIC)(?![\w:-])'
 				style = 'misc'
 			}
 			%highlight { use = 'xml-attribute' }
@@ -84,9 +84,9 @@
 		}
 
 		%highlight {
-			start = '<\?xml(?![\w-])'
+			start = '<\?xml(?![\w:-])'
 			%highlight {
-				regex = '(?i)(?<![\w-])(?:version|encoding|standalone)(?![\w-])'
+				regex = '(?i)(?<![\w:-])(?:version|encoding|standalone)(?![\w:-])'
 				style = 'misc'
 			}
 			%highlight { use = 'xml-attribute' }

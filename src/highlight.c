@@ -750,7 +750,7 @@ const char *t3_highlight_strerror(int error) {
 		case T3_ERR_INVALID_REGEX:
 			return _("invalid regular expression");
 		case T3_ERR_NO_SYNTAX:
-			return _("could not locate appropriate highlighting highlights");
+			return _("could not locate appropriate highlighting pattern");
 		case T3_ERR_UNDEFINED_USE:
 			return _("'use' specifies undefined highlight");
 	}

@@ -42,9 +42,9 @@
 		%highlight { use = "xml-bare-escape" }
 
 		%highlight {
-			start = '(?i)<\?xml(?![\w-])'
+			start = '(?i)<\?xml(?![\w:-])'
 			%highlight {
-				regex = '(?i)(?<![\w-])(?:version|encoding)(?![\w-])'
+				regex = '(?i)(?<![\w:-])(?:version|encoding)(?![\w:-])'
 				style = 'misc'
 			}
 			%highlight { use = 'xml-attribute' }
@@ -72,14 +72,14 @@
 		}
 
 		%highlight {
-			start = '<[\w-]+'
+			start = '<[\w:-]+'
 			%highlight { use = "xml-attribute" }
 			end = '/?>'
 			delim-style = "keyword"
 		}
 
 		%highlight {
-			start = '</[\w-]+'
+			start = '</[\w:-]+'
 			%highlight {
 				regex = '[^\s>]+'
 				style = 'error'
