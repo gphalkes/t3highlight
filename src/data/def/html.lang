@@ -3,66 +3,10 @@
 #	- css inlining
 
 %include = "def/javascript.lang"
+%include = "def/html-escapes.lang"
+%include = "def/svg-base.lang"
 
 %define {
-	html-bare-escape {
-		%highlight {
-			regex = '&(?:A(?:Elig|acute|circ|grave|lpha|ring|tilde|uml)|Beta|C(?:' +
-				'cedil|hi)|D(?:agger|elta)|E(?:TH|acute|circ|grave|psilon|ta|uml)|' +
-				'Gamma|I(?:acute|circ|grave|ota|uml)|Kappa|Lambda|Mu|N(?:tilde|u)|' +
-				'O(?:Elig|acute|circ|grave|m(?:ega|icron)|slash|tilde|uml)|P(?:hi|' +
-				'i|rime|si)|Rho|S(?:caron|igma)|T(?:HORN|au|heta)|U(?:acute|circ|' +
-				'grave|psilon|uml)|Xi|Y(?:acute|uml)|Zeta|a(?:acute|c(?:irc|ute)|' +
-				'elig|grave|l(?:efsym|pha)|mp|n(?:d|g)|ring|symp|tilde|uml)|b(?:dquo|' +
-				'eta|rvbar|ull)|c(?:ap|cedil|e(?:dil|nt)|hi|irc|lubs|o(?:ng|py)|rarr|' +
-				'u(?:p|rren))|d(?:Arr|a(?:gger|rr)|e(?:g|lta)|i(?:ams|vide))|e(?:' +
-				'acute|circ|grave|m(?:pty|sp)|nsp|psilon|quiv|t(?:a|h)|u(?:ml|ro)|' +
-				'xist)|f(?:nof|orall|ra(?:c(?:1(?:2|4)|34)|sl))|g(?:amma|e|t)|h(?:' +
-				'Arr|arr|e(?:arts|llip))|i(?:acute|circ|excl|grave|mage|n(?:fin|t)|' +
-				'ota|quest|sin|uml)|kappa|l(?:Arr|a(?:mbda|ng|quo|rr)|ceil|dquo|e|' +
-				'floor|o(?:wast|z)|rm|s(?:aquo|quo)|t)|m(?:acr|dash|i(?:cro|ddot|' +
-				'nus)|u)|n(?:abla|bsp|dash|e|i|ot(?:in)?|sub|tilde|u)|o(?:acute|circ|' +
-				'elig|grave|line|m(?:ega|icron)|plus|r(?:d(?:f|m))?|slash|ti(?:lde|' +
-				'mes)|uml)|p(?:ar(?:a|t)|er(?:mil|p)|hi|i(?:v)?|lusmn|ound|r(?:ime|' +
-				'o(?:d|p))|si)|quot|r(?:Arr|a(?:dic|ng|quo|rr)|ceil|dquo|e(?:al|g)|' +
-				'floor|ho|lm|s(?:aquo|quo))|s(?:bquo|caron|dot|ect|hy|i(?:gma(?:f)?|' +
-				'm)|pades|u(?:b(?:e)?|m|p(?:1|2|3|e)?)|zlig)|t(?:au|h(?:e(?:re4|' +
-				'ta(?:sym)?)|insp|orn)|i(?:lde|mes)|rade)|u(?:Arr|a(?:cute|rr)|circ|' +
-				'grave|ml|psi(?:h|lon)|uml)|weierp|xi|y(?:acute|en|uml)|z(?:eta|' +
-				'w(?:j|nj)));'
-			style = "number"
-		}
-	}
-
-	html-escape {
-		%highlight {
-			regex = '&(?:A(?:Elig|acute|circ|grave|lpha|ring|tilde|uml)|Beta|C(?:' +
-				'cedil|hi)|D(?:agger|elta)|E(?:TH|acute|circ|grave|psilon|ta|uml)|' +
-				'Gamma|I(?:acute|circ|grave|ota|uml)|Kappa|Lambda|Mu|N(?:tilde|u)|' +
-				'O(?:Elig|acute|circ|grave|m(?:ega|icron)|slash|tilde|uml)|P(?:hi|' +
-				'i|rime|si)|Rho|S(?:caron|igma)|T(?:HORN|au|heta)|U(?:acute|circ|' +
-				'grave|psilon|uml)|Xi|Y(?:acute|uml)|Zeta|a(?:acute|c(?:irc|ute)|' +
-				'elig|grave|l(?:efsym|pha)|mp|n(?:d|g)|ring|symp|tilde|uml)|b(?:dquo|' +
-				'eta|rvbar|ull)|c(?:ap|cedil|e(?:dil|nt)|hi|irc|lubs|o(?:ng|py)|rarr|' +
-				'u(?:p|rren))|d(?:Arr|a(?:gger|rr)|e(?:g|lta)|i(?:ams|vide))|e(?:' +
-				'acute|circ|grave|m(?:pty|sp)|nsp|psilon|quiv|t(?:a|h)|u(?:ml|ro)|' +
-				'xist)|f(?:nof|orall|ra(?:c(?:1(?:2|4)|34)|sl))|g(?:amma|e|t)|h(?:' +
-				'Arr|arr|e(?:arts|llip))|i(?:acute|circ|excl|grave|mage|n(?:fin|t)|' +
-				'ota|quest|sin|uml)|kappa|l(?:Arr|a(?:mbda|ng|quo|rr)|ceil|dquo|e|' +
-				'floor|o(?:wast|z)|rm|s(?:aquo|quo)|t)|m(?:acr|dash|i(?:cro|ddot|' +
-				'nus)|u)|n(?:abla|bsp|dash|e|i|ot(?:in)?|sub|tilde|u)|o(?:acute|circ|' +
-				'elig|grave|line|m(?:ega|icron)|plus|r(?:d(?:f|m))?|slash|ti(?:lde|' +
-				'mes)|uml)|p(?:ar(?:a|t)|er(?:mil|p)|hi|i(?:v)?|lusmn|ound|r(?:ime|' +
-				'o(?:d|p))|si)|quot|r(?:Arr|a(?:dic|ng|quo|rr)|ceil|dquo|e(?:al|g)|' +
-				'floor|ho|lm|s(?:aquo|quo))|s(?:bquo|caron|dot|ect|hy|i(?:gma(?:f)?|' +
-				'm)|pades|u(?:b(?:e)?|m|p(?:1|2|3|e)?)|zlig)|t(?:au|h(?:e(?:re4|' +
-				'ta(?:sym)?)|insp|orn)|i(?:lde|mes)|rade)|u(?:Arr|a(?:cute|rr)|circ|' +
-				'grave|ml|psi(?:h|lon)|uml)|weierp|xi|y(?:acute|en|uml)|z(?:eta|' +
-				'w(?:j|nj)));'
-			style = "string-escape"
-		}
-	}
-
 	html-attribute {
 		%highlight {
 			start = '"'
@@ -88,7 +32,7 @@
 
 	html-named-attributes {
 		%highlight {
-			regex = '(?i)(?<![\w-])(?:a(?:bbr|c(?:ce(?:pt(?:-charset)?|sskey)|tion)|' +
+			regex = '(?i)(?<![\w:-])(?:a(?:bbr|c(?:ce(?:pt(?:-charset)?|sskey)|tion)|' +
 				'l(?:i(?:gn|nk)|t)|rchive|sync|uto(?:complete|focus|play)|xis)|b(?:' +
 				'ackground|gcolor|order)|c(?:ell(?:padding|spacing)|h(?:a(?:llenge|' +
 				'r(?:off|set)?)|ecked)|ite|l(?:ass(?:id)?|ear)|o(?:de(?:base|type)?|' +
@@ -114,7 +58,7 @@
 				'ope(?:d)?|rolling)|e(?:amless|lected)|hape|ize(?:s)?|p(?:an|ellcheck)|' +
 				'rc(?:doc|lang)?|t(?:a(?:ndby|rt)|ep|yle)|ummary)|t(?:a(?:bindex|rget)|' +
 				'ext|itle|ype(?:mustmatch)?)|usemap|v(?:al(?:ign|ue(?:type)?)|ersion|' +
-				'link|space)|w(?:idth|rap)|xml(?::(?:base|lang|space)|ns)(?![\w-])'
+				'link|space)|w(?:idth|rap)|xml(?::(?:base|lang|space)|ns))(?![\w:-])'
 			style = 'variable'
 		}
 	}
@@ -123,21 +67,17 @@
 		%highlight { use = "html-bare-escape" }
 
 		%highlight {
-			start = '</(?=[a-zA-Z])'
-			%highlight {
-				regex = '(?<=</)(?i)(?:a(?:bbr|cronym|ddress|pplet|rticle|side|udio)?|' +
-					'b(?:d(?:i|o)|ig|lockquote|ody|utton)?|c(?:a(?:nvas|ption)|enter|' +
-					'heckbox|ite|o(?:de|lgroup))|d(?:atalist|d|e(?:l|tails)|fn|i(?:' +
-					'r|v)|l|t)|em|f(?:i(?:eldset|g(?:caption|ure)|le)|o(?:nt|oter|' +
-					'rm)|rameset)|h(?:1|2|3|4|5|6|ead(?:er)?|group|idden|tml)|i(?:' +
-					'frame|mage|ns)?|kbd|l(?:abel|egend|i)|m(?:a(?:p|rk)|e(?:nu|' +
-					'ter))|n(?:av|o(?:frames|script))|o(?:bject|l|pt(?:group|ion)|' +
-					'utput)|p(?:assword|r(?:e|ogress))?|q|r(?:adio|eset|p|t|uby)|' +
-					's(?:amp|cript|e(?:ction|lect)|mall|pan|t(?:r(?:ike|ong)|yle)|' +
-					'u(?:b(?:mit)?|mmary|p))?|t(?:able|body|d|ext(?:area)?|foot|' +
-					'h(?:ead)?|i(?:me|tle)|r|t)|u(?:l)?|v(?:ar|ideo))(?![\w-])'
-				style = 'keyword'
-			}
+			start = '(?i)</(?:a(?:bbr|cronym|ddress|pplet|rticle|side|udio)?|' +
+				'b(?:d(?:i|o)|ig|lockquote|ody|utton)?|c(?:a(?:nvas|ption)|enter|' +
+				'heckbox|ite|o(?:de|lgroup))|d(?:atalist|d|e(?:l|tails)|fn|i(?:' +
+				'r|v)|l|t)|em|f(?:i(?:eldset|g(?:caption|ure)|le)|o(?:nt|oter|' +
+				'rm)|rameset)|h(?:1|2|3|4|5|6|ead(?:er)?|group|idden|tml)|i(?:' +
+				'frame|mage|ns)?|kbd|l(?:abel|egend|i)|m(?:a(?:p|rk)|e(?:nu|' +
+				'ter))|n(?:av|o(?:frames|script))|o(?:bject|l|pt(?:group|ion)|' +
+				'utput)|p(?:assword|r(?:e|ogress))?|q|r(?:adio|eset|p|t|uby)|' +
+				's(?:amp|cript|e(?:ction|lect)|mall|pan|t(?:r(?:ike|ong)|yle)|' +
+				'u(?:b(?:mit)?|mmary|p))?|t(?:able|body|d|ext(?:area)?|foot|' +
+				'h(?:ead)?|i(?:me|tle)|r|t)|u(?:l)?|v(?:ar|ideo))(?![\w-])'
 			%highlight {
 				regex = '[^\s>]+'
 				style = 'error'
@@ -175,13 +115,13 @@
 		}
 
 		%highlight {
-			start = '<(?i)script(?![\w-])'
+			start = '(?i)<script(?![\w-])'
 			%highlight { use = "html-named-attributes" }
 			%highlight { use = "html-attribute" }
 			%highlight {
 				start = '>'
 				%highlight { use = "javascript" }
-				end = "(?i)(?=</script>)"
+				end = "(?i)(?=</script)"
 				exit = 2
 				delim-style = 'keyword'
 			}
@@ -189,27 +129,45 @@
 		}
 
 		%highlight {
-			start = '<(?=[a-zA-Z])'
+			start = '(?i)<svg(?![\w-])'
 			%highlight {
-				start = '(?<=<)(?i)(?:a(?:bbr|cronym|ddress|pplet|r(?:ea|ticle)|' +
-					'side|udio)?|b(?:ase(?:font)?|d(?:i|o)|ig|lockquote|ody|r|utton)?|' +
-					'c(?:a(?:nvas|ption)|enter|ite|o(?:de|l(?:group)?|mmand))|d(?:' +
-					'atalist|d|e(?:l|tails)|fn|i(?:r|v)|l|t)|em(?:bed)?|f(?:i(?:' +
-					'eldset|g(?:caption|ure))|o(?:nt|oter|rm)|rame(?:set)?)|h(?:1|' +
-					'2|3|4|5|6|ead(?:er)?|group|r|tml)|i(?:frame|mg|n(?:put|s)|' +
-					'sindex)?|k(?:bd|eygen)|l(?:abel|egend|i(?:nk)?)|m(?:a(?:p|rk)|' +
-					'e(?:nu|t(?:a|er)))|n(?:av|o(?:frames|script))|o(?:bject|l|pt(?:' +
-					'group|ion)|utput)|p(?:aram|r(?:e|ogress))?|q|r(?:p|t|uby)|s(?:' +
-					'amp|e(?:ction|lect)|mall|ource|pan|t(?:r(?:ike|ong)|yle)|u(?:' +
-					'b|mmary|p))?|t(?:able|body|d|extarea|foot|h(?:ead)?|i(?:me|' +
-					'tle)|r(?:ack)?|t)|u(?:l)?|v(?:ar|ideo)|wbr)(?![\w-])'
-				%highlight { use = "html-named-attributes" }
-				%highlight { use = 'html-attribute' }
-				end = '/?>'
-				exit = 2
+				regex = '(?<![\w:-])xmlns(?::[\w-]+)?(?<![\w:-])'
+				style = 'variable'
+			}
+			%highlight { use = "html-named-attributes" }
+			%highlight { use = "html-attribute" }
+			%highlight {
+				start = '>'
+				%highlight {
+					start = "(?i)</svg"
+					%highlight {
+						regex = '[^\s>]+'
+						style = 'error'
+					}
+					end = '>'
+					exit = 3
+					delim-style = 'keyword'
+				}
+				%highlight { use = "svg" }
 				delim-style = 'keyword'
 			}
+			delim-style = 'keyword'
+		}
 
+		%highlight {
+			start = '(?i)<(?:a(?:bbr|cronym|ddress|pplet|r(?:ea|ticle)|' +
+				'side|udio)?|b(?:ase(?:font)?|d(?:i|o)|ig|lockquote|ody|r|utton)?|' +
+				'c(?:a(?:nvas|ption)|enter|ite|o(?:de|l(?:group)?|mmand))|d(?:' +
+				'atalist|d|e(?:l|tails)|fn|i(?:r|v)|l|t)|em(?:bed)?|f(?:i(?:' +
+				'eldset|g(?:caption|ure))|o(?:nt|oter|rm)|rame(?:set)?)|h(?:1|' +
+				'2|3|4|5|6|ead(?:er)?|group|r|tml)|i(?:frame|mg|n(?:put|s)|' +
+				'sindex)?|k(?:bd|eygen)|l(?:abel|egend|i(?:nk)?)|m(?:a(?:p|rk)|' +
+				'e(?:nu|t(?:a|er)))|n(?:av|o(?:frames|script))|o(?:bject|l|pt(?:' +
+				'group|ion)|utput)|p(?:aram|r(?:e|ogress))?|q|r(?:p|t|uby)|s(?:' +
+				'amp|e(?:ction|lect)|mall|ource|pan|t(?:r(?:ike|ong)|yle)|u(?:' +
+				'b|mmary|p))?|t(?:able|body|d|extarea|foot|h(?:ead)?|i(?:me|' +
+				'tle)|r(?:ack)?|t)|u(?:l)?|v(?:ar|ideo)|wbr)(?![\w-])'
+			%highlight { use = "html-named-attributes" }
 			%highlight { use = 'html-attribute' }
 			end = '/?>'
 			delim-style = 'keyword'
