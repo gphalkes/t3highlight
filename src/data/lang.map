@@ -68,6 +68,12 @@ format = 1
 	file-regex = "(?i)\.svg$"
 	lang-file = "svg.lang"
 }
+%lang {
+	name = "XML"
+	name-regex = "^(?i)xml$"
+	file-regex = "(?i)\.xml$"
+	lang-file = "xml.lang"
+}
 
 %lang {
 	name = "T3 Highlight Language Definition"

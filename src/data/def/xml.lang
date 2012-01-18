@@ -1,0 +1,105 @@
+%define {
+	xml-bare-escape {
+		%highlight {
+			regex = '&(?:#(?:x[\da-fA-F]+|\d+)|[a-zA-Z:][\w:.-]*);'
+			style = 'number'
+		}
+	}
+	xml-escape {
+		%highlight {
+			regex = '&(?:#(?:x[\da-fA-F]+|\d+)|[a-zA-Z:][\w:.-]*);'
+			style = 'string-escape'
+		}
+	}
+	xml-attribute {
+		%highlight {
+			start = '"'
+			%highlight { use = 'xml-escape' }
+			end = '"'
+			style = "string"
+		}
+		%highlight {
+			start = "'"
+			%highlight { use = 'xml-escape' }
+			end = "'"
+			style = "string"
+		}
+		%highlight {
+			regex = '[^\s/>=''"]+|/(?!>)'
+			style = 'variable'
+		}
+	}
+	xml-comment {
+		%highlight {
+			start = '<!--'
+			end = '-->'
+			style = 'comment'
+		}
+	}
+
+	xml {
+		%highlight { use = "xml-comment" }
+		%highlight { use = "xml-bare-escape" }
+
+		%highlight {
+			start = '(?i)<\?xml(?![\w-])'
+			%highlight {
+				regex = '(?i)(?<![\w-])(?:version|encoding)(?![\w-])'
+				style = 'misc'
+			}
+			%highlight { use = 'xml-attribute' }
+			end = '\?>'
+			style = 'misc'
+		}
+
+		%highlight {
+			start = '<!DOCTYPE'
+			%highlight { use = "xml-attribute" }
+			%highlight {
+				start = '<'
+				%highlight { use = "xml-comment" }
+				end = '>'
+				nested = yes
+			}
+			end = '>'
+			delim-style = 'misc'
+		}
+
+		%highlight {
+			start = '<!\[CDATA\['
+			end = '\]\]>'
+			delim-style = 'keyword'
+		}
+
+		%highlight {
+			start = '<[\w-]+'
+			%highlight { use = "xml-attribute" }
+			end = '/?>'
+			delim-style = "keyword"
+		}
+
+		%highlight {
+			start = '</[\w-]+'
+			%highlight {
+				regex = '[^\s>]+'
+				style = 'error'
+			}
+			end = '>'
+			delim-style = "keyword"
+		}
+
+		%highlight {
+			start = '<'
+			%highlight {
+				start = "'"
+				end = "'"
+			}
+			%highlight {
+				start = '"'
+				end = '"'
+			}
+			end = '>'
+			style = "error"
+		}
+	}
+}

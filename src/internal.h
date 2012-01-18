@@ -19,6 +19,8 @@
 #include "vector.h"
 
 #define NO_CHANGE (-1)
+/* EXIT_STATE is equal to exit = 1. For higher values of the exit attribute,
+   subtract from EXIT_STATE. I.e. -3 equals exit = 2, -4 equals exit = 3, etc. */
 #define EXIT_STATE (-2)
 
 typedef struct {
@@ -41,7 +43,7 @@ typedef struct {
 typedef struct {
 	full_pcre_t regex;
 	dynamic_highlight_t *dynamic; /* Only set for start patterns. */
-	int next_state, /* Values: NO_CHANGE, EXIT_STATE or a value >= 0. */
+	int next_state, /* Values: NO_CHANGE, EXIT_STATE or smaller,  or a value >= 0. */
 		attribute_idx;
 } highlight_t;
 

@@ -552,11 +552,12 @@ static void match_internal(match_context_t *context) {
 		   pattern with a dynamic back reference. */
 		if (context->state->highlights.data[j].regex.regex == NULL) {
 			if (context->state->highlights.data[j].next_state >= 0) {
+				state_t *save_state;
 				/* Don't keep on going into use definitions. At level 50, we probably
 				   ended up in a cycle, so just stop it. */
 				if (context->recursion_depth > 50)
 					continue;
-				state_t *save_state = context->state;
+				save_state = context->state;
 				context->state = &context->match->highlight->states.data[context->state->highlights.data[j].next_state];
 				match_internal(context);
 				context->state = save_state;

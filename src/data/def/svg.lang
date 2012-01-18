@@ -1,2 +1,132 @@
-%include = "def/html-escapes.lang"
-%include = "def/svg-base.lang"
+%include = "def/xml.lang"
+
+%define {
+	svg-named-attributes {
+		%highlight {
+			regex = '(?<![\w:-])(?:a(?:cc(?:ent-height|umulate)|dditive|l(?:' +
+				'ignment-baseline|phabetic)|mplitude|rabic-form|scent|ttribute' +
+				'(?:Name|Type)|zimuth)|b(?:ase(?:Frequency|Profile|line-shift)|' +
+				'box|egin|ias|y)|c(?:a(?:lcMode|p-height)|l(?:ass|ip(?:-(?:path|' +
+				'rule)|PathUnits)?)|o(?:lor(?:-(?:interpolation(?:-filters)?|' +
+				'profile|rendering))?|ntentS(?:criptType|tyleType))|ursor|x|y)|d' +
+				'(?:escent|i(?:ffuseConstant|rection|splay|visor)|ominant-baseline|' +
+				'ur|x|y)?|e(?:dgeMode|levation|n(?:able-background|d)|x(?:ponent|' +
+				'ternalResourcesRequired))|f(?:il(?:l(?:-(?:opacity|rule))?|ter(?:' +
+				'Res|Units)?)|lood-(?:color|opacity)|o(?:nt-(?:family|s(?:ize(?:' +
+				'-adjust)?|t(?:retch|yle))|variant|weight)|rmat)|rom|x|y)|g(?:1|2|' +
+				'lyph(?:-(?:name|orientation-(?:horizontal|vertical))|Ref)|radient(?:' +
+				'Transform|Units))|h(?:anging|eight|oriz-(?:adv-x|origin-(?:x|y)))|' +
+				'i(?:d(?:eographic)?|mage-rendering|n(?:2|tercept)?)|k(?:1|2|3|4|e(?:' +
+				'rn(?:el(?:Matrix|UnitLength)|ing)|y(?:Points|Splines|Times)))?|l(?:' +
+				'ang|e(?:ngthAdjust|tter-spacing)|i(?:ghting-color|mitingConeAngle)|' +
+				'ocal)|m(?:a(?:rker(?:-(?:end|mid|start)|Height|Units|Width)|sk(?:' +
+				'ContentUnits|Units)?|thematical|x)|e(?:dia|thod)|in|ode)|n(?:ame|' +
+				'umOctaves)|o(?:ffset|n(?:a(?:bort|ctivate)|begin|click|e(?:nd|rror)|' +
+				'focus(?:in|out)|load|mouse(?:down|move|o(?:ut|ver)|up)|re(?:peat|' +
+				'size)|scroll|unload|zoom)|p(?:acity|erator)|r(?:der|i(?:ent(?:' +
+				'ation)?|gin))|ver(?:flow|line-(?:position|thickness)))|p(?:a(?:' +
+				'nose-1|t(?:h(?:Length)?|tern(?:ContentUnits|Transform|Units)))|' +
+				'oint(?:er-events|s(?:At(?:X|Y|Z))?)|r(?:eserveA(?:lpha|spectRatio)|' +
+				'imitiveUnits))|r(?:adius|e(?:f(?:X|Y)|ndering-intent|peat(?:Count|' +
+				'Dur)|quired(?:Extensions|Features)|s(?:tart|ult))|otate|x|y)?|s(?:' +
+				'cale|eed|hape-rendering|lope|p(?:acing|ecular(?:Constant|Exponent)|' +
+				'readMethod)|t(?:artOffset|dDeviation|em(?:h|v)|itchTiles|op-(?:' +
+				'color|opacity)|r(?:i(?:kethrough-(?:position|thickness)|ng)|oke(?:' +
+				'-(?:dash(?:array|offset)|line(?:cap|join)|miterlimit|opacity|' +
+				'width))?)|yle)|urfaceScale|ystemLanguage)|t(?:a(?:bleValues|rget(?:' +
+				'X|Y)?)|ext(?:-(?:anchor|decoration|rendering)|Length)|itle|o|' +
+				'ransform|ype)|u(?:1|2|n(?:derline-(?:position|thickness)|i(?:code(?:' +
+				'-(?:bidi|range))?|ts-per-em)))|v(?:-(?:alphabetic|hanging|' +
+				'ideographic|mathematical)|alues|er(?:sion|t-(?:adv-y|origin-(?:x|' +
+				'y)))|i(?:ew(?:Box|Target)|sibility))|w(?:idth(?:s)?|ord-spacing|' +
+				'riting-mode)|x(?:-height|1|2|ChannelSelector|link:(?:a(?:ctuate|' +
+				'rcrole)|href|role|show|t(?:itle|ype))|ml(?::(?:base|lang|space)|' +
+				'ns(?::[a-zA-Z0-9-]+)?))?|y(?:1|2|ChannelSelector)?|z(?:oomAndPan)?)(?![\w:-])'
+			style = 'variable'
+		}
+	}
+
+	svg {
+		%highlight { use = "xml-bare-escape" }
+
+		%highlight {
+			start = '</(?:a(?:ltGlyph(?:Def|Item)?|nimate(?:Color|' +
+				'Motion|Transform)?)?|c(?:ircle|lipPath|olor-profile|ursor)|' +
+				'de(?:fs|sc)|ellipse|f(?:e(?:Blend|Co(?:lorMatrix|mpo(?:' +
+				'nentTransfer|site)|nvolveMatrix)|Di(?:ffuseLighting|s(?:' +
+				'placementMap|tantLight))|F(?:lood|unc(?:A|B|G|R))|GaussianBlur|' +
+				'Image|M(?:erge(?:Node)?|orphology)|Offset|PointLight|Sp(?:' +
+				'ecularLighting|otLight)|T(?:ile|urbulence))|ilter|o(?:nt(?:' +
+				'-face(?:-(?:format|name|src|uri))?)?|reignObject))|g(?:lyph(?:' +
+				'Ref)?)?|hkern|image|line(?:arGradient)?|m(?:a(?:rker|sk)|' +
+				'etadata|issing-glyph|path)|p(?:at(?:h|tern)|oly(?:gon|line))|' +
+				'r(?:adialGradient|ect)|s(?:cript|et|t(?:op|yle)|vg|witch|ymbol)|' +
+				't(?:ext(?:Path)?|itle|ref|span)|use|v(?:iew|kern))(?![\w:-])'
+			%highlight {
+				regex = '[^\s>]+'
+				style = 'error'
+			}
+			end = '>'
+			delim-style = 'keyword'
+		}
+
+		%highlight { use = "xml-comment" }
+
+		%highlight {
+			start = '<!DOCTYPE(?![\w-])'
+			%highlight {
+				regex = '(?i)(?<![\w-])(?:svg|PUBLIC)(?![\w-])'
+				style = 'misc'
+			}
+			%highlight { use = 'xml-attribute' }
+			end = '>'
+			style = 'misc'
+		}
+
+		%highlight {
+			start = '<\?xml(?![\w-])'
+			%highlight {
+				regex = '(?i)(?<![\w-])(?:version|encoding|standalone)(?![\w-])'
+				style = 'misc'
+			}
+			%highlight { use = 'xml-attribute' }
+			end = '\?>'
+			style = 'misc'
+		}
+
+		%highlight {
+			start = '<(?:a(?:ltGlyph(?:Def|Item)?|nimate(?:Color|' +
+				'Motion|Transform)?)?|c(?:ircle|lipPath|olor-profile|ursor)|' +
+				'de(?:fs|sc)|ellipse|f(?:e(?:Blend|Co(?:lorMatrix|mpo(?:' +
+				'nentTransfer|site)|nvolveMatrix)|Di(?:ffuseLighting|s(?:' +
+				'placementMap|tantLight))|F(?:lood|unc(?:A|B|G|R))|GaussianBlur|' +
+				'Image|M(?:erge(?:Node)?|orphology)|Offset|PointLight|Sp(?:' +
+				'ecularLighting|otLight)|T(?:ile|urbulence))|ilter|o(?:nt(?:' +
+				'-face(?:-(?:format|name|src|uri))?)?|reignObject))|g(?:lyph(?:' +
+				'Ref)?)?|hkern|image|line(?:arGradient)?|m(?:a(?:rker|sk)|' +
+				'etadata|issing-glyph|path)|p(?:at(?:h|tern)|oly(?:gon|line))|' +
+				'r(?:adialGradient|ect)|s(?:cript|et|t(?:op|yle)|vg|witch|ymbol)|' +
+				't(?:ext(?:Path)?|itle|ref|span)|use|v(?:iew|kern))(?![\w:-])'
+			%highlight { use = "svg-named-attributes" }
+			%highlight { use = 'xml-attribute' }
+			end = '/?>'
+			delim-style = 'keyword'
+		}
+
+		%highlight {
+			start = '<'
+			%highlight {
+				start = "'"
+				end = "'"
+			}
+			%highlight {
+				start = '"'
+				end = '"'
+			}
+			end = '>'
+			style = 'error'
+		}
+	}
+}
+
+
