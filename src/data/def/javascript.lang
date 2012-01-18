@@ -6,7 +6,23 @@
 		}
 	}
 
-	javascript {
+	javascript-regex-literal {
+		%highlight {
+			start = '/(?=[^*\\/[])'
+			%highlight { regex = '\\.' }
+			%highlight {
+				start = '\['
+				%highlight { regex = '\\.' }
+				end = ']'
+			}
+			# The end pattern here is not correct according to the specification.
+			# However, the only characters allowed after a regular expression
+			# literal are ASCII letters anyway, so anything else we just ignore.
+			end = '$|/\w*'
+			style = "string"
+		}
+	}
+	javascript-comment {
 		%highlight {
 			start = '/\*'
 			end = '\*/'
@@ -17,6 +33,10 @@
 			end = '(?<!\\)$'
 			style = "comment"
 		}
+	}
+
+	javascript {
+		%highlight { use = "javascript-comment" }
 
 		%highlight {
 			start = '(?:\bL)?"'
@@ -39,30 +59,28 @@
 			style = "string"
 		}
 
-		#FIXME: For now we have a hack about where regular expressions are allowed.
-		# This should be fixed to be more accurate.
+		# Here we hack in the regular expression literals. The problem here is that
+		# these literals should only be detected in certain places. In other places,
+		# the / indicates a division and should not be mistaken for a regular
+		# expression literal. This looks for one of the characters =, ( or :, or
+		# the keywords return and throw.
 		%highlight {
 			start = '[=(:]'
-			%highlight {
-				start = '/(?=[^*\\/[])'
-				%highlight { regex = '\\.' }
-				%highlight {
-					start = '\['
-					%highlight { regex = '\\.' }
-					end = ']'
-				}
-				# The end pattern here is not correct according to the specification.
-				# However, the only characters allowed after a regular expression
-				# literal are ASCII letters anyway, so anything else we just ignore.
-				end = '$|/\w*'
-				style = "string"
-			}
-			end = '(?![\s=(:])'
+			%highlight { use = "javascript-comment" }
+			%highlight { use = "javascript-regex-literal" }
+			end = '(?![\s=(:]|$)'
+		}
+		%highlight {
+			start = '\breturn|throw\b'
+			%highlight { use = "javascript-comment" }
+			%highlight { use = "javascript-regex-literal" }
+			end = '(?![\s=(:]|$)'
+			delim-style = "keyword"
 		}
 
 		%highlight {
 			regex = '\b(?:break|case|catch|continue|debugger|default|delete|do|else|finally|' +
-				'for|function|if|in(:?stanceof)?|new|return|switch|this|throw|try|typeof|' +
+				'for|function|if|in(:?stanceof)?|new|switch|this|throw|try|typeof|' +
 				'var|void|while|with|null|true|false)\b'
 			style = "keyword"
 		}

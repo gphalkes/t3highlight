@@ -15,6 +15,7 @@ src.util/.deps
 src.util/.objects
 src.util/t3highlight
 src.util/valgrind.log
+src.util/temp
 
 src/highlight_api.h
 src/highlight_errors.h
