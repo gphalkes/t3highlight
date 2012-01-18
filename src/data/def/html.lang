@@ -1,5 +1,6 @@
 #TODO:
 # - css inlining
+# - aria attributes?
 
 %include = "def/javascript.lang"
 %include = "def/svg.lang"

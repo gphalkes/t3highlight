@@ -69,6 +69,8 @@ extern "C" {
 #define T3_HIGHLIGHT_UTF8_NOCHECK (1<<1)
 /** Use the default include path to lookup the file. */
 #define T3_HIGHLIGHT_USE_PATH (1<<2)
+/** Use verbose error reporting. */
+#define T3_HIGHLIGHT_VERBOSE_ERROR (1<<3)
 /*@}*/
 
 
@@ -89,13 +91,24 @@ typedef struct {
 	char *lang_file; /**< Name of the language file, to be used with ::t3_highlight_load. */
 } t3_highlight_lang_t;
 
+/** @struct t3_highlight_error_t
+    A struct with error information. The error member is always filled in, all
+    other members are dependent on the ::T3_HIGHLIGHT_VERBOSE_ERROR flag.
+*/
+typedef struct {
+	int error;
+	int line_number;
+	char *file_name;
+	char *extra;
+} t3_highlight_error_t;
+
 /** List the known languages.
     @return A list of display name/language file name pairs.
 
     The returned list is terminated by an entry with two @c NULL pointers, and
     must be freed using ::t3_highlight_free_list.
 */
-T3_HIGHLIGHT_API t3_highlight_lang_t *t3_highlight_list(int *error);
+T3_HIGHLIGHT_API t3_highlight_lang_t *t3_highlight_list(int flags, t3_highlight_error_t *error);
 /** Free a list returned by ::t3_highlight_list.
     It is acceptable to pass a @c NULL pointer.
 */
@@ -116,7 +129,7 @@ T3_HIGHLIGHT_API void t3_highlight_free_list(t3_highlight_lang_t *list);
     same value as the 'normal' style.
 */
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load(const char *name,
-	int (*map_style)(void *, const char *), void *map_style_data, int flags, int *error);
+	int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
 /** Load a highlighting pattern, using a source file name.
     @param name The source file name used to determine the appropriate highlighting pattern.
 	@param map_style See ::t3_highlight_load.
@@ -129,7 +142,7 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load(const char *name,
     to determine which highlighting patterns should be loaded.
 */
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_filename(const char *name,
-	int (*map_style)(void *, const char *), void *map_style_data, int flags, int *error);
+	int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
 /** Load a highlighting pattern, using a language name.
     @param name The source file name used to determine the appropriate highlighting pattern.
 	@param map_style See ::t3_highlight_load.
@@ -142,7 +155,7 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_filename(const char *name,
     to determine which highlighting patterns should be loaded.
 */
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_langname(const char *name,
-	int (*map_style)(void *, const char *), void *map_style_data, int flags, int *error);
+	int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
 /** Create a highlighting pattern from a previously created configuration.
     @param syntax The @c t3_config_t to create the highlighting pattern from.
 	@param map_style See ::t3_highlight_load.
@@ -156,7 +169,7 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_langname(const char *name,
     can be used to create a highlighting pattern.
 */
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_new(t3_config_t *syntax,
-	int (*map_style)(void *, const char *), void *map_style_data, int flags, int *error);
+	int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
 
 /** Free all memory associated with a highlighting pattern.
     It is acceptable to pass a @c NULL pointer.

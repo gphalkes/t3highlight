@@ -70,7 +70,19 @@ struct t3_highlight_t {
 	int flags;
 };
 
-#define RETURN_ERROR(x) do { if (error != NULL) *error = (x); goto return_error; } while (0)
+#define RETURN_ERROR_FULL(_error, _line_number, _file_name, _extra, _flags) do { \
+	if (error != NULL) { \
+		error->error = (_error); \
+		if (_flags & T3_HIGHLIGHT_VERBOSE_ERROR) { \
+			error->line_number = _line_number; \
+			error->file_name = _file_name; \
+			error->extra = _extra; \
+		} \
+	} \
+	goto return_error; \
+} while (0)
+#define RETURN_ERROR(_error, _flags) RETURN_ERROR_FULL(_error, 0, NULL, NULL, _flags)
+
 
 T3_HIGHLIGHT_LOCAL char *_t3_highlight_strdup(const char *str);
 #endif

@@ -38,27 +38,30 @@ static const char map_schema[] = {
 };
 
 /** Load a single language map. */
-static t3_config_t *load_single_map(const char *name, int *error) {
+static t3_config_t *load_single_map(const char *name, int flags, t3_highlight_error_t *error) {
 	t3_config_schema_t *schema = NULL;
 	t3_config_error_t local_error;
 	t3_config_t *map;
+	t3_config_opts_t opts;
 	FILE *file;
 
 	if ((file = fopen(name, "r")) == NULL)
-		RETURN_ERROR(T3_ERR_ERRNO);
+		RETURN_ERROR_FULL(T3_ERR_ERRNO, 0, _t3_highlight_strdup(name), NULL, flags);
 
-	map = t3_config_read_file(file, &local_error, NULL);
+	opts.flags = (flags & T3_HIGHLIGHT_VERBOSE_ERROR) ? (T3_CONFIG_VERBOSE_ERROR | T3_CONFIG_ERROR_FILE_NAME) : 0;
+	map = t3_config_read_file(file, &local_error, &opts);
 	fclose(file);
 	if (map == NULL)
-		RETURN_ERROR(local_error.error);
+		RETURN_ERROR_FULL(local_error.error, local_error.line_number, local_error.file_name, local_error.extra, flags);
 
 	if ((schema = t3_config_read_schema_buffer(map_schema, sizeof(map_schema), &local_error, NULL)) == NULL) {
 		t3_config_delete(map);
-		RETURN_ERROR(local_error.error != T3_ERR_OUT_OF_MEMORY ? T3_ERR_INTERNAL : local_error.error);
+		RETURN_ERROR_FULL(local_error.error != T3_ERR_OUT_OF_MEMORY ? T3_ERR_INTERNAL : local_error.error, 0, NULL, NULL, flags);
 	}
 
-	if (!t3_config_validate(map, schema, NULL, 0))
-		RETURN_ERROR(T3_ERR_INVALID_FORMAT);
+	if (!t3_config_validate(map, schema, &local_error, T3_CONFIG_VERBOSE_ERROR | T3_CONFIG_ERROR_FILE_NAME))
+		RETURN_ERROR_FULL((flags & T3_HIGHLIGHT_VERBOSE_ERROR) ? local_error.error : T3_ERR_INVALID_FORMAT,
+			local_error.line_number, local_error.file_name, local_error.extra, flags);
 	t3_config_delete_schema(schema);
 
 	return map;
@@ -81,30 +84,30 @@ static void merge(t3_config_t *main, t3_config_t *map) {
 	t3_config_delete(map);
 }
 
-static t3_config_t *load_map(int *error) {
+static t3_config_t *load_map(int flags, t3_highlight_error_t *error) {
 	t3_config_t *full_map = NULL, *map;
 	const char *home_env;
 
 	if ((full_map = t3_config_new()) == NULL)
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
-	if (!t3_config_add_plist(full_map, "lang", error))
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+	if (!t3_config_add_plist(full_map, "lang", error == NULL ? NULL : &error->error))
 		goto return_error;
 
 	home_env = getenv("HOME");
 	if (home_env != NULL) {
 		char *tmp;
 		if ((tmp = malloc(strlen(home_env) + strlen(".libt3highlight/lang.map") + 2)) == NULL)
-			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
 		strcpy(tmp, home_env);
 		strcat(tmp, "/");
 		strcat(tmp, ".libt3highlight/lang.map");
-		map = load_single_map(tmp, NULL);
+		map = load_single_map(tmp, 0, NULL);
 		free(tmp);
 		if (map != NULL)
 			merge(full_map, map);
 	}
 
-	if ((map = load_single_map(DATADIR "/" "lang.map", error)) == NULL)
+	if ((map = load_single_map(DATADIR "/" "lang.map", 0, error)) == NULL)
 		goto return_error;
 
 	merge(full_map, map);
@@ -115,19 +118,19 @@ return_error:
 	return NULL;
 }
 
-t3_highlight_lang_t *t3_highlight_list(int *error) {
+t3_highlight_lang_t *t3_highlight_list(int flags, t3_highlight_error_t *error) {
 	t3_config_t *map, *lang, *ptr;
 	t3_highlight_lang_t *retval = NULL;
 	int count;
 
-	if ((map = load_map(error)) == NULL)
+	if ((map = load_map(flags, error)) == NULL)
 		return NULL;
 
 	lang = t3_config_get(map, "lang");
 	for (count = 0, ptr = t3_config_get(lang, NULL); ptr != NULL; count++, ptr = t3_config_get_next(ptr)) {}
 
 	if ((retval = malloc((count + 1) * sizeof(t3_highlight_lang_t))) == NULL)
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
 
 	for (count = 0, ptr = t3_config_get(lang, NULL); ptr != NULL; count++, ptr = t3_config_get_next(ptr)) {
 		retval[count].name = t3_config_take_string(t3_config_get(ptr, "name"));
@@ -168,13 +171,13 @@ void t3_highlight_free_list(t3_highlight_lang_t *list) {
     @param map_style_error Location to store an error code.
 */
 static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, int (*map_style)(void *, const char *),
-		void *map_style_data, int flags, int *error)
+		void *map_style_data, int flags, t3_highlight_error_t *error)
 {
 	t3_config_t *map, *ptr;
 	pcre *pcre;
 	int ovector[30];
 
-	if ((map = load_map(error)) == NULL)
+	if ((map = load_map(flags, error)) == NULL)
 		return NULL;
 
 	for (ptr = t3_config_get(t3_config_get(map, "lang"), NULL); ptr != NULL; ptr = t3_config_get_next(ptr)) {
@@ -201,24 +204,24 @@ static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, i
 	}
 	t3_config_delete(map);
 	if (error != NULL)
-		*error = T3_ERR_NO_SYNTAX;
+		error->error = T3_ERR_NO_SYNTAX;
 	return NULL;
 }
 
 t3_highlight_t *t3_highlight_load_by_filename(const char *name, int (*map_style)(void *, const char *),
-		void *map_style_data, int flags, int *error)
+		void *map_style_data, int flags, t3_highlight_error_t *error)
 {
 	return load_by_xname("file-regex", name, map_style, map_style_data, flags, error);
 }
 
 t3_highlight_t *t3_highlight_load_by_langname(const char *name, int (*map_style)(void *, const char *),
-		void *map_style_data, int flags, int *error)
+		void *map_style_data, int flags, t3_highlight_error_t *error)
 {
 	return load_by_xname("name-regex", name, map_style, map_style_data, flags, error);
 }
 
 t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, const char *), void *map_style_data,
-		int flags, int *error)
+		int flags, t3_highlight_error_t *error)
 {
 	t3_config_opts_t opts;
 	const char *path[] = { NULL, NULL, NULL };
@@ -233,7 +236,7 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 	if (home_env != NULL) {
 		char *tmp;
 		if ((tmp = malloc(strlen(home_env) + strlen(".libt3highlight") + 2)) == NULL)
-			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
 		strcpy(tmp, home_env);
 		strcat(tmp, "/");
 		strcat(tmp, ".libt3highlight");
@@ -244,18 +247,21 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 
 	if (flags & T3_HIGHLIGHT_USE_PATH) {
 		if ((file = t3_config_open_from_path(path, name, 0)) == NULL)
-			RETURN_ERROR(T3_ERR_ERRNO);
+			RETURN_ERROR_FULL(T3_ERR_ERRNO, 0, _t3_highlight_strdup(name), NULL, flags);
 	} else {
 		if ((file = fopen(name, "r")) == NULL)
-			RETURN_ERROR(T3_ERR_ERRNO);
+			RETURN_ERROR_FULL(T3_ERR_ERRNO, 0, _t3_highlight_strdup(name), NULL, flags);
 	}
 
 	opts.flags = T3_CONFIG_INCLUDE_DFLT;
+	if (flags & T3_HIGHLIGHT_VERBOSE_ERROR)
+		opts.flags |= T3_CONFIG_VERBOSE_ERROR | T3_CONFIG_ERROR_FILE_NAME;
 	opts.include_callback.dflt.path = path;
 	opts.include_callback.dflt.flags = 0;
 
 	if ((config = t3_config_read_file(file, &config_error, &opts)) == NULL)
-		RETURN_ERROR(config_error.error);
+		RETURN_ERROR_FULL(config_error.error, config_error.line_number, config_error.file_name == NULL ?
+			_t3_highlight_strdup(name) : config_error.file_name, config_error.extra, flags);
 
 	free(home_env);
 	home_env = NULL;
@@ -263,11 +269,14 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 	file = NULL;
 
 
-	if ((result = t3_highlight_new(config, map_style, map_style_data, flags, error)) == NULL)
+	if ((result = t3_highlight_new(config, map_style, map_style_data, flags, error)) == NULL) {
+		if ((flags & T3_HIGHLIGHT_VERBOSE_ERROR) && error->file_name == NULL)
+			error->file_name = _t3_highlight_strdup(name);
 		goto return_error;
+	}
 
 	if ((result->lang_file = _t3_highlight_strdup(name)) == NULL)
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
 
 	t3_config_delete(config);
 

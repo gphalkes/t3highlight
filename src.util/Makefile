@@ -24,7 +24,7 @@ include ../../makesys/rules.mk
 
 CFLAGS += -I. -I../src -I.objects
 
-t3highlight: | lib
+.objects/t3highlight.o: | lib
 
 .objects/%.bytes: %.schema
 	$(GENOBJDIR)

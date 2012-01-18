@@ -81,11 +81,15 @@ static PARSE_FUNCTION(parse_args)
 			option_language_file = optArg;
 		END_OPTION
 		OPTION('L', "list", NO_ARG)
-			int i, error;
-			t3_highlight_lang_t *list = t3_highlight_list(&error);
+			t3_highlight_error_t error;
+			int i;
+			t3_highlight_lang_t *list = t3_highlight_list(T3_HIGHLIGHT_VERBOSE_ERROR, &error);
 
 			if (list == NULL)
-				fatal("Error retrieving listing: %s\n", t3_highlight_strerror(error));
+				if (error.file_name != NULL)
+					fatal("%s:%d: %s\n", error.file_name, error.line_number, t3_highlight_strerror(error.error));
+				else
+					fatal("Error loading highlight listing: %s\n", t3_highlight_strerror(error.error));
 
 			printf("Available languages:\n");
 			for (i = 0; list[i].name != NULL; i++)
@@ -117,9 +121,8 @@ static PARSE_FUNCTION(parse_args)
 
 		fatal("No such option " OPTFMT "\n", OPTPRARG);
 	NO_OPTION
-		//FIXME: handle more than one option
 		if (option_input != NULL)
-			fatal("Multiple inputs not implemented yet\n");
+			fatal("Only one input file allowed\n");
 		option_input = optcurrent;
 	END_OPTIONS
 END_FUNCTION
@@ -158,7 +161,7 @@ static style_def_t *load_style(const char *name) {
 	const char *path[] = { DATADIR, NULL };
 	int count;
 
-	//FIXME: search in appropriate dirs (DATADIR and environment/user home)
+	//FIXME: search in appropriate dirs (DATADIR _and_ environment/user home)
 	if ((style_file = t3_config_open_from_path(path, name, 0)) == NULL)
 		fatal("Can't open '%s': %s\n", name, strerror(errno));
 
@@ -253,7 +256,8 @@ static void highlight_file(const char *name, t3_highlight_t *highlight) {
 
 int main(int argc, char *argv[]) {
 	t3_highlight_t *highlight;
-	int error, i;
+	t3_highlight_error_t error;
+	int i;
 	//FIXME: setlocale etc. for gettext
 	//FIXME: open style by file name only if so specified on the cli
 
@@ -270,14 +274,25 @@ int main(int argc, char *argv[]) {
 	if (option_language == NULL && option_language_file == NULL && option_input == NULL) {
 		fatal("-l/--language or --language-file required for reading from standard input\n");
 	} else if (option_language_file != NULL) {
-		if ((highlight = t3_highlight_load(option_language_file, map_style, styles, T3_HIGHLIGHT_UTF8, &error)) == NULL)
-			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
+		highlight = t3_highlight_load(option_language_file, map_style, styles,
+				T3_HIGHLIGHT_VERBOSE_ERROR | T3_HIGHLIGHT_UTF8, &error);
 	} else if (option_language != NULL) {
-		if ((highlight = t3_highlight_load_by_langname(option_language, map_style, styles, T3_HIGHLIGHT_UTF8, &error)) == NULL)
-			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
+		highlight = t3_highlight_load_by_langname(option_language, map_style, styles,
+				T3_HIGHLIGHT_VERBOSE_ERROR | T3_HIGHLIGHT_UTF8, &error);
 	} else {
-		if ((highlight = t3_highlight_load_by_filename(option_input, map_style, styles, T3_HIGHLIGHT_UTF8, &error)) == NULL)
-			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error));
+		highlight = t3_highlight_load_by_filename(option_input, map_style, styles,
+				T3_HIGHLIGHT_VERBOSE_ERROR | T3_HIGHLIGHT_UTF8, &error);
+	}
+
+	if (highlight == NULL) {
+		if (error.file_name == NULL)
+			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error.error));
+
+		fprintf(stderr, "Error loading highlighting patterns: %s:%d: %s",
+			error.file_name, error.line_number, t3_highlight_strerror(error.error));
+		if (error.extra != NULL)
+			fprintf(stderr, ": %s", error.extra);
+		fatal("\n");
 	}
 
 	highlight_file(option_input, highlight);
