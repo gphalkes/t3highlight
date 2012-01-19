@@ -146,7 +146,7 @@ static t3_bool compile_highlight(const char *highlight, full_pcre_t *action, int
 	int error_offset, local_error;
 	const char *study_error;
 
-	if ((action->regex = pcre_compile2(highlight, (flags & T3_HIGHLIGHT_UTF8 ? PCRE_UTF8 : 0) | PCRE_ANCHORED,
+	if ((action->regex = pcre_compile2(highlight, (flags & T3_HIGHLIGHT_UTF8 ? PCRE_UTF8 | PCRE_NO_UTF8_CHECK: 0) | PCRE_ANCHORED,
 			&local_error, &error_message, &error_offset, NULL)) == NULL)
 	{
 		if (error != NULL) {
@@ -571,7 +571,7 @@ static void match_internal(match_context_t *context) {
 
 	for (j = 0; j < context->state->highlights.used; j++) {
 		full_pcre_t *regex;
-		int options = PCRE_NO_UTF8_CHECK;
+		int options = 0;
 
 		/* If the regex member == NULL, this highlight is either a pointer to
 		   another state which we should search here ("use"), or it is an end

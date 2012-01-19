@@ -30,7 +30,25 @@ typedef struct {
 	char *end;
 } style_def_t;
 
+typedef struct {
+	char *search;
+	char *replace;
+	size_t search_len;
+	size_t replace_len;
+} translation_t;
+
+typedef struct tag_t {
+	const char *name;
+	const char *value;
+	size_t name_len;
+	struct tag_t *next;
+} tag_t;
+
 static style_def_t *styles;
+static translation_t *translations;
+static char *header;
+static char *footer;
+static tag_t *tags;
 
 static const char style_schema[] = {
 #include "style.bytes"
@@ -38,9 +56,13 @@ static const char style_schema[] = {
 
 static int option_verbose;
 static const char *option_language;
-static const char *option_style;
+static char *option_style;
 static const char *option_input;
 static const char *option_language_file;
+static t3_bool option_raw;
+
+static t3_bool set_tag(const char *name, const char *value);
+static void write_data(const char *string, size_t size);
 
 /** Alert the user of a fatal error and quit.
     @param fmt The format string for the message. See fprintf(3) for details.
@@ -56,7 +78,7 @@ void fatal(const char *fmt, ...) {
 }
 
 /** Duplicate a string but exit on allocation failure */
-char *safe_strdup(const char *str) {
+static char *safe_strdup(const char *str) {
 	char *result;
 	size_t len = strlen(str) + 1;
 
@@ -105,16 +127,32 @@ static PARSE_FUNCTION(parse_args)
 		OPTION('s', "style", REQUIRED_ARG)
 			if (option_style != NULL)
 				fatal("Error: only one style option allowed\n");
-			option_style = optArg;
+			if ((option_style = malloc(strlen(optArg) + 7)) == NULL)
+				fatal("Out of memory");
+			strcpy(option_style, optArg);
+			strcat(option_style, ".style");
 		END_OPTION
 		OPTION('h', "help", NO_ARG)
 			printf("Usage: t3highlight [<options>] [<file>]\n"
 				"  -l<lang>,--language=<lang>      Highlight using language <lang>\n"
 				"  --language-file=<file>          Load highlighting description file <file>\n"
 				"  -L,--list                       List available languages and styles\n"
+				"  -r,--raw                        Output without header or footer\n"
 				"  -s<style>,--style=<style>       Output using style <style>\n"
 				"  -v,--verbose                    Enable verbose output mode\n"
 			);
+		END_OPTION
+		OPTION('r', "raw", NO_ARG)
+			option_raw = t3_true;
+		END_OPTION
+		OPTION('t', "tag", REQUIRED_ARG)
+			char *value;
+			if ((value = strchr(optArg, '=')) == NULL)
+				fatal("Error: -t/--tag argument must be <name>=<value>\n");
+			*value = 0;
+			value++;
+			if (!set_tag(optArg, value))
+				fatal("Error: duplicate tag specified\n");
 		END_OPTION
 		DOUBLE_DASH
 			NO_MORE_OPTIONS;
@@ -127,6 +165,23 @@ static PARSE_FUNCTION(parse_args)
 		option_input = optcurrent;
 	END_OPTIONS
 END_FUNCTION
+
+static t3_bool set_tag(const char *name, const char *value) {
+	tag_t *ptr;
+	for (ptr = tags; ptr != NULL; ptr = ptr->next)
+		if (strcmp(ptr->name, name) == 0)
+			return t3_false;
+
+	if ((ptr = malloc(sizeof(tag_t))) == NULL)
+		fatal("Out of memory\n");
+
+	ptr->name = name;
+	ptr->name_len = strlen(name);
+	ptr->value = value;
+	ptr->next = tags;
+	tags = ptr;
+	return t3_true;
+}
 
 
 static int map_style(void *_styles, const char *name) {
@@ -149,6 +204,30 @@ static char *expand_string(const char *str, t3_bool expand_escapes) {
 	if (expand_escapes)
 		parse_escapes(result);
 	return result;
+}
+
+static void init_translations(t3_config_t *translate, const char *name, t3_bool expand_escapes) {
+	int count, i;
+	if ((count = t3_config_get_length(translate)) == 0)
+		return;
+
+	if ((translations = malloc(sizeof(translation_t) * (count + 1))) == NULL)
+		fatal("Out of memory");
+	for (i = 0, translate = t3_config_get(translate, NULL); translate != NULL; i++, translate = t3_config_get_next(translate)) {
+		translations[i].search = t3_config_take_string(t3_config_get(translate, "search"));
+		translations[i].replace = t3_config_take_string(t3_config_get(translate, "replace"));
+		if (expand_escapes) {
+			translations[i].search_len = parse_escapes(translations[i].search);
+			translations[i].replace_len = parse_escapes(translations[i].replace);
+		} else {
+			translations[i].search_len = strlen(translations[i].search);
+			translations[i].replace_len = strlen(translations[i].replace);
+		}
+		if (translations[i].search_len == 0)
+			fatal("Empty search string: %s:%d\n", name, t3_config_get_line_number(t3_config_get(translate, "search")));
+	}
+	translations[i].search = NULL;
+	translations[i].replace = NULL;
 }
 
 static style_def_t *load_style(const char *name) {
@@ -177,7 +256,7 @@ static style_def_t *load_style(const char *name) {
 		fatal("Can't open '%s': %s\n", name, strerror(errno));
 
 	if ((style_config = t3_config_read_file(style_file, &config_error, NULL)) == NULL)
-		fatal("Error reading style file: %d: %s\n", config_error.line_number, t3_config_strerror(config_error.error));
+		fatal("Error reading style file: %s:%d: %s\n", name, config_error.line_number, t3_config_strerror(config_error.error));
 	fclose(style_file);
 
 	if ((schema = t3_config_read_schema_buffer(style_schema, sizeof(style_schema), &config_error, NULL)) == NULL) {
@@ -220,13 +299,86 @@ static style_def_t *load_style(const char *name) {
 	}
 	result[count].tag = NULL;
 
+	init_translations(t3_config_get(style_config, "translate"), name, expand_escapes);
+
+	if (option_raw) {
+		header = t3_config_take_string(t3_config_get(t3_config_get(style_config, "raw"), "header"));
+		footer = t3_config_take_string(t3_config_get(t3_config_get(style_config, "raw"), "footer"));
+	} else {
+		header = t3_config_take_string(t3_config_get(t3_config_get(style_config, "document"), "header"));
+		footer = t3_config_take_string(t3_config_get(t3_config_get(style_config, "document"), "footer"));
+	}
+	if (parse_escapes) {
+		if (header != NULL)
+			parse_escapes(header);
+		if (footer != NULL)
+			parse_escapes(footer);
+	}
+
 	t3_config_delete(normal);
 	t3_config_delete(style_config);
 
 	return result;
 }
 
-static void highlight_file(const char *name, t3_highlight_t *highlight) {
+static void write_header(void) {
+	char *ptr, *prev_ptr = header;
+	tag_t *tag_ptr;
+	if (header == NULL)
+		return;
+
+	for (ptr = strchr(header, '%'); ptr != NULL; ptr = strchr(prev_ptr, '%')) {
+		if (ptr != prev_ptr)
+			fwrite(prev_ptr, 1, ptr - prev_ptr, stdout);
+		if (ptr[1] == '{') {
+			for (tag_ptr = tags; tag_ptr != NULL; tag_ptr = tag_ptr->next) {
+				if (strncmp(ptr + 2, tag_ptr->name, tag_ptr->name_len) == 0 && ptr[tag_ptr->name_len + 2] == '}') {
+					write_data(tag_ptr->value, strlen(tag_ptr->value));
+					ptr += tag_ptr->name_len + 2;
+					break;
+				}
+			}
+			if (tag_ptr == NULL) {
+				char *close_ptr = strchr(ptr, '}');
+				if (close_ptr == NULL) {
+					ptr++;
+					putc(*ptr, stdout);
+				} else {
+					ptr = close_ptr;
+				}
+			}
+		} else {
+			ptr++;
+			putc(*ptr, stdout);
+		}
+		prev_ptr = ptr + 1;
+	}
+	fwrite(prev_ptr, 1, header + strlen(header) - prev_ptr, stdout);
+}
+
+static void write_data(const char *string, size_t size) {
+	translation_t *ptr;
+	size_t i;
+
+	if (translations == NULL) {
+		fwrite(string, 1, size, stdout);
+		return;
+	}
+
+	for (i = 0; i < size; i++) {
+		for (ptr = translations; ptr->search != NULL; ptr++) {
+			if (i + ptr->search_len <= size && strncmp(string + i, ptr->search, ptr->search_len) == 0) {
+				fwrite(ptr->replace, 1, ptr->replace_len, stdout);
+				i += ptr->search_len - 1;
+				break;
+			}
+		}
+		if (ptr->search == NULL)
+			putc(string[i], stdout);
+	}
+}
+
+static void highlight_file(t3_highlight_t *highlight) {
  	FILE *input;
 	char *line = NULL;
 	size_t n;
@@ -238,10 +390,12 @@ static void highlight_file(const char *name, t3_highlight_t *highlight) {
 	if (match == NULL)
 		fatal("Out of memory\n");
 
-	if (name == NULL)
+	if (option_input == NULL)
 		input = stdin;
-	else if ((input = fopen(name, "rb")) == NULL)
-		fatal("Can't open '%s': %s\n", name, strerror(errno));
+	else if ((input = fopen(option_input, "rb")) == NULL)
+		fatal("Can't open '%s': %s\n", option_input, strerror(errno));
+
+	write_header();
 
 	while ((chars_read = getline(&line, &n, input)) > 0) {
 		if (line[chars_read - 1] == '\n')
@@ -255,17 +409,20 @@ static void highlight_file(const char *name, t3_highlight_t *highlight) {
 				end = t3_highlight_get_end(match);
 			if (start != match_start) {
 				fputs(styles[t3_highlight_get_begin_attr(match)].start, stdout);
-				printf("%.*s", (int) (match_start - start), line + start);
+				write_data(line + start, match_start - start);
 				fputs(styles[t3_highlight_get_begin_attr(match)].end, stdout);
 			}
 			if (match_start != end) {
 				fputs(styles[t3_highlight_get_match_attr(match)].start, stdout);
-				printf("%.*s", (int) (end - match_start), line + match_start);
+				write_data(line + match_start, end - match_start);
 				fputs(styles[t3_highlight_get_match_attr(match)].end, stdout);
 			}
 		} while (match_result);
 		putchar('\n');
 	}
+	if (footer != NULL)
+		fwrite(footer, 1, strlen(footer), stdout);
+	fflush(stdout);
 	t3_highlight_free_match(match);
 	fclose(input);
 	free(line);
@@ -312,7 +469,10 @@ int main(int argc, char *argv[]) {
 		fatal("\n");
 	}
 
-	highlight_file(option_input, highlight);
+	set_tag("name", option_input);
+	set_tag("charset", "UTF-8");
+
+	highlight_file(highlight);
 
 	for (i = 0; styles[i].tag != NULL; i++) {
 		free(styles[i].tag);

@@ -17,51 +17,31 @@ types {
 	style {
 		type = "section"
 		allowed-keys {
-			start {
-				type = "string"
-			}
-			end {
-				type = "string"
-			}
+			start { type = "string" }
+			end { type = "string" }
 		}
-		%constraint = "start & end"
+		%constraint = "{style definition must provide both 'start' and 'end'}start & end"
 	}
 	translation {
 		type = "section"
 		allowed-keys {
-			string {
-				type = "string"
-			}
-			regex {
-				type = "string"
-			}
-			replace {
-				type = "string"
-			}
+			search { type = "string" }
+			replace { type = "string" }
 		}
-		%constraint = "string ^ regex"
-		%constraint = "replace"
+		%constraint = "{translation must provide both 'search' and 'replace'} search & replace"
 	}
 	doc-def {
 		type = "section"
 		allowed-keys {
-			header {
-				type = "string"
-			}
-			footer {
-				type = "string"
-			}
+			header { type = "string" }
+			footer { type = "string" }
 		}
 	}
 }
 
 allowed-keys {
-	format {
-		type = "int"
-	}
-	expand-escapes {
-		type = "bool"
-	}
+	format { type = "int" }
+	expand-escapes { type = "bool" }
 	styles {
 		type = "section"
 		item-type = "style"
@@ -70,12 +50,8 @@ allowed-keys {
 		type = "list"
 		item-type = "translation"
 	}
-	document {
-		type = "doc-def"
-	}
-	raw {
-		type = "doc-def"
-	}
+	document { type = "doc-def" }
+	raw { type = "doc-def" }
 }
-%constraint = "format = 1"
-%constraint = "styles"
+%constraint = "{'format' must be 1} format = 1"
+%constraint = "{style file must contain 'styles' list} styles"
