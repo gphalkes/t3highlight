@@ -18,7 +18,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <locale.h>
-#include <sys/types.h>
 #include <dirent.h>
 #include <fnmatch.h>
 #include <t3config/config.h>

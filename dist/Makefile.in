@@ -45,6 +45,7 @@ prefix=/usr/local
 INSTALL=install
 
 # Miscelaneous install paths
+bindir=$(prefix)/bin
 libdir=$(prefix)/lib
 datadir=$(prefix)/share
 docdir=$(prefix)/share/doc/libt3highlight
@@ -59,12 +60,18 @@ OBJECTS=<OBJECTS>
 
 all: src/libt3highlight.la
 
-.PHONY: all clean dist-clean install uninstall
+.PHONY: all clean dist-clean install uninstall lib t3highlight
 .SUFFIXES: .c .o .lo .la .mo .po
 .IGNORE: uninstall
 
+lib:
+	@$(MAKE) -f mk/libt3highlight
+
+t3highlight: lib
+	@$(MAKE) -f mk/t3highlight
+
 clean:
-	rm -rf src/*.lo src/generated/*.lo src/.libs src/generated/.libs src/libt3highlight.la
+	rm -rf src/*.lo src/generated/*.lo src/.libs src/generated/.libs src/libt3highlight.la src.util/*.o src.util/t3highlight
 
 dist-clean: clean
 	rm -rf Makefile config.log libt3highlight.pc
@@ -76,6 +83,7 @@ src/libt3highlight.la: $(OBJECTS)
 	$(SILENTLDLT) $(LIBTOOL) $(SILENCELT) --mode=link --tag=CC $(CC) -shared -version-info <VERSIONINFO> $(CFLAGS) $(LDFLAGS) -o $@ $(OBJECTS) $(LDLIBS) $(CONFIGLIBS) $(GETTEXTLIBS) -rpath $(libdir)
 
 # Macros to make DESTDIR support more readable
+bindir=$(DESTDIR)$(bindir)
 _libdir=$(DESTDIR)$(libdir)
 _datadir=$(DESTDIR)$(datadir)
 _docdir=$(DESTDIR)$(docdir)
@@ -96,6 +104,9 @@ install: all
 	find src/data -type f | while read X ; do $(INSTALL) -m0644 $${X} $(_datadir)/libt3highlight<LIBVERSION>/$${X#src/data} ; done
 	$(INSTALL) -d $(_pkgconfigdir)
 	$(INSTALL) -m0644 libt3highlight.pc $(_pkgconfigdir)
+	$(INSTALL) -d $(_bindir)
+	$(INSTALL) -m0755 src.util/t3highlight $(_bindir)
+	find src.util/data -type f | while read X ; do $(INSTALL) -m0644 $${X} $(_datadir)/libt3highlight<LIBVERSION>/$${X#src/data} ; done
 
 uninstall:
 	$(LIBTOOL) --mode=uninstall rm $(_libdir)/libt3highlight.la
