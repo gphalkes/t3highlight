@@ -5,4 +5,4 @@ TODO
 	header/footer in the same style
 	- add option to print list of document names
 - handle encodings (better)
-- print list of styles
+- merge consecutive sections using the same attribute?

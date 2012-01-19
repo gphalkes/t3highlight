@@ -7,25 +7,13 @@ DESIGN GOALS:
 TODO:
 Library:
 - Add an interface for language detection
+	- Only provide an interface to test a line. This will allow a program to use
+	  it as it sees fit.
 	- Support and detect Emacs language identifiers (-*- <name> -*- or something)
 		and vi/vim modelines (only first and last 5 lines)
 	- Do we wish to support language switching?
-	- Only provide an interface to test a line. This will allow a program to use
-	  it as it sees fit.
-
-t3highlight:
-- add html/latex/etc escaping of inputs (i.e. sed scripts or something like it)
-- merge consecutive sections using the same attribute?
 
 Generic:
 - define a list of default style names to use
-- convert nano/GNU source-highlight/other highlighting patterns if possible
 
 IDEAS:
-Perl operator start:
-%highlight {
-	start = "qq(?|(?<delim>#)|\s+(?<delim>[a-z0-9_])|\s*(?<delim>[^({[<a-z0-9_#\s]))"
-	extract = "delim"
-	end = "(?&delim)"
-	style = "string"
-}

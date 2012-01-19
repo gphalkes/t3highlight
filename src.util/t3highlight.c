@@ -18,6 +18,9 @@
 #include <errno.h>
 #include <unistd.h>
 #include <locale.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <fnmatch.h>
 #include <t3config/config.h>
 #include <t3highlight/highlight.h>
 
@@ -63,6 +66,7 @@ static t3_bool option_raw;
 
 static t3_bool set_tag(const char *name, const char *value);
 static void write_data(const char *string, size_t size);
+static void list_styles(void);
 
 /** Alert the user of a fatal error and quit.
     @param fmt The format string for the message. See fprintf(3) for details.
@@ -121,7 +125,7 @@ static PARSE_FUNCTION(parse_args)
 			t3_highlight_free_list(list);
 
 			printf("\nAvaliable styles:\n");
-			printf("  FIXME: list styles\n");
+			list_styles();
 			exit(EXIT_SUCCESS);
 		END_OPTION
 		OPTION('s', "style", REQUIRED_ARG)
@@ -183,6 +187,39 @@ static t3_bool set_tag(const char *name, const char *value) {
 	return t3_true;
 }
 
+static int style_filter(const struct dirent *entry) {
+	/* FIXME: filter out directories and other non-file entries. */
+	return fnmatch("*.style", entry->d_name, 0) == 0;
+}
+
+static void list_dir_styles(const char *dirname) {
+	struct dirent **namelist;
+	int namelist_len;
+	int i;
+
+	if ((namelist_len = scandir(dirname, &namelist, style_filter, alphasort)) <= 0)
+		return;
+
+	for (i = 0; i < namelist_len; i++) {
+		printf("  %.*s\n", (int) (strrchr(namelist[i]->d_name, '.') - namelist[i]->d_name), namelist[i]->d_name);
+		free(namelist[i]);
+	}
+	free(namelist);
+}
+
+static void list_styles(void) {
+	char *home_env = getenv("HOME");
+	if (home_env != NULL && home_env[0] != 0) {
+		char *tmp;
+		if ((tmp = malloc(strlen(home_env) + strlen("/.libt3highlight") + 1)) == NULL)
+			fatal("Out of memory\n");
+		strcpy(tmp, home_env);
+		strcat(tmp, "/.libt3highlight");
+		list_dir_styles(tmp);
+		free(tmp);
+	}
+	list_dir_styles(DATADIR);
+}
 
 static int map_style(void *_styles, const char *name) {
 	style_def_t *styles = _styles;
@@ -240,11 +277,11 @@ static style_def_t *load_style(const char *name) {
 	style_def_t *result;
 	const char *path[] = { NULL, DATADIR, NULL };
 	const char *home_env;
+	char *tmp = NULL;
 	int count;
 
 	home_env = getenv("HOME");
 	if (home_env != NULL && home_env[0] != 0) {
-		char *tmp;
 		if ((tmp = malloc(strlen(home_env) + strlen("/.libt3highlight") + 1)) == NULL)
 			fatal("Out of memory\n");
 		strcpy(tmp, home_env);
@@ -254,6 +291,7 @@ static style_def_t *load_style(const char *name) {
 
 	if ((style_file = t3_config_open_from_path(path[0] == NULL ? path + 1 : path, name, 0)) == NULL)
 		fatal("Can't open '%s': %s\n", name, strerror(errno));
+	free(tmp);
 
 	if ((style_config = t3_config_read_file(style_file, &config_error, NULL)) == NULL)
 		fatal("Error reading style file: %s:%d: %s\n", name, config_error.line_number, t3_config_strerror(config_error.error));
