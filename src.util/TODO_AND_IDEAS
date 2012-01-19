@@ -1,0 +1,8 @@
+TODO
+====
+- allow mutiple document names, such that we can allow different headers. This
+	would for example allow definition of a HTML4 and HTML5 document
+	header/footer in the same style
+	- add option to print list of document names
+- handle encodings (better)
+- print list of styles

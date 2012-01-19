@@ -1,0 +1,129 @@
+%define {
+	css-comment {
+		%highlight {
+			start = '/\*'
+			end = '\*/'
+			style = "comment"
+		}
+	}
+	css-escape {
+		%highlight {
+			start = '\\\r?$'
+			end = '^'
+		}
+		%highlight {
+			regex = '(?i)\\(?:[^\r\f\da-f]|[a-f0-9]{1,6}|[\r\f])'
+			style = "string-escape"
+		}
+	}
+	css-elements {
+		%highlight {
+			start = '(?i)(?<![_a-z\d\240-\377-])(?:\d+|\d*\.\d+|#[a-f0-9]{1,6})'
+			%highlight {
+				regex = '(?i)(?:%|em|ex|px|cm|mm|in|pt|pc|deg|rad|grad|ms|s|hz|khz)(?![_a-z\d\240-\377-])'
+				exit = 1
+			}
+			%highlight {
+				regex = '(?i)[_a-z\240-\377][_a-z\d\240-\377-]*'
+				style = "error"
+				exit = 1
+			}
+			style = "number"
+			end = ''
+		}
+		%highlight {
+			start = '"'
+			%highlight { use = "css-escape" }
+			end = '["\r\f]'
+			style = "string"
+		}
+		%highlight {
+			start = "'"
+			%highlight { use = "css-escape" }
+			end = "['\r\f]"
+			style = "string"
+		}
+	}
+
+	css-value {
+		%highlight {
+			start = ':'
+			%highlight { use = "css-comment" }
+			%highlight { use = "css-elements" }
+			%highlight {
+				start = '!'
+				%highlight { use = 'css-comment' }
+				%highlight {
+					regex = '(?i)important(?![_a-z\d\240-\377-])'
+					style = "misc"
+				}
+				end = '(?=\S)'
+				delim-style = "misc"
+			}
+			style = "string"
+			delim-style = "normal"
+			end = ';|(?=})'
+			exit = 2
+		}
+	}
+
+	css {
+
+		%highlight {
+			regex = '(?i)(?<![_a-z\d\240-\377-])(?:import|page|media|charset)(?![_a-z\d\240-\377-])'
+			style = "keyword"
+		}
+
+		%highlight {
+			regex = '(?i)(?<![_a-z\d\240-\377.:-])(?:a(?:bbr|cronym|ddress|pplet|r(?:ea|ticle)|' +
+				'side|udio)?|b(?:ase(?:font)?|d(?:i|o)|ig|lockquote|ody|r|utton)?|' +
+				'c(?:a(?:nvas|ption)|enter|ite|o(?:de|l(?:group)?|mmand))|d(?:' +
+				'atalist|d|e(?:l|tails)|fn|i(?:r|v)|l|t)|em(?:bed)?|f(?:i(?:' +
+				'eldset|g(?:caption|ure))|o(?:nt|oter|rm)|rame(?:set)?)|h(?:1|' +
+				'2|3|4|5|6|ead(?:er)?|group|r|tml)|i(?:frame|mg|n(?:put|s)|' +
+				'sindex)?|k(?:bd|eygen)|l(?:abel|egend|i(?:nk)?)|m(?:a(?:p|rk)|' +
+				'e(?:nu|t(?:a|er)))|n(?:av|o(?:frames|script))|o(?:bject|l|pt(?:' +
+				'group|ion)|utput)|p(?:aram|r(?:e|ogress))?|q|r(?:p|t|uby)|s(?:' +
+				'amp|e(?:ction|lect)|mall|ource|pan|t(?:r(?:ike|ong)|yle)|u(?:' +
+				'b|mmary|p))?|t(?:able|body|d|extarea|foot|h(?:ead)?|i(?:me|' +
+				'tle)|r(?:ack)?|t)|u(?:l)?|v(?:ar|ideo)|wbr)(?![_a-z\d\240-\377-])'
+			style = "keyword"
+		}
+
+		%highlight { use = "css-elements" }
+
+
+		%highlight {
+			start = '{'
+			%highlight {
+				start = '(?i)(?<![_a-z\d\240-\377-])(?:azimuth|b(?:ackground(?:-(?:' +
+					'attachment|color|image|position|repeat))?|o(?:rder(?:-(?:botto' +
+					'm(?:-(?:color|style|width))?|col(?:lapse|or)|left(?:-(?:color|' +
+					'style|width))?|right(?:-(?:color|style|width))?|s(?:pacing|tyl' +
+					'e)|top(?:-(?:color|style|width))?|width))?|ttom))|c(?:aption-s' +
+					'ide|l(?:ear|ip)|o(?:lor|ntent|unter-(?:increment|reset))|u(?:e' +
+					'(?:-(?:after|before))?|rsor))|di(?:rection|splay)|e(?:levation' +
+					'|mpty-cells)|f(?:loat|ont(?:-(?:family|s(?:ize|tyle)|variant|w' +
+					'eight))?)|height|l(?:e(?:ft|tter-spacing)|i(?:ne-height|st-sty' +
+					'le(?:-(?:image|position|type))?))|m(?:a(?:rgin(?:-(?:bottom|le' +
+					'ft|right|top))?|x-(?:height|width))|in-(?:height|width))|o(?:r' +
+					'phans|utline(?:-(?:color|style|width))?|verflow)|p(?:a(?:dding' +
+					'(?:-(?:bottom|left|right|top))?|ge-break-(?:after|before|insid' +
+					'e)|use(?:-(?:after|before))?)|itch(?:-range)?|lay-during|ositi' +
+					'on)|quotes|ri(?:chness|ght)|s(?:pe(?:ak(?:-(?:header|numeral|p' +
+					'unctuation))?|ech-rate)|tress)|t(?:able-layout|ext-(?:align|de' +
+					'coration|indent|transform)|op)|unicode-bidi|v(?:ertical-align|' +
+					'isibility|o(?:ice-family|lume))|w(?:hite-space|id(?:ows|th)|or' +
+					'd-spacing)|z-index)(?![_a-z\d\240-\377-])'
+				%highlight { use = "css-value" }
+				delim-style = "keyword"
+			}
+			%highlight {
+				start = '(?i)(?<![_a-z\d\240-\377-])[_a-z\240-\377][_a-z\d\240-\377-]*(?![_a-z\d\240-\377-])'
+				%highlight { use = "css-value" }
+				delim-style = "error"
+			}
+			end = '}'
+		}
+	}
+}

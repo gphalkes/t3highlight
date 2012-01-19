@@ -1,10 +1,10 @@
 #TODO:
-# - css inlining
 # - aria attributes?
 
 %include = "def/javascript.lang"
 %include = "def/svg.lang"
 %include = "def/mathml.lang"
+%include = "def/css.lang"
 
 %define {
 	html-bare-escape {
@@ -182,7 +182,7 @@
 			%highlight {
 				start = '>'
 				%highlight { use = "javascript" }
-				end = "(?i)(?=</script)"
+				end = "(?i)(?=</script([^\w-]|$))"
 				exit = 2
 				delim-style = 'keyword'
 			}
@@ -239,6 +239,12 @@
 				delim-style = 'keyword'
 			}
 			delim-style = 'keyword'
+		}
+		%highlight {
+			start = '(?i)<style(?![\w-])'
+			%highlight { use = "css" }
+			end = '(?i)(?=</style([^\w-]|$))'
+			delim-style = "keyword"
 		}
 
 		%highlight {

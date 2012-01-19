@@ -80,6 +80,12 @@ format = 1
 	file-regex = "(?i)\.mml$"
 	lang-file = "mathml.lang"
 }
+%lang {
+	name = "CSS"
+	name-regex = "^(?i)css$"
+	file-regex = "(?i)\.css$"
+	lang-file = "css.lang"
+}
 
 %lang {
 	name = "T3 Highlight Language Definition"

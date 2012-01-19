@@ -202,8 +202,14 @@ static t3_highlight_t *load_by_xname(const char *regex_name, const char *name, i
 
 	}
 	t3_config_delete(map);
-	if (error != NULL)
+	if (error != NULL) {
 		error->error = T3_ERR_NO_SYNTAX;
+		if (flags & T3_HIGHLIGHT_VERBOSE_ERROR) {
+			error->line_number = 0;
+			error->file_name = NULL;
+			error->extra = NULL;
+		}
+	}
 	return NULL;
 }
 
