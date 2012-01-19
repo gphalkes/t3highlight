@@ -1,4 +1,4 @@
-/* Copyright (C) 2011 G.P. Halkes
+/* Copyright (C) 2011-2012 G.P. Halkes
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License version 3, as
    published by the Free Software Foundation.
@@ -23,8 +23,8 @@
 #include <t3config/config.h>
 #include <t3highlight/highlight.h>
 
-#include "optionMacros.h"
 #include "t3highlight.h"
+#include "optionMacros.h"
 
 #define DEFAULT_STYLE "esc.style"
 

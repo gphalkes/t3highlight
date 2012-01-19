@@ -1,4 +1,4 @@
-# Copyright (C) 2011 G.P. Halkes
+# Copyright (C) 2011-2012 G.P. Halkes
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3, as
 # published by the Free Software Foundation.
@@ -15,7 +15,7 @@ EXTENSIONS="c libtool pkgconfig verbose_compile pkgconfig_dep gettext"
 MAKEFILES="Makefile mk/libt3highlight mk/t3highlight"
 LTSHARED=1
 DEFAULT_LINGUAS=nl
-INSTALLDIRS="libdir docdir includedir datadir"
+INSTALLDIRS="bindir libdir docdir includedir datadir"
 
 config() {
 	clean_c

@@ -27,14 +27,16 @@ sed -i "/#define T3_HIGHLIGHT_VERSION/c #define T3_HIGHLIGHT_VERSION ${VERSION_B
 
 ( cd ${TOPDIR}/src ; ln -s . t3highlight )
 
-OBJECTS="`echo \"${SOURCES} ${GENSOURCES} ${AUXSOURCES}\" | tr ' ' '\n' | sed -r 's%\.objects/%%' | egrep '^src/.*\.c$' | sed -r 's/\.c\>/.lo/g' | tr '\n' ' '`"
+OBJECTS_LIB="`echo \"${SOURCES} ${GENSOURCES} ${AUXSOURCES}\" | tr ' ' '\n' | sed -r 's%\.objects/%%' | egrep '^src/[^/]*\.c$' | sed -r 's/\.c\>/.lo/g' | tr '\n' ' '`"
+OBJECTS_T3HIGHLIGHT="`echo \"${SOURCES} ${GENSOURCES} ${AUXSOURCES}\" | tr ' ' '\n' | sed -r 's%\.objects/%%' | egrep '^src\.util/.*\.c$' | sed -r 's/\.c\>/.o/g' | tr '\n' ' '`"
 
 #FIXME: somehow verify binary compatibility, and print an error if not compatible
 LIBVERSION="${VERSIONINFO%%:*}"
 
-sed -r -i "s%<LIBVERSION>%${LIBVERSION}%g" ${TOPDIR}/Makefile.in
+sed -r -i "s%<LIBVERSION>%${LIBVERSION}%g" ${TOPDIR}/Makefile.in ${TOPDIR}/mk/*.in
 
-sed -r -i "s%<OBJECTS>%${OBJECTS}%g;\
-s%<VERSIONINFO>%${VERSIONINFO}%g" ${TOPDIR}/Makefile.in
+sed -r -i "s%<OBJECTS>%${OBJECTS_LIB}%g;\
+s%<VERSIONINFO>%${VERSIONINFO}%g" ${TOPDIR}/mk/libt3highlight.in
+sed -r -i "s%<OBJECTS>%${OBJECTS_T3HIGHLIGHT}%g" ${TOPDIR}/mk/t3highlight.in
 
 create_tar

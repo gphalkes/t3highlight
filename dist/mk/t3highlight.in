@@ -1,4 +1,4 @@
-# Copyright (C) 2011 G.P. Halkes
+# Copyright (C) 2012 G.P. Halkes
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3, as
 # published by the Free Software Foundation.
@@ -15,10 +15,8 @@
 # C-compiler flags
 CFLAGS=-O2
 
-# Configuration flags and libraries. Include flags here to compile against the
-# libpcre and libt3config libraries.
-# If your system does not provide strdup, remove -DHAS_STRDUP
-CONFIGFLAGS=-DHAS_STRDUP
+# Configuration flags and libraries.
+CONFIGFLAGS=
 CONFIGLIBS=
 
 # Gettext configuration
@@ -54,7 +52,7 @@ SILENTLD=@echo '[LD]' $@ ;
 
 OBJECTS=<OBJECTS>
 
-all: src/libt3highlight.la
+all: src.util/t3highlight
 
 .PHONY: all clean dist-clean install uninstall
 .SUFFIXES: .c .o .lo .la .mo .po

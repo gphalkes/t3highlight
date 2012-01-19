@@ -1,4 +1,4 @@
-/* Copyright (C) 2011 G.P. Halkes
+/* Copyright (C) 2012 G.P. Halkes
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License version 3, as
    published by the Free Software Foundation.
@@ -14,6 +14,9 @@
 #ifndef T3HIGHLIGHT_H
 #define T3HIGHLIGHT_H
 #include <stdlib.h>
+
+/* FIXME: depending on USE_GETTEXT setting this should work differently */
+#define _(_x) _x
 
 void fatal(const char *fmt, ...);
 size_t parse_escapes(char *string);

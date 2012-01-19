@@ -1,4 +1,4 @@
-# Copyright (C) 2011 G.P. Halkes
+# Copyright (C) 2011-2012 G.P. Halkes
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3, as
 # published by the Free Software Foundation.
@@ -56,9 +56,7 @@ SILENCELT=--silent
 SILENTCCLT=@echo '[CCLT]' $< ;
 SILENTLDLT=@echo '[LDLT]' $@ ;
 
-OBJECTS=<OBJECTS>
-
-all: src/libt3highlight.la
+all: lib t3highlight
 
 .PHONY: all clean dist-clean install uninstall lib t3highlight
 .SUFFIXES: .c .o .lo .la .mo .po
@@ -76,14 +74,8 @@ clean:
 dist-clean: clean
 	rm -rf Makefile config.log libt3highlight.pc
 
-.c.lo:
-	$(SILENTCCLT) $(LIBTOOL) $(SILENCELT) --mode=compile --tag=CC $(CC) -shared $(CFLAGS) $(CONFIGFLAGS) $(GETTEXTFLAGS) -DLOCALEDIR=\"$(LOCALEDIR)\" -Isrc -DT3_HIGHLIGHT_BUILD_DSO -DDATADIR=\"$(datadir)/libt3highlight<LIBVERSION>\" -c -o $@ $<
-
-src/libt3highlight.la: $(OBJECTS)
-	$(SILENTLDLT) $(LIBTOOL) $(SILENCELT) --mode=link --tag=CC $(CC) -shared -version-info <VERSIONINFO> $(CFLAGS) $(LDFLAGS) -o $@ $(OBJECTS) $(LDLIBS) $(CONFIGLIBS) $(GETTEXTLIBS) -rpath $(libdir)
-
 # Macros to make DESTDIR support more readable
-bindir=$(DESTDIR)$(bindir)
+_bindir=$(DESTDIR)$(bindir)
 _libdir=$(DESTDIR)$(libdir)
 _datadir=$(DESTDIR)$(datadir)
 _docdir=$(DESTDIR)$(docdir)
@@ -106,7 +98,7 @@ install: all
 	$(INSTALL) -m0644 libt3highlight.pc $(_pkgconfigdir)
 	$(INSTALL) -d $(_bindir)
 	$(INSTALL) -m0755 src.util/t3highlight $(_bindir)
-	find src.util/data -type f | while read X ; do $(INSTALL) -m0644 $${X} $(_datadir)/libt3highlight<LIBVERSION>/$${X#src/data} ; done
+	find src.util/data -type f | while read X ; do $(INSTALL) -m0644 $${X} $(_datadir)/libt3highlight<LIBVERSION>/$${X#src.util/data} ; done
 
 uninstall:
 	$(LIBTOOL) --mode=uninstall rm $(_libdir)/libt3highlight.la
