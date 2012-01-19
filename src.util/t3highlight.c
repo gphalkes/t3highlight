@@ -27,6 +27,8 @@
 #include "optionMacros.h"
 #include "t3highlight.h"
 
+#define DEFAULT_STYLE "esc.style"
+
 typedef struct {
 	char *tag;
 	char *start;
@@ -62,11 +64,12 @@ static const char *option_language;
 static char *option_style;
 static const char *option_input;
 static const char *option_language_file;
-static t3_bool option_raw;
+static const char *option_document_type;
 
 static t3_bool set_tag(const char *name, const char *value);
 static void write_data(const char *string, size_t size);
 static void list_styles(void);
+static void list_document_types(const char *name);
 
 /** Alert the user of a fatal error and quit.
     @param fmt The format string for the message. See fprintf(3) for details.
@@ -93,6 +96,7 @@ static char *safe_strdup(const char *str) {
 }
 
 static PARSE_FUNCTION(parse_args)
+	t3_bool option_list_document_types = t3_false;
 	OPTIONS
 		OPTION('v', "verbose", NO_ARG)
 			option_verbose = 1;
@@ -138,16 +142,20 @@ static PARSE_FUNCTION(parse_args)
 		END_OPTION
 		OPTION('h', "help", NO_ARG)
 			printf("Usage: t3highlight [<options>] [<file>]\n"
+				"  -d<type>,--document-type=<type> Output using document type <type>\n"
+			    "  -D,--list-document-types        List the document types for the current style\n"
 				"  -l<lang>,--language=<lang>      Highlight using language <lang>\n"
 				"  --language-file=<file>          Load highlighting description file <file>\n"
 				"  -L,--list                       List available languages and styles\n"
-				"  -r,--raw                        Output without header or footer\n"
 				"  -s<style>,--style=<style>       Output using style <style>\n"
 				"  -v,--verbose                    Enable verbose output mode\n"
 			);
 		END_OPTION
-		OPTION('r', "raw", NO_ARG)
-			option_raw = t3_true;
+		OPTION('d', "document-type", REQUIRED_ARG)
+			option_document_type = optArg;
+		END_OPTION
+		OPTION('D', "--list-document-types", NO_ARG)
+			option_list_document_types = t3_true;
 		END_OPTION
 		OPTION('t', "tag", REQUIRED_ARG)
 			char *value;
@@ -168,6 +176,11 @@ static PARSE_FUNCTION(parse_args)
 			fatal("Only one input file allowed\n");
 		option_input = optcurrent;
 	END_OPTIONS
+
+	if (option_list_document_types) {
+		list_document_types(option_style == NULL ? DEFAULT_STYLE : option_style);
+		exit(EXIT_SUCCESS);
+	}
 END_FUNCTION
 
 static t3_bool set_tag(const char *name, const char *value) {
@@ -221,6 +234,72 @@ static void list_styles(void) {
 	list_dir_styles(DATADIR);
 }
 
+static t3_config_t *open_style(const char *name) {
+	t3_config_t *style_config;
+	t3_config_schema_t *schema;
+	t3_config_error_t config_error;
+	const char *path[] = { NULL, DATADIR, NULL };
+	const char *home_env;
+	char *tmp = NULL;
+	FILE *style_file;
+
+	home_env = getenv("HOME");
+	if (home_env != NULL && home_env[0] != 0) {
+		if ((tmp = malloc(strlen(home_env) + strlen("/.libt3highlight") + 1)) == NULL)
+			fatal("Out of memory\n");
+		strcpy(tmp, home_env);
+		strcat(tmp, "/.libt3highlight");
+		path[0] = tmp;
+	}
+
+	if ((style_file = t3_config_open_from_path(path[0] == NULL ? path + 1 : path, name, 0)) == NULL)
+		fatal("Can't open '%s': %s\n", name, strerror(errno));
+	free(tmp);
+
+	if ((style_config = t3_config_read_file(style_file, &config_error, NULL)) == NULL)
+		fatal("Error reading style file: %s:%d: %s\n", name, config_error.line_number, t3_config_strerror(config_error.error));
+	fclose(style_file);
+
+	if ((schema = t3_config_read_schema_buffer(style_schema, sizeof(style_schema), &config_error, NULL)) == NULL) {
+		if (config_error.error != T3_ERR_OUT_OF_MEMORY)
+			config_error.error = T3_ERR_INTERNAL;
+		fatal("Error reading style file: %s\n", t3_config_strerror(config_error.error));
+	}
+
+	if (!t3_config_validate(style_config, schema, &config_error, T3_CONFIG_VERBOSE_ERROR)) {
+		fatal("Error reading style file: %s:%d: %s%s%s\n", name, config_error.line_number,
+			t3_config_strerror(config_error.error), config_error.extra == NULL ? "" : ": ",
+			config_error.extra == NULL ? "" : config_error.extra);
+	}
+	t3_config_delete_schema(schema);
+	return style_config;
+}
+
+static void list_document_types(const char *name) {
+	t3_config_t *document;
+	t3_config_t *style_config = open_style(name);
+	printf("Available document types for style '%.*s':\n", (int) (strrchr(name, '.') - name), name);
+	for (document = t3_config_get(t3_config_get(style_config, "documents"), NULL);
+			document != NULL; document = t3_config_get_next(document))
+	{
+		const char *name, *description;
+		name = t3_config_get_name(document);
+		description = t3_config_get_string(t3_config_get(document, "description"));
+
+		printf("  %s", name);
+		if (description != NULL) {
+			size_t name_len = strlen(name);
+			size_t spaces = name_len < 15 ? 15 - name_len : 1;
+			size_t i;
+
+			for (i = 0; i < spaces; i++)
+				putchar(' ');
+			printf("%s", description);
+		}
+		putchar('\n');
+	}
+}
+
 static int map_style(void *_styles, const char *name) {
 	style_def_t *styles = _styles;
 	int i;
@@ -268,47 +347,12 @@ static void init_translations(t3_config_t *translate, const char *name, t3_bool 
 }
 
 static style_def_t *load_style(const char *name) {
-	FILE *style_file;
-	t3_config_t *style_config, *styles, *ptr, *normal;
-	t3_config_schema_t *schema;
-	t3_config_error_t config_error;
-
+	t3_config_t *style_config, *styles, *ptr, *normal, *document;
 	t3_bool expand_escapes = t3_false;
 	style_def_t *result;
-	const char *path[] = { NULL, DATADIR, NULL };
-	const char *home_env;
-	char *tmp = NULL;
 	int count;
 
-	home_env = getenv("HOME");
-	if (home_env != NULL && home_env[0] != 0) {
-		if ((tmp = malloc(strlen(home_env) + strlen("/.libt3highlight") + 1)) == NULL)
-			fatal("Out of memory\n");
-		strcpy(tmp, home_env);
-		strcat(tmp, "/.libt3highlight");
-		path[0] = tmp;
-	}
-
-	if ((style_file = t3_config_open_from_path(path[0] == NULL ? path + 1 : path, name, 0)) == NULL)
-		fatal("Can't open '%s': %s\n", name, strerror(errno));
-	free(tmp);
-
-	if ((style_config = t3_config_read_file(style_file, &config_error, NULL)) == NULL)
-		fatal("Error reading style file: %s:%d: %s\n", name, config_error.line_number, t3_config_strerror(config_error.error));
-	fclose(style_file);
-
-	if ((schema = t3_config_read_schema_buffer(style_schema, sizeof(style_schema), &config_error, NULL)) == NULL) {
-		if (config_error.error != T3_ERR_OUT_OF_MEMORY)
-			config_error.error = T3_ERR_INTERNAL;
-		fatal("Error reading style file: %s\n", t3_config_strerror(config_error.error));
-	}
-
-	if (!t3_config_validate(style_config, schema, &config_error, T3_CONFIG_VERBOSE_ERROR)) {
-		fatal("Error reading style file: %s:%d: %s%s%s\n", name, config_error.line_number,
-			t3_config_strerror(config_error.error), config_error.extra == NULL ? "" : ": ",
-			config_error.extra == NULL ? "" : config_error.extra);
-	}
-	t3_config_delete_schema(schema);
+	style_config = open_style(name);
 
 	expand_escapes = t3_config_get_bool(t3_config_get(style_config, "expand-escapes"));
 	styles = t3_config_get(t3_config_get(style_config, "styles"), NULL);
@@ -339,13 +383,19 @@ static style_def_t *load_style(const char *name) {
 
 	init_translations(t3_config_get(style_config, "translate"), name, expand_escapes);
 
-	if (option_raw) {
-		header = t3_config_take_string(t3_config_get(t3_config_get(style_config, "raw"), "header"));
-		footer = t3_config_take_string(t3_config_get(t3_config_get(style_config, "raw"), "footer"));
+	if (option_document_type != NULL) {
+		document = t3_config_get(t3_config_get(style_config, "documents"), option_document_type);
+		if (document == NULL)
+			fatal("Document type '%s' is not defined\n", option_document_type);
 	} else {
-		header = t3_config_take_string(t3_config_get(t3_config_get(style_config, "document"), "header"));
-		footer = t3_config_take_string(t3_config_get(t3_config_get(style_config, "document"), "footer"));
+		document = t3_config_get(t3_config_get(style_config, "documents"), NULL);
 	}
+
+	if (document != NULL) {
+		header = t3_config_take_string(t3_config_get(document, "header"));
+		footer = t3_config_take_string(t3_config_get(document, "footer"));
+	}
+
 	if (parse_escapes) {
 		if (header != NULL)
 			parse_escapes(header);
@@ -475,10 +525,7 @@ int main(int argc, char *argv[]) {
 
 	parse_args(argc, argv);
 
-	if (option_style == NULL)
-		styles = load_style("esc.style");
-	else
-		styles = load_style(option_style);
+	styles = load_style(option_style == NULL ? DEFAULT_STYLE : option_style);
 
 	if (option_input != NULL && strcmp(option_input, "-") == 0)
 		option_input = NULL;

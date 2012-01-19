@@ -33,6 +33,7 @@ types {
 	doc-def {
 		type = "section"
 		allowed-keys {
+			description { type = "string" }
 			header { type = "string" }
 			footer { type = "string" }
 		}
@@ -50,8 +51,10 @@ allowed-keys {
 		type = "list"
 		item-type = "translation"
 	}
-	document { type = "doc-def" }
-	raw { type = "doc-def" }
+	documents {
+		type = "section"
+		item-type = "doc-def"
+	}
 }
 %constraint = "{'format' must be 1} format = 1"
 %constraint = "{style file must contain 'styles' list} styles"
