@@ -8,12 +8,21 @@ Version 0.2.0:
 	  'start' pattern. This allows more state based handling of the input.
 	- Added perl language definition.
 	- Added HTML language definition.
+	- Added CSS language definition.
+	- Added MathML language definition.
+	- Added SVG language definition.
+	- Updated C language definition to C11 standard.
 	- Improved the handling of here-docs in the shell language.
+	- Implemented internal UTF-8 validity check, such that pcre_exec can be
+	  called with PCRE_NO_UTF8_CHECK. This increases performance.
 	- Changed the matching routine to use anchored matching, to speed up the
 	  matching process. As a result, the \G assertion matches everywhere, and
-	  is therefore rendered useless.
-	- Implemented internal UTF-8 validity check, such that pcre_exec can be
-	  called with PCRE_NO_UTF8_CHECK. This greatly increases performance.
+	  is therefore rendered useless. This results in a large (>10 times)
+	  speed-up.
+	- Added t3highlight executable, which allows using the highlighter from the
+	  command line. Different output styles can be used, with styles for
+	  terminal output (esc) and HTML included.
+	- Added verbose error reporting.
 
 	Bug fixes:
 	- Don't use \b to determine word boundaries when - is also a word character.

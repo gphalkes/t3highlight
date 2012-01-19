@@ -281,8 +281,7 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 					{
 						t3_config_t *extract = t3_config_get(highlights, "extract");
 						const char *file_name = t3_config_get_file_name(extract);
-						/* FIXME: this should be more precise */
-						RETURN_ERROR_FULL(T3_ERR_INVALID_REGEX, t3_config_get_line_number(extract),
+						RETURN_ERROR_FULL(T3_ERR_INVALID_NAME, t3_config_get_line_number(extract),
 							file_name == NULL ? NULL : _t3_highlight_strdup(file_name),
 							t3_config_take_string(t3_config_get(highlights, "extract")), context->flags);
 					}
@@ -779,6 +778,8 @@ const char *t3_highlight_strerror(int error) {
 			return _("could not locate appropriate highlighting pattern");
 		case T3_ERR_UNDEFINED_USE:
 			return _("'use' specifies undefined highlight");
+		case T3_ERR_INVALID_NAME:
+			return _("invalid sub-pattern name");
 	}
 }
 
