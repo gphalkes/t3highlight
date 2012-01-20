@@ -89,7 +89,7 @@ static char *safe_strdup(const char *str) {
 	size_t len = strlen(str) + 1;
 
 	if ((result = malloc(len)) == NULL)
-		fatal("Out of memory\n");
+		fatal(_("Out of memory\n"));
 	memcpy(result, str, len);
 	return result;
 }
@@ -102,12 +102,12 @@ static PARSE_FUNCTION(parse_args)
 		END_OPTION
 		OPTION('l', "language", REQUIRED_ARG)
 			if (option_language != NULL || option_language_file != NULL)
-				fatal("Error: only one language option allowed\n");
+				fatal(_("Only one language option allowed\n"));
 			option_language = optArg;
 		END_OPTION
 		LONG_OPTION("language-file", REQUIRED_ARG)
 			if (option_language != NULL || option_language_file != NULL)
-				fatal("Error: only one language option allowed\n");
+				fatal(_("Only one language option allowed\n"));
 			option_language_file = optArg;
 		END_OPTION
 		OPTION('L', "list", NO_ARG)
@@ -119,15 +119,16 @@ static PARSE_FUNCTION(parse_args)
 				if (error.file_name != NULL)
 					fatal("%s:%d: %s\n", error.file_name, error.line_number, t3_highlight_strerror(error.error));
 				else
-					fatal("Error loading highlight listing: %s\n", t3_highlight_strerror(error.error));
+					fatal(_("Error loading highlight listing: %s\n"), t3_highlight_strerror(error.error));
 
-			printf("Available languages:\n");
+			printf(_("Available languages:\n"));
 			for (i = 0; list[i].name != NULL; i++)
 				printf("  %s\n", list[i].name);
 
 			t3_highlight_free_list(list);
 
-			printf("\nAvaliable styles:\n");
+			putchar('\n');
+			printf(_("Avaliable styles:\n"));
 			list_styles();
 			exit(EXIT_SUCCESS);
 		END_OPTION
@@ -159,20 +160,20 @@ static PARSE_FUNCTION(parse_args)
 		OPTION('t', "tag", REQUIRED_ARG)
 			char *value;
 			if ((value = strchr(optArg, '=')) == NULL)
-				fatal("Error: -t/--tag argument must be <name>=<value>\n");
+				fatal("-t/--tag argument must be <name>=<value>\n");
 			*value = 0;
 			value++;
 			if (!set_tag(optArg, value))
-				fatal("Error: duplicate tag specified\n");
+				fatal(_("Duplicate tag specified\n"));
 		END_OPTION
 		DOUBLE_DASH
 			NO_MORE_OPTIONS;
 		END_OPTION
 
-		fatal("No such option " OPTFMT "\n", OPTPRARG);
+		fatal(_("No such option %.*s\n"), OPTPRARG);
 	NO_OPTION
 		if (option_input != NULL)
-			fatal("Only one input file allowed\n");
+			fatal(_("Error: only one input file allowed\n"));
 		option_input = optcurrent;
 	END_OPTIONS
 
@@ -189,7 +190,7 @@ static t3_bool set_tag(const char *name, const char *value) {
 			return t3_false;
 
 	if ((ptr = malloc(sizeof(tag_t))) == NULL)
-		fatal("Out of memory\n");
+		fatal(_("Out of memory\n"));
 
 	ptr->name = name;
 	ptr->name_len = strlen(name);
@@ -224,7 +225,7 @@ static void list_styles(void) {
 	if (home_env != NULL && home_env[0] != 0) {
 		char *tmp;
 		if ((tmp = malloc(strlen(home_env) + strlen("/.libt3highlight") + 1)) == NULL)
-			fatal("Out of memory\n");
+			fatal(_("Out of memory\n"));
 		strcpy(tmp, home_env);
 		strcat(tmp, "/.libt3highlight");
 		list_dir_styles(tmp);
@@ -245,7 +246,7 @@ static t3_config_t *open_style(const char *name) {
 	home_env = getenv("HOME");
 	if (home_env != NULL && home_env[0] != 0) {
 		if ((tmp = malloc(strlen(home_env) + strlen("/.libt3highlight") + 1)) == NULL)
-			fatal("Out of memory\n");
+			fatal(_("Out of memory\n"));
 		strcpy(tmp, home_env);
 		strcat(tmp, "/.libt3highlight");
 		path[0] = tmp;
@@ -255,18 +256,22 @@ static t3_config_t *open_style(const char *name) {
 		fatal("Can't open '%s': %s\n", name, strerror(errno));
 	free(tmp);
 
-	if ((style_config = t3_config_read_file(style_file, &config_error, NULL)) == NULL)
-		fatal("Error reading style file: %s:%d: %s\n", name, config_error.line_number, t3_config_strerror(config_error.error));
+	if ((style_config = t3_config_read_file(style_file, &config_error, NULL)) == NULL) {
+		fprintf(stderr, _("Error reading style file: "));
+		fatal("%s:%d: %s\n", name, config_error.line_number, t3_config_strerror(config_error.error));
+	}
 	fclose(style_file);
 
 	if ((schema = t3_config_read_schema_buffer(style_schema, sizeof(style_schema), &config_error, NULL)) == NULL) {
 		if (config_error.error != T3_ERR_OUT_OF_MEMORY)
 			config_error.error = T3_ERR_INTERNAL;
-		fatal("Error reading style file: %s\n", t3_config_strerror(config_error.error));
+		fprintf(stderr, _("Error reading style file: "));
+		fatal("%s\n", t3_config_strerror(config_error.error));
 	}
 
 	if (!t3_config_validate(style_config, schema, &config_error, T3_CONFIG_VERBOSE_ERROR)) {
-		fatal("Error reading style file: %s:%d: %s%s%s\n", name, config_error.line_number,
+		fprintf(stderr, _("Error reading style file: "));
+		fatal("%s:%d: %s%s%s\n", name, config_error.line_number,
 			t3_config_strerror(config_error.error), config_error.extra == NULL ? "" : ": ",
 			config_error.extra == NULL ? "" : config_error.extra);
 	}
@@ -277,7 +282,7 @@ static t3_config_t *open_style(const char *name) {
 static void list_document_types(const char *name) {
 	t3_config_t *document;
 	t3_config_t *style_config = open_style(name);
-	printf("Available document types for style '%.*s':\n", (int) (strrchr(name, '.') - name), name);
+	printf(_("Available document types for style '%.*s':\n"), (int) (strrchr(name, '.') - name), name);
 	for (document = t3_config_get(t3_config_get(style_config, "documents"), NULL);
 			document != NULL; document = t3_config_get_next(document))
 	{
@@ -327,7 +332,7 @@ static void init_translations(t3_config_t *translate, const char *name, t3_bool 
 		return;
 
 	if ((translations = malloc(sizeof(translation_t) * (count + 1))) == NULL)
-		fatal("Out of memory");
+		fatal(_("Out of memory"));
 	for (i = 0, translate = t3_config_get(translate, NULL); translate != NULL; i++, translate = t3_config_get_next(translate)) {
 		translations[i].search = t3_config_take_string(t3_config_get(translate, "search"));
 		translations[i].replace = t3_config_take_string(t3_config_get(translate, "replace"));
@@ -339,7 +344,7 @@ static void init_translations(t3_config_t *translate, const char *name, t3_bool 
 			translations[i].replace_len = strlen(translations[i].replace);
 		}
 		if (translations[i].search_len == 0)
-			fatal("Empty search string: %s:%d\n", name, t3_config_get_line_number(t3_config_get(translate, "search")));
+			fatal(_("Empty search string: %s:%d\n"), name, t3_config_get_line_number(t3_config_get(translate, "search")));
 	}
 	translations[i].search = NULL;
 	translations[i].replace = NULL;
@@ -362,7 +367,7 @@ static style_def_t *load_style(const char *name) {
 	count += 2; /* One for normal state, and one for terminator. */
 
 	if ((result = malloc(sizeof(style_def_t) * count)) == NULL)
-		fatal("Out of memory\n");
+		fatal(_("Out of memory\n"));
 
 	result[0].tag = safe_strdup("normal");
 	if (normal == NULL) {
@@ -385,7 +390,7 @@ static style_def_t *load_style(const char *name) {
 	if (option_document_type != NULL) {
 		document = t3_config_get(t3_config_get(style_config, "documents"), option_document_type);
 		if (document == NULL)
-			fatal("Document type '%s' is not defined\n", option_document_type);
+			fatal(_("Document type '%s' is not defined\n"), option_document_type);
 	} else {
 		document = t3_config_get(t3_config_get(style_config, "documents"), NULL);
 	}
@@ -475,12 +480,12 @@ static void highlight_file(t3_highlight_t *highlight) {
 	t3_bool match_result;
 
 	if (match == NULL)
-		fatal("Out of memory\n");
+		fatal(_("Out of memory\n"));
 
 	if (option_input == NULL)
 		input = stdin;
 	else if ((input = fopen(option_input, "rb")) == NULL)
-		fatal("Can't open '%s': %s\n", option_input, strerror(errno));
+		fatal(_("Can't open '%s': %s\n"), option_input, strerror(errno));
 
 	write_header();
 
@@ -520,7 +525,11 @@ int main(int argc, char *argv[]) {
 	t3_highlight_error_t error;
 	int i;
 
+#ifdef USE_GETTEXT
 	setlocale(LC_ALL, "");
+	bindtextdomain("t3highlight", LOCALEDIR);
+	textdomain("t3highlight");
+#endif
 
 	parse_args(argc, argv);
 
@@ -530,7 +539,7 @@ int main(int argc, char *argv[]) {
 		option_input = NULL;
 
 	if (option_language == NULL && option_language_file == NULL && option_input == NULL) {
-		fatal("-l/--language or --language-file required for reading from standard input\n");
+		fatal(_("-l/--language or --language-file required for reading from standard input\n"));
 	} else if (option_language_file != NULL) {
 		highlight = t3_highlight_load(option_language_file, map_style, styles,
 				T3_HIGHLIGHT_VERBOSE_ERROR | T3_HIGHLIGHT_UTF8, &error);
@@ -543,11 +552,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (highlight == NULL) {
-		if (error.file_name == NULL)
-			fatal("Error loading highlighting patterns: %s\n", t3_highlight_strerror(error.error));
+		if (error.file_name == NULL) {
+			fprintf(stderr, _("Error loading highlighting patterns: "));
+			fatal("%s\n", t3_highlight_strerror(error.error));
+		}
 
-		fprintf(stderr, "Error loading highlighting patterns: %s:%d: %s",
-			error.file_name, error.line_number, t3_highlight_strerror(error.error));
+		fprintf(stderr, _("Error loading highlighting patterns: "));
+		fprintf(stderr, "%s:%d: %s", error.file_name, error.line_number, t3_highlight_strerror(error.error));
 		if (error.extra != NULL)
 			fprintf(stderr, ": %s", error.extra);
 		fatal("\n");

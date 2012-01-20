@@ -15,8 +15,12 @@
 #define T3HIGHLIGHT_H
 #include <stdlib.h>
 
-/* FIXME: depending on USE_GETTEXT setting this should work differently */
-#define _(_x) _x
+#ifdef USE_GETTEXT
+#include <libintl.h>
+#define _(x) gettext(x)
+#else
+#define _(x) (x)
+#endif
 
 void fatal(const char *fmt, ...);
 size_t parse_escapes(char *string);

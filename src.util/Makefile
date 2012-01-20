@@ -14,7 +14,7 @@
 SOURCES.t3highlight := t3highlight.c escapes.c
 LDFLAGS.t3highlight := -L../src/.libs -Lt3config/.libs
 LDLIBS.t3highlight := -lt3highlight -lt3config
-CFLAGS.t3highlight += -I.objects -DDATADIR='"$(CURDIR)/data"'
+CFLAGS.t3highlight := -I.objects -DDATADIR='"$(CURDIR)/data"'
 
 TARGETS := t3highlight
 #================================================#
@@ -23,6 +23,7 @@ TARGETS := t3highlight
 include ../../makesys/rules.mk
 
 CFLAGS += -I. -I../src -I.objects
+#~ CFLAGS += -DUSE_GETTEXT -DLOCALEDIR=\"locales\"
 
 .objects/t3highlight.o: | lib
 
