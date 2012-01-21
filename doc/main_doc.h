@@ -11,14 +11,15 @@ Toolkit (T3)</A>.
 Documentation on where libt3highlight looks for highlighting description files
 and how it finds the appropriate file is @ref users_doc "here". If you are
 interested in writing your own highlighting description, the explanation of the
-file format is @ref syntax "here". Finally there is the <a class="el"
+file format is @ref syntax "here". Furthermore there is a @ref style "page" on the style
+definition files used by t3highlight. Finally there is the <a class="el"
 href="modules.html">API documentation</a>.
 
 */
 
 /** @page users_doc General information
 
-@section location Location of Highlighting Description Files.
+@section location Location of Highlighting Description Files
 
 The highlighting description files that come with libt3highlight are stored in
 libt3highlight data directory. This is usually
@@ -30,7 +31,7 @@ Furthermore, libt3highlight also searches the .libt3highlight directory of the
 user's home directory. This allows users to easily develop their own
 highlighting description files.
 
-@section map The Map File.
+@section map The Map File
 
 To associate the correct syntax highlighting description file with a source
 file, libt3highlight uses a special map file named <tt>lang.map</tt>. This file
@@ -83,7 +84,7 @@ format = 1
 */
 
 
-/** @page syntax Syntax of Highlighting Description Files.
+/** @page syntax Syntax of Highlighting Description Files
 
 @section syntax_introduction Introduction
 
@@ -100,7 +101,7 @@ description files. For the most part, the syntax of the files will be
 self-explanatory, but if you need more details, you can find them in <a
 href="http://os.ghalkes.nl/t3/doc/t3config">the libt3config documentation</a>.
 
-@section structure Overall Structure.
+@section structure Overall Structure
 
 A complete highlighting description file for libt3highlight consists of a
 file format specifier, which must have the value @c 1, an optional list of
@@ -148,7 +149,7 @@ A highlight definition can have three forms: a single matching item using the
 @c regex key, a state definition using the @c start and @c end keys, and a
 reference to a named highlight using the @c use key.
 
-@subsection single_regex Single Regular Expression.
+@subsection single_regex Single Regular Expression
 
 To define items like keywords and other simple items which can be described
 using a single regular expression, a highlight can be defined using the @c regex
@@ -164,7 +165,7 @@ key. The style can be selected using the @c style key. For example:
 will ensure that the words @c int, @c float and @c bool will be styled as
 keywords.
 
-@subsection state_definition State Definitions.
+@subsection state_definition State Definitions
 
 A state definition uses the @c start and @c end regular-expression keys. Once
 the @c start regular expression is matched, everything up to and including the
@@ -400,11 +401,126 @@ the line. This state is then exited when the new line is started:
 	end = '"|$'
 	style = "string"
 }
+@endverbatim
 
-@note in versions before 0.1.4 a single pattern could be written using the PCRE
+@note In versions before 0.2.0 a single pattern could be written using the PCRE
 @\G assertion. However, due to a change in the matching process for optimization
 purposes, this assertion will be true at every point in the input. Therefore, it
 is no longer usable.
 
+*/
+
+/** @page style Syntax of Style Definition Files
+
+@section introduction Introduction
+
+The t3highlight program uses style definition files to define what the
+generated output should look like. This allows t3highlight to output syntax
+highlighted source code for a variety of purposes. This page describes the
+syntax of the style definition files.
+
+@section structure Overall Structure
+
+A complete style definition file for t3highlight consists of:
+@li a file format specifier, which must have the value @c 1,
+@li the optional boolean key @c expand-escapes,
+@li an optional list of string replacements,
+@li an optional list of document definitions,
+@li a list of style start and end strings.
+
+The style definitions are read using libt3config, which defines the lexical
+structure and basic syntax. The syntax of libt3config is fairly self-explanitory,
+but the following note from the libt3config documentation is useful to repeat
+here:
+
+@par
+Strings are text enclosed in either @" or '. Strings may not include newline
+characters. To include the delimiting character in the string, repeat the
+character twice (i.e. <tt>'foo''bar'</tt> encodes the string <tt>foo'bar</tt>).
+Multiple strings may be concatenated by using a plus sign (+). To split a
+string accross multiple lines, use string concatenation using the plus sign,
+where a plus sign must appear before the newline after each substring.
+
+@section example Example
+
+Below is a section from the @b html style, which shows the different parts of a
+style definition file. For brevity, some parts have been shortened or omitted.
+
+@verbatim
+format = 1
+expand-escapes = yes
+
+%translate { search = "&" ; replace = "&amp;" }
+%translate { search = "<" ; replace = "&lt;" }
+%translate { search = ">" ; replace = "&gt;" }
+
+documents {
+	# The actual html style also includes a "standalone" document type. This has
+	# been omitted for brevity.
+	separate-css {
+		description = "HTML 4.01 strict with style sheet reference (use css tag)"
+		header = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">\n<html><head>\n' +
+			'<meta http-equiv="Content-Type" content="text/html; charset=%{charset}">' +
+			'<!--Generated by t3highlight-->\n' +
+			'<link href="%{css}" rel="stylesheet" type="text/css">' +
+			'<title>%{name}</title></head>\n<body><pre>\n'
+		footer = '</pre></body></html>\n'
+	}
+	raw {
+		description = "HTML without header, for embedding"
+		header = "<!--Generated by t3highlight-->\n<pre>"
+		footer = "</pre>"
+	}
+}
+
+styles {
+	normal {
+		start = ""
+		end = ""
+	}
+	keyword {
+		start = '<span class="hl-keyword">'
+		end = '</span>'
+	}
+	string {
+		start = '<span class="hl-string">'
+		end = '</span>'
+	}
+	string-escape {
+		start = '<span class="hl-string-escape">'
+		end = '</span>'
+	}
+	comment {
+		start = '<span class="hl-comment">'
+		end = '</span>'
+	}
+	# More styles follow. These have been omitted for brevity. In a complete style
+	# definition file, start and end strings should be included for all possible
+	# style names.
+}
 @endverbatim
+
+The only required parts in the style definition are the format version and the
+@c styles sections. The @c expand-escapes setting causes backslash-escapes in
+the strings to be expanded. All the standard escapes are supported.
+
+The @c %translate definitions are textual replacements, which are made to the
+input just before writing the output. In the html example above, the characters
+&amp;, &lt; and &gt; are replaced with their HTML character names to make sure
+the output is valid HTML.
+
+The optional document section allows one to define headers and footers for the
+output. Multiple such headers and footers may be given, to define different but
+related document types. The first of these document definitions is
+automatically chosen as the default. Note the occurence of %{@e text} tags in
+the first header. These will be replaced in the output. The tags %{name} and
+%{charset} are set by default to the name of the file and the character-set,
+but may be overriden from the command line. All other tags must be set from the
+command line, or they will be removed from the output. To include a literal %
+in the output, use %%.
+
+Each style definition must include only a start and an end key. These are the
+strings that will be inserted before and after each section of output with the
+named style.
+
 */

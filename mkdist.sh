@@ -33,7 +33,7 @@ OBJECTS_T3HIGHLIGHT="`echo \"${SOURCES} ${GENSOURCES} ${AUXSOURCES}\" | tr ' ' '
 #FIXME: somehow verify binary compatibility, and print an error if not compatible
 LIBVERSION="${VERSIONINFO%%:*}"
 
-sed -r -i "s%<LIBVERSION>%${LIBVERSION}%g" ${TOPDIR}/Makefile.in ${TOPDIR}/mk/*.in
+sed -r -i "s%<LIBVERSION>%${LIBVERSION}%g" ${TOPDIR}/Makefile.in ${TOPDIR}/mk/*.in ${TOPDIR}/man/*
 
 sed -r -i "s%<OBJECTS>%${OBJECTS_LIB}%g;\
 s%<VERSIONINFO>%${VERSIONINFO}%g" ${TOPDIR}/mk/libt3highlight.in

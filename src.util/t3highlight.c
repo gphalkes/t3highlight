@@ -148,8 +148,10 @@ static PARSE_FUNCTION(parse_args)
 				"  --language-file=<file>          Load highlighting description file <file>\n"
 				"  -L,--list                       List available languages and styles\n"
 				"  -s<style>,--style=<style>       Output using style <style>\n"
+				"  -t<tag>,--tag=<tag>             Define tag <tag>, which must be <name>=<value>\n"
 				"  -v,--verbose                    Enable verbose output mode\n"
 			);
+			exit(EXIT_SUCCESS);
 		END_OPTION
 		OPTION('d', "document-type", REQUIRED_ARG)
 			option_document_type = optArg;
