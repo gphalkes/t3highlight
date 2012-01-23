@@ -49,6 +49,7 @@ bindir=$(prefix)/bin
 libdir=$(prefix)/lib
 datadir=$(prefix)/share
 docdir=$(prefix)/share/doc/libt3highlight
+mandir=$(prefix)/share/man
 includedir=$(prefix)/include
 pkgconfigdir=$(libdir)/pkgconfig
 
@@ -79,6 +80,7 @@ _bindir=$(DESTDIR)$(bindir)
 _libdir=$(DESTDIR)$(libdir)
 _datadir=$(DESTDIR)$(datadir)
 _docdir=$(DESTDIR)$(docdir)
+_mandir=$(DESTDIR)$(mandir)
 _includedir=$(DESTDIR)$(includedir)
 _pkgconfigdir=$(DESTDIR)$(pkgconfigdir)
 _LOCALEDIR=$(DESTDIR)$(LOCALEDIR)
@@ -97,8 +99,10 @@ install: all
 	$(INSTALL) -d $(_pkgconfigdir)
 	$(INSTALL) -m0644 libt3highlight.pc $(_pkgconfigdir)
 	$(INSTALL) -d $(_bindir)
-	$(INSTALL) -m0755 src.util/t3highlight $(_bindir)
+	$(INSTALL) -m0755 -s src.util/t3highlight $(_bindir)
 	find src.util/data -type f | while read X ; do $(INSTALL) -m0644 $${X} $(_datadir)/libt3highlight<LIBVERSION>/$${X#src.util/data} ; done
+	$(INSTALL) -d $(_mandir)/man1
+	$(INSTALL) -m0644 man/t3highlight.1 $(_mandir)/man1
 
 uninstall:
 	$(LIBTOOL) --mode=uninstall rm $(_libdir)/libt3highlight.la
