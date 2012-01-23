@@ -115,11 +115,12 @@ static PARSE_FUNCTION(parse_args)
 			int i;
 			t3_highlight_lang_t *list = t3_highlight_list(T3_HIGHLIGHT_VERBOSE_ERROR, &error);
 
-			if (list == NULL)
+			if (list == NULL) {
 				if (error.file_name != NULL)
 					fatal("%s:%d: %s\n", error.file_name, error.line_number, t3_highlight_strerror(error.error));
 				else
 					fatal(_("Error loading highlight listing: %s\n"), t3_highlight_strerror(error.error));
+			}
 
 			printf(_("Available languages:\n"));
 			for (i = 0; list[i].name != NULL; i++)
@@ -402,7 +403,7 @@ static style_def_t *load_style(const char *name) {
 		footer = t3_config_take_string(t3_config_get(document, "footer"));
 	}
 
-	if (parse_escapes) {
+	if (expand_escapes) {
 		if (header != NULL)
 			parse_escapes(header);
 		if (footer != NULL)
