@@ -134,10 +134,10 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load(const char *name,
 	int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
 /** Load a highlighting pattern, using a source file name.
     @param name The source file name used to determine the appropriate highlighting pattern.
-	@param map_style See ::t3_highlight_load.
-	@param map_style_data See ::t3_highlight_load.
-	@param flags See ::t3_highlight_load.
-	@param error See ::t3_highlight_load.
+    @param map_style See ::t3_highlight_load.
+    @param map_style_data See ::t3_highlight_load.
+    @param flags See ::t3_highlight_load.
+    @param error See ::t3_highlight_load.
 
     Other parameters and return value are equal to ::t3_highlight_load. The
     file-regex member in the language definition in the lang.map file is used
@@ -147,10 +147,10 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_filename(const char *name,
 	int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
 /** Load a highlighting pattern, using a language name.
     @param name The source file name used to determine the appropriate highlighting pattern.
-	@param map_style See ::t3_highlight_load.
-	@param map_style_data See ::t3_highlight_load.
-	@param flags See ::t3_highlight_load.
-	@param error See ::t3_highlight_load.
+    @param map_style See ::t3_highlight_load.
+    @param map_style_data See ::t3_highlight_load.
+    @param flags See ::t3_highlight_load.
+    @param error See ::t3_highlight_load.
 
     Other parameters and return value are equal to ::t3_highlight_load. The
     name-regex member in the language definition in the lang.map file is used
@@ -158,12 +158,27 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_filename(const char *name,
 */
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_langname(const char *name,
 	int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
+/** Load a highlighting pattern, based on auto-detection from the line content.
+    @param line The line to use for auto-detection.
+    @param line_length The length in bytes of the data in @p line.
+    @param first Boolean indicating whether the @c first-line-regex patterns should be applied.
+    @param map_style See ::t3_highlight_load.
+    @param map_style_data See ::t3_highlight_load.
+    @param flags See ::t3_highlight_load.
+    @param error See ::t3_highlight_load.
+
+    For details on the file loading, see ::t3_highlight_load. For details on the
+    detection, see ::t3_highlight_detect.
+*/
+T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_detect(const char *line, size_t line_length, t3_bool first,
+		int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
+
 /** Create a highlighting pattern from a previously created configuration.
     @param syntax The @c t3_config_t to create the highlighting pattern from.
-	@param map_style See ::t3_highlight_load.
-	@param map_style_data See ::t3_highlight_load.
-	@param flags See ::t3_highlight_load.
-	@param error See ::t3_highlight_load.
+    @param map_style See ::t3_highlight_load.
+    @param map_style_data See ::t3_highlight_load.
+    @param flags See ::t3_highlight_load.
+    @param error See ::t3_highlight_load.
 
     Other parameters and return value are equal to ::t3_highlight_load. The
     highlighting pattern are stored in the format of @c libt3config. Any
@@ -284,6 +299,24 @@ T3_HIGHLIGHT_API long t3_highlight_get_version(void);
     (inclusive).
 */
 T3_HIGHLIGHT_API t3_bool t3_highlight_utf8check(const char *line, size_t size);
+
+/** Detect the language of a file from line data.
+    @param line The line to use for auto-detection.
+    @param line_length The length in bytes of the data in @p line.
+    @param first Boolean indicating whether the @c first-line-regex patterns should be applied.
+    @param flags Flags for loading of the map file.
+    @param error Location to store an error code, or @c NULL.
+	@return A newly allocated string with the name of the language, or @c NULL
+        when no language was detected.
+
+    Auto-detection of the highlighting language is based on vi/Vim modelines, and
+    Emacs major mode tags. Furthermore, when the boolean @p first is set, the
+    @c first-line-regex patterns from the map file are used. for detection.
+    These regular expressions typically look for interpreters indicated with the
+    #! syntax.
+*/
+T3_HIGHLIGHT_API char *t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
+	int flags, t3_highlight_error_t *error);
 
 #ifdef __cplusplus
 } /* extern "C" */

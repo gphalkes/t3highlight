@@ -300,3 +300,85 @@ return_error:
 const char *t3_highlight_get_langfile(const t3_highlight_t *highlight) {
 	return highlight == NULL ? NULL : highlight->lang_file;
 }
+
+/* FIXME: do we want to return what type of result we are returning?
+	i.e. whether it is from a modeline/emacs language identifier or from
+	autodetection regexes?
+*/
+/* FIXME: do we really want to compile the patterns everytime we call this? Probably
+   not, but doing it another way is difficult. */
+
+char *t3_highlight_detect(const char *line, size_t line_length, t3_bool first, int flags, t3_highlight_error_t *error) {
+	const char *error_message;
+	int error_offset;
+	int ovector[30];
+	char *result = NULL;
+	pcre *pcre;
+
+	if (line == NULL)
+		return NULL;
+
+	if ((pcre = pcre_compile("-\\*-\\s*(?:mode:\\s*)([^\\s;]);?.*-\\*-", PCRE_CASELESS, &error_message, &error_offset, NULL)) == NULL)
+		RETURN_ERROR(T3_ERR_INTERNAL, flags);
+	if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector, sizeof(ovector) / sizeof(ovector[0])) > 0)
+		goto pattern_succeeded;
+	pcre_free(pcre);
+	if ((pcre = pcre_compile("\\s(?:vim?|ex): .*[: ]syntax=([^\\s:]+)", 0, &error_message, &error_offset, NULL)) == NULL)
+		RETURN_ERROR(T3_ERR_INTERNAL, flags);
+	if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector, sizeof(ovector) / sizeof(ovector[0])) > 0)
+		goto pattern_succeeded;
+	pcre_free(pcre);
+
+	if (first) {
+		t3_config_t *map, *language;
+		const char *regex;
+
+		if ((map = load_map(flags, error)) == NULL)
+			return NULL;
+
+		for (language = t3_config_get(t3_config_get(map, "lang"), NULL); language != NULL; language = t3_config_get_next(language)) {
+			if ((regex = t3_config_get_string(t3_config_get(language, "first-line-regex"))) == NULL)
+				continue;
+
+			if ((pcre = pcre_compile(regex, 0, &error_message, &error_offset, NULL)) == NULL)
+				continue;
+
+			if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector, sizeof(ovector) / sizeof(ovector[0])) < 0) {
+				pcre_free(pcre);
+				continue;
+			}
+			pcre_free(pcre);
+			result = t3_config_take_string(t3_config_get(language, "name"));
+			t3_config_delete(map);
+			return result;
+		}
+	}
+
+	if (error != NULL)
+		error->error = T3_ERR_SUCCESS;
+	return NULL;
+
+pattern_succeeded:
+	pcre_free(pcre);
+	if ((result = malloc(ovector[3] - ovector[2] + 1)) == NULL)
+		return NULL;
+	memcpy(result, line + ovector[2], ovector[3] - ovector[2]);
+	result[ovector[3] - ovector[2]] = 0;
+	return result;
+
+return_error:
+	return NULL;
+}
+
+t3_highlight_t *t3_highlight_load_by_detect(const char *line, size_t line_length, t3_bool first,
+		int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error)
+{
+	char *language_name = t3_highlight_detect(line, line_length, first, flags, error);
+	t3_highlight_t *result;
+
+	if (language_name == NULL)
+		return NULL;
+	result = t3_highlight_load_by_langname(language_name, map_style, map_style_data, flags, error);
+	free(language_name);
+	return result;
+}

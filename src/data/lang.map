@@ -31,24 +31,28 @@ format = 1
 	name-regex = "^(?i)(?:ba)?sh|(?i)shell$"
 	file-regex = "(?i)\.sh$"
 	lang-file = "sh.lang"
+	first-line-regex = "^#![\w/]*(?:/env\s+|/)(?:ba)?sh(?!\S)"
 }
 %lang {
 	name = "Python"
 	name-regex = "^(?i)python$"
 	file-regex = "(?i)\.py$"
 	lang-file = "python.lang"
+	first-line-regex = "^#![\w/]*(?:/env\s+|/)python(?:2\.\d+)?(?!\S)"
 }
 %lang {
 	name = "Python 3"
 	name-regex = "^(?i)python ?3$"
 	#file-regex = "(?i)\.py$"
 	lang-file = "python3.lang"
+	first-line-regex = "^#![\w/]*(?:/env\s+|/)python3(?:\.\d+)?(?!\S)"
 }
 %lang {
 	name = "Perl"
 	name-regex = "^(?i)perl$"
 	file-regex = "(?i)\.pl$"
 	lang-file = "perl.lang"
+	first-line-regex = "^#![\w/]*(?:/env\s+|/)perl(?!\S)"
 }
 %lang {
 	name = "(X)HTML"

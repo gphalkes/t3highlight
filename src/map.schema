@@ -17,18 +17,11 @@ types {
 	mapping {
 		type = "section"
 		allowed-keys {
-			name {
-				type = "string"
-			}
-			name-regex {
-				type = "string"
-			}
-			file-regex {
-				type = "string"
-			}
-			lang-file {
-				type = "string"
-			}
+			name { type = "string" }
+			name-regex { type = "string" }
+			file-regex { type = "string" }
+			lang-file { type = "string" }
+			first-line-regex { type = "string" }
 		}
 		%constraint = "{a language definition requires 'name' and 'lang-file'} name & lang-file"
 	}
