@@ -86,22 +86,18 @@ static void merge(t3_config_t *main, t3_config_t *map) {
 
 static t3_config_t *load_map(int flags, t3_highlight_error_t *error) {
 	t3_config_t *full_map = NULL, *map;
-	const char *home_env;
+	char *xdg_map;
 
 	if ((full_map = t3_config_new()) == NULL)
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
 	if (!t3_config_add_plist(full_map, "lang", error == NULL ? NULL : &error->error))
 		goto return_error;
 
-	home_env = getenv("HOME");
-	if (home_env != NULL && home_env[0] != 0) {
-		char *tmp;
-		if ((tmp = malloc(strlen(home_env) + strlen("/.libt3highlight/lang.map") + 1)) == NULL)
-			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-		strcpy(tmp, home_env);
-		strcat(tmp, "/.libt3highlight/lang.map");
-		map = load_single_map(tmp, 0, NULL);
-		free(tmp);
+	xdg_map = t3_config_xdg_get_path(T3_CONFIG_XDG_DATA_HOME, "libt3highlight", strlen("lang.map"));
+	if (xdg_map != NULL) {
+		strcat(xdg_map, "/lang.map");
+		map = load_single_map(xdg_map, 0, NULL);
+		free(xdg_map);
 		if (map != NULL)
 			merge(full_map, map);
 	}
@@ -230,23 +226,14 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 {
 	t3_config_opts_t opts;
 	const char *path[] = { NULL, NULL, NULL };
-	char *home_env = NULL;
+	char *xdg_path = NULL;
 	t3_config_t *config = NULL;
 	t3_config_error_t config_error;
 	t3_highlight_t *result;
 	FILE *file = NULL;
 
 	/* Setup path. */
-	home_env = getenv("HOME");
-	if (home_env != NULL && home_env[0] != 0) {
-		char *tmp;
-		if ((tmp = malloc(strlen(home_env) + strlen("/.libt3highlight") + 1)) == NULL)
-			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-		strcpy(tmp, home_env);
-		strcat(tmp, "/.libt3highlight");
-		path[0] = home_env = tmp;
-	}
-
+	path[0] = xdg_path = t3_config_xdg_get_path(T3_CONFIG_XDG_DATA_HOME, "libt3highlight", 0);
 	path[path[0] == NULL ? 0 : 1] = DATADIR;
 
 	if (flags & T3_HIGHLIGHT_USE_PATH) {
@@ -267,8 +254,8 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 		RETURN_ERROR_FULL(config_error.error, config_error.line_number, config_error.file_name == NULL ?
 			_t3_highlight_strdup(name) : config_error.file_name, config_error.extra, flags);
 
-	free(home_env);
-	home_env = NULL;
+	free(xdg_path);
+	xdg_path = NULL;
 	fclose(file);
 	file = NULL;
 
@@ -288,7 +275,7 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 
 return_error:
 	t3_config_delete(config);
-	free(home_env);
+	free(xdg_path);
 	if (file != NULL) {
 		int save_errno = errno;
 		fclose(file);

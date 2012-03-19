@@ -27,18 +27,20 @@ libt3highlight data directory. This is usually
 /usr/local/share/libt3highlight-VERSION (where VERSION should be replaced
 by the version number of the installed version of libt3highlight).
 
-Furthermore, libt3highlight also searches the .libt3highlight directory of the
-user's home directory. This allows users to easily develop their own
-highlighting description files.
+Furthermore, libt3highlight also searches the libt3highlight directory in the
+XDG DATA HOME directory (if the XDG_DATA_HOME environment variable is not set,
+this defaults to ~/.local/share/libt3highlight). This allows users to easily
+develop their own highlighting description files.
 
 @section map The Map File
 
 To associate the correct syntax highlighting description file with a source
 file, libt3highlight uses a special map file named <tt>lang.map</tt>. This file
 must be located in the libt3highlight data directory. A per-user map file may
-also be stored in the .libt3highlight directory of each user's home directory.
-This per-user map is read before the system-wide map, allowing a user to
-override the system-wide definitions.
+also be stored in the libt3highlight directory of the XDG DATA HOME directory
+(which defaults to ~/.local/share/libt3highlight if the XDG_DATA_HOME
+environment variable is not set). This per-user map is read before the
+system-wide map, allowing a user to override the system-wide definitions.
 
 The map file must include the format number (<tt>format = 1</tt>) and a list
 of @c @%lang sections. Each @c @%lang section must include a @c name and a
@@ -136,12 +138,12 @@ where a plus sign must appear before the newline after each substring.
 To make it easier to reuse (parts of) highlighting description files, other
 files can be included. To include a file, use <tt>@%include = "file.lang"</tt>.
 Either absolute path names may be used, or paths relative to the include
-directories. The include directories are the .libt3highlight subdirectory of
-the user's home directory and the default libt3highlight data directory
-(usually /usr/share/libt3highlight-VERSION or
-/usr/local/share/libt3highlight-VERSION). Files meant to be included by other
-files should not contain a @c format key. Only files intended to be used as
-complete language definitions should include the @c format key.
+directories. The include directories are the per user data directory (see
+above) and the default libt3highlight data directory (usually
+/usr/share/libt3highlight-VERSION or /usr/local/share/libt3highlight-VERSION).
+Files meant to be included by other files should not contain a @c format key.
+Only files intended to be used as complete language definitions should include
+the @c format key.
 
 @section highlight_definitions Highlight Definitions.
 
