@@ -1,3 +1,10 @@
+Version 0.2.1:
+	New features:
+	- A new API for autodetection of languages using either the vi(m) modelines
+	  and Emacs major mode comments, or the interpreter for scripts.
+	- Switch to XDG Base Directory Specification locations for per-user
+	  configuration files.
+
 Version 0.2.0:
 	New features:
 	- Added dynamic 'end' patterns, which allows the 'end' pattern to be
