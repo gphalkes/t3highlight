@@ -139,7 +139,8 @@ static PARSE_FUNCTION(parse_args)
 			if ((option_style = malloc(strlen(optArg) + 7)) == NULL)
 				fatal("Out of memory");
 			strcpy(option_style, optArg);
-			strcat(option_style, ".style");
+			if (strchr(option_style, '/') == NULL)
+				strcat(option_style, ".style");
 		END_OPTION
 		OPTION('h', "help", NO_ARG)
 			printf("Usage: t3highlight [<options>] [<file>]\n"
@@ -513,7 +514,7 @@ static void highlight_file(t3_highlight_t *highlight) {
 				fputs(styles[t3_highlight_get_match_attr(match)].end, stdout);
 			}
 		} while (match_result);
-		putchar('\n');
+		write_data("\n", 1);
 	}
 	if (footer != NULL)
 		fwrite(footer, 1, strlen(footer), stdout);
