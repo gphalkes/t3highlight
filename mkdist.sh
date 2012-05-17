@@ -13,7 +13,7 @@ get_sources_hg
 make_tmpdir
 copy_sources ${SOURCES} ${GENSOURCES} ${AUXSOURCES}
 copy_dist_files
-copy_files doc/API `hg manifest | egrep '^man/'`
+copy_files doc/API
 create_configure
 
 if [[ "${VERSION}" =~ [0-9]{8} ]] ; then
