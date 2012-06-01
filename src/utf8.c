@@ -39,11 +39,11 @@ t3_bool t3_highlight_utf8check(const char *line, size_t size) {
 
 		if (bytes == 3) {
 			/* Check for out-of-range codepoints. */
-			if ((unsigned char) line[i] > 0xf4 || (line[i] == 0xf4 && (unsigned char) line[i + 1] >= 0x90))
+			if ((unsigned char) line[i] > 0xf4 || ((unsigned char) line[i] == 0xf4 && (unsigned char) line[i + 1] >= 0x90))
 				return t3_false;
 		} else if (bytes == 2) {
 			/* Check for surrogates. */
-			if (line[i] == 0xed && (unsigned char) line[i] >= 0xa0)
+			if ((unsigned char) line[i] == 0xed && (unsigned char) line[i] >= 0xa0)
 				return t3_false;
 		}
 
