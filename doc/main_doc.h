@@ -96,7 +96,7 @@ detailed. libt3highlight uses the <a href="http://pcre.org">PCRE library</a>
 for regular expression matching. See the documentation of the PCRE library
 (either the local pcrepattern manpage, or the online documentation) for details
 on the regular expression syntax. All features of the PCRE library are available,
-with the exception of the @\\G assertion.
+with the exception of the @\G assertion.
 
 libt3highlight uses the libt3config library for storing the highlighting
 description files. For the most part, the syntax of the files will be
