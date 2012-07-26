@@ -339,6 +339,7 @@ char *t3_highlight_detect(const char *line, size_t line_length, t3_bool first, i
 			t3_config_delete(map);
 			return result;
 		}
+		t3_config_delete(map);
 	}
 
 	if (error != NULL)

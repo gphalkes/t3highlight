@@ -1,3 +1,7 @@
+Version 0.2.3:
+	Bug fixes:
+	- Fix memory leak in t3_highlight_detect.
+
 Version 0.2.2:
 	New features:
 	- Added LaTeX output option for t3highlight program.
