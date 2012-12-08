@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-EXTENSIONS="c libtool pkgconfig verbose_compile pkgconfig_dep gettext"
+EXTENSIONS="c libtool pkgconfig verbose_compile pkgconfig_dep gettext lfs"
 MAKEFILES="Makefile mk/libt3highlight mk/t3highlight"
 LTSHARED=1
 DEFAULT_LINGUAS=nl

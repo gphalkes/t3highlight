@@ -14,7 +14,7 @@
 SOURCES.libt3highlight.la := highlight.c vector.c highlight_shared.c io.c utf8.c
 
 LDLIBS.libt3highlight.la += -lt3config
-LDFLAGS.libt3highlight.la += -Lt3config/.libs
+LDFLAGS.libt3highlight.la += -L../include/t3config/.libs
 LDFLAGS.libt3highlight.la += `pkg-config --libs libpcre`
 CFLAGS.highlight += -I.objects -DDATADIR='"$(CURDIR)/data"'
 CFLAGS.io += -I.objects -DDATADIR='"$(CURDIR)/data"'
@@ -30,12 +30,8 @@ include ../../shared/rules.mk
 
 .objects/%.bytes: %.schema
 	$(GENOBJDIR)
-	$(_VERBOSE_GEN) t3config/data2bytes -s -- $< > $@
+	$(_VERBOSE_GEN) ../include/t3config/data2bytes -s -- $< > $@
 
 highlight.c: .objects/syntax.bytes .objects/map.bytes
-
-links:
-	@[ -L t3highlight ] || ln -s . t3highlight
-	@[ -L t3config ] || ln -s ../../config/src t3config
 
 .PHONY: links

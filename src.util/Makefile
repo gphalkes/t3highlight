@@ -22,14 +22,14 @@ TARGETS := t3highlight
 #================================================#
 include ../../makesys/rules.mk
 
-CFLAGS += -I. -I../src -I.objects
+CFLAGS += -I. -I../include -I.objects
 #~ CFLAGS += -DUSE_GETTEXT -DLOCALEDIR=\"locales\"
 
 .objects/t3highlight.o: | lib
 
 .objects/%.bytes: %.schema
 	$(GENOBJDIR)
-	$(_VERBOSE_GEN) ../src/t3config/data2bytes -s -- $< > $@
+	$(_VERBOSE_GEN) ../include/t3config/data2bytes -s -- $< > $@
 
 .objects/t3highlight.o: .objects/style.bytes
 
