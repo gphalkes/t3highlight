@@ -12,7 +12,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 SOURCES.t3highlight := t3highlight.c escapes.c
-LDFLAGS.t3highlight := -L../src/.libs -Lt3config/.libs
+LDFLAGS.t3highlight := -L../src/.libs -L../include/t3config/.libs
 LDLIBS.t3highlight := -lt3highlight -lt3config
 CFLAGS.t3highlight := -I.objects -DDATADIR='"$(CURDIR)/data"'
 
