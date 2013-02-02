@@ -15,4 +15,4 @@ all: doxygen
 .PHONY: all
 
 T3NAME:=highlight
-include ../../shared/doc-rules.mk
+include ../../t3shared/doc-rules.mk

@@ -26,7 +26,7 @@ LTTARGETS := libt3highlight.la
 include ../../makesys/rules.mk
 #================================================#
 T3NAME := highlight
-include ../../shared/rules.mk
+include ../../t3shared/rules.mk
 
 .objects/%.bytes: %.schema
 	$(GENOBJDIR)
