@@ -16,6 +16,7 @@
 			style = "string"
 		}
 	}
+
 	sh-comment {
 		%highlight {
 			start = '#'
@@ -23,7 +24,6 @@
 			style = "comment"
 		}
 	}
-
 
 	sh-variable {
 		%highlight {
@@ -78,20 +78,137 @@
 		}
 	}
 
-	sh-keyword {
+	sh-carry-over-line {
 		%highlight {
-			regex = '(?<!\S)(?:if|then|else|elif|fi|done|do|case|esac|while|until|for|in|' +
+			# Prevent continued lines to end the highlight
+			start = '\\$'
+			end = '^'
+		}
+		%highlight {
+			regex = '[;|&]|$'
+			exit = 1
+		}
+	}
+
+	sh-shell {
+		# Regular keywords. However, keywords in the shell are only recognised
+		# when they are the first word in the statement. This makes things
+		# _very_ complicated, because we have to implement a partial parser.
+		# The way it is implemented here, is by having a substate for after
+		# matching the keyword, which is exited after a command is ended.
+		%highlight {
+			start = '(?<![^|&;()<> \t])(?:else|fi|done|esac|' +
 				'break|continue|eval|exec|exit|export|readonly|return|set|shift|' +
 				'times|trap|unset|source|alias|bg|bind|break|builtin|caller|cd|' +
 				'command|compgen|complete|compopt|declare|typeset|dirs|disown|echo|' +
 				'enable|fc|fg|getopts|hash|help|history|jobs|kill|let|local|logout|' +
 				'mapfile|readarray|popd|printf|pushd|pwd|read|shopt|suspend|test|' +
-				'type|ulimit|umask|unalias|wait)(?!\S)'
+				'type|ulimit|umask|unalias|wait)(?![^|&;()<> \t])'
+			%highlight { use = "sh-shell-nokeyword" }
+			%highlight { use = "sh-carry-over-line" }
+			%highlight {
+				regex = '[<>]\('
+				exit = 1
+			}
+			delim-style = "keyword"
+		}
+		# After if, then, while, until and do a "list" is expected, i.e. the
+		# normal keywords should be matched again. So we return to the outer
+		# state again after matching.
+		%highlight {
+			regex = '(?<![^|&;()<> \t])(if|then|while|until|do)(?![^|&;()<> \t])'
 			style = "keyword"
+		}
+		# After for and select a "name" i.e. a variable name without a $ is
+		# expected. Then the word in must appear, or the end of the statement.
+		# Implemented using %on-entry to push the two different items that need
+		# to match.
+		%highlight {
+			start = '(?<![^|&;()<> \t])(?:for|select)(?![^|&;()<> \t])'
+			%on-entry {
+				end = '(?<![^|&;()<> \t])in(?![^|&;()<> \t])'
+				%highlight {
+					regex = '(?=[^|&;()<> \t])'
+					exit = 1
+				}
+				%highlight {
+					start = '\\$'
+					end = '^'
+				}
+				%highlight {
+					regex = '[;|&]|$'
+					exit = 2
+				}
+			}
+			%on-entry {
+				end = '(?<![^|&;()<> \t])[a-zA-Z][a-zA-Z_0-9]*(?![^|&;()<> \t])'
+				%highlight {
+					regex = '(?=[^ \t])'
+					exit = 2
+				}
+				style = "normal"
+			}
+			%highlight { use = "sh-shell-nokeyword" }
+			%highlight { use = "sh-carry-over-line" }
+			delim-style = "keyword"
+		}
+		# The keyword case is nasty, because it expects a "word", which means
+		# any type of string, followed by in. After that a special environment
+		# is started which recognizes words, and goes to normal shell mode on
+		# detecting a closing parenthesis. That mode is closed on detecting
+		# two consecutive semi-colons. When esac is encountered in the inner
+		# shell mode, we abort the case mode, because that most likely means
+		# the author hasn't closed the last case item (yet).
+		%highlight {
+			start = '(?<![^|&;()<> \t])case(?![^|&;()<> \t])'
+			%highlight { use = "sh-shell-nokeyword" }
+			%highlight { use = "sh-carry-over-line" }
+			%highlight {
+				start = '(?<![^|&;()<> \t])in(?![^|&;()<> \t])'
+				%highlight { use = "sh-word" }
+				%highlight {
+					start = '\)'
+					%highlight {
+						regex = '(?<![^|&;()<> \t])esac(?![^|&;()<> \t])'
+						style = 'keyword'
+						exit = 3
+					}
+					%highlight { use = "sh-shell" }
+					end = ';;'
+				}
+				end = '(?<![^|&;()<> \t])esac(?![^|&;()<> \t])'
+				exit = 2
+				delim-style = "keyword"
+			}
+			delim-style = "keyword"
+		}
+		# Another complication is the option to write variable assignments
+		# before the actual statement. So we have to recognise them specially,
+		# or parsing would go into the last item, which disables keyword
+		# handling.
+		%highlight {
+			start = '(?<![^|&;()<> \t])[a-zA-Z][a-zA-Z_0-9]*='
+			%highlight { use = "sh-word" }
+			%highlight { use = "sh-carry-over-line" }
+			end = '[|&;()<> \t]|$'
+		}
+		# Parenthesis and braces open new shells, and so do not jump out
+		# of the outer (keyword recognising) state.
+		%highlight {
+			regex = '[({]'
+		}
+		# If any non-metacharacter is encountered that was not matched by the
+		# above rules, enter this special mode which recognises everything,
+		# except keywords.
+		%highlight {
+			start = '(?=[^|&;()<> \t])'
+			%highlight { use = "sh-shell-nokeyword" }
+			%highlight { use = "sh-carry-over-line" }
+			end = '[<>]\('
 		}
 	}
 
-	sh-shell {
+	sh-word {
 		%highlight { regex = '\\.' }
 		%highlight { use = "sh-string" }
 		%highlight { use = "sh-comment" }
@@ -99,8 +216,10 @@
 		%highlight { use = "sh-arithmetic" }
 		%highlight { use = "sh-eval" }
 		%highlight { use = "sh-simple-eval" }
-		%highlight { use = "sh-keyword" }
+	}
 
+	sh-shell-nokeyword {
+		%highlight { use = "sh-word" }
 		# For the here-docs, there is one limitation: the shell accepts quotes
 		# anywhere within word as well. This is an uncommon thing to do, so we
 		# let it slide.

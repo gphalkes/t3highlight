@@ -1,4 +1,4 @@
-format = 1
+format = 2
 
 %include = "def/sh.lang"
 

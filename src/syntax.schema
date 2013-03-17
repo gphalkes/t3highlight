@@ -62,6 +62,7 @@ types {
 		%constraint = "{'nested' can only occur together with 'start'} start | !nested"
 		%constraint = "{'extract' can oly occur together with 'start' and 'end'} (start & end) | !extract"
 		%constraint = "{'on-entry' can only occur together with 'start'} start | !on-entry"
+		%constraint = "{'exit' can only occur togther with 'regex' or 'end'} regex | end | !exit"
 	}
 
 	on-entry {
