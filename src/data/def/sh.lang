@@ -80,13 +80,13 @@
 
 	sh-keyword {
 		%highlight {
-			regex = '(?<![-\w])(?:if|then|else|elif|fi|done|do|case|esac|while|until|for|in|' +
+			regex = '(?<!\S)(?:if|then|else|elif|fi|done|do|case|esac|while|until|for|in|' +
 				'break|continue|eval|exec|exit|export|readonly|return|set|shift|' +
 				'times|trap|unset|source|alias|bg|bind|break|builtin|caller|cd|' +
 				'command|compgen|complete|compopt|declare|typeset|dirs|disown|echo|' +
 				'enable|fc|fg|getopts|hash|help|history|jobs|kill|let|local|logout|' +
 				'mapfile|readarray|popd|printf|pushd|pwd|read|shopt|suspend|test|' +
-				'type|ulimit|umask|unalias|wait)\b'
+				'type|ulimit|umask|unalias|wait)(?!\S)'
 			style = "keyword"
 		}
 	}

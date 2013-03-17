@@ -12,15 +12,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 SOURCES.t3highlight := t3highlight.c escapes.c
-LDFLAGS.t3highlight := -L../src/.libs -L../include/t3config/.libs
-LDLIBS.t3highlight := -lt3highlight -lt3config
-CFLAGS.t3highlight := -I.objects -DDATADIR='"$(CURDIR)/data"'
 
 TARGETS := t3highlight
 #================================================#
 # NO RULES SHOULD BE DEFINED BEFORE THIS INCLUDE #
 #================================================#
 include ../../makesys/rules.mk
+#================================================#
+LDFLAGS.t3highlight := $(call L, ../src/.libs ../include/t3config/.libs)
+LDLIBS.t3highlight := -lt3highlight -lt3config
+CFLAGS.t3highlight := -I.objects -DDATADIR='"$(CURDIR)/data"'
 
 CFLAGS += -I. -I../include -I.objects
 #~ CFLAGS += -DUSE_GETTEXT -DLOCALEDIR=\"locales\"

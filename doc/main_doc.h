@@ -5,15 +5,15 @@
 The libt3highlight library provides functions for syntax highlighting different
 types of text files.
 
-libt3highlight is part of the <A HREF="http://os.ghalkes.nl/t3/">Tilde Terminal
-Toolkit (T3)</A>.
+libt3highlight is part of the <a href="http://os.ghalkes.nl/t3/">Tilde Terminal
+Toolkit (T3)</a>.
 
 Documentation on where libt3highlight looks for highlighting description files
 and how it finds the appropriate file is @ref users_doc "here". If you are
 interested in writing your own highlighting description, the explanation of the
-file format is @ref syntax "here". Furthermore there is a @ref style "page" on the style
-definition files used by t3highlight. Finally there is the <a class="el"
-href="modules.html">API documentation</a>.
+file format is @ref syntax "here". Furthermore there is a @ref style "page" on
+the style definition files used by t3highlight. Finally there is the <a
+class="el" href="modules.html">API documentation</a>.
 
 */
 
@@ -22,10 +22,9 @@ href="modules.html">API documentation</a>.
 @section location Location of Highlighting Description Files
 
 The highlighting description files that come with libt3highlight are stored in
-libt3highlight data directory. This is usually
-/usr/share/libt3highlight-VERSION or
-/usr/local/share/libt3highlight-VERSION (where VERSION should be replaced
-by the version number of the installed version of libt3highlight).
+libt3highlight data directory. This is usually /usr/share/libt3highlightX or
+/usr/local/share/libt3highlightX (where X should be replaced by a number
+corresponding to the API version of the installed libt3highlight).
 
 Furthermore, libt3highlight also searches the libt3highlight directory in the
 XDG DATA HOME directory (if the XDG_DATA_HOME environment variable is not set,
@@ -56,30 +55,30 @@ libt3highlight:
 format = 1
 
 %lang {
-	name = "C++"
-	name-regex = "^(?i)(?:c\+\+|cpp)$"
-	# We treat .h files as if they are C++ files, because many C++ header files
-	# use the .h suffix. There is little harm in treating a C file as a C++ file.
-	file-regex = "\.(?:cpp|C|cxx|cc|hpp|hxx|H|h)$"
-	lang-file = "cpp.lang"
+  name = "C++"
+  name-regex = "^(?i)(?:c\+\+|cpp)$"
+  # We treat .h files as if they are C++ files, because many C++ header files
+  # use the .h suffix. There is little harm in treating a C file as a C++ file.
+  file-regex = "\.(?:cpp|C|cxx|cc|hpp|hxx|H|h)$"
+  lang-file = "cpp.lang"
 }
 %lang {
-	name = "C"
-	name-regex = "^(?i)c$"
-	file-regex = '\.[ch]$'
-	lang-file = "c.lang"
+  name = "C"
+  name-regex = "^(?i)c$"
+  file-regex = '\.[ch]$'
+  lang-file = "c.lang"
 }
 %lang {
-	name = "Shell"
-	name-regex = "^(?i)(?:ba)?sh$"
-	file-regex = "(?i)\.sh$"
-	lang-file = "sh.lang"
+  name = "Shell"
+  name-regex = "^(?i)(?:ba)?sh$"
+  file-regex = "(?i)\.sh$"
+  lang-file = "sh.lang"
 }
 %lang {
-	name = "T3 Highlight Language Definition"
-	name-regex = "^(?i)lang$"
-	file-regex = "\.lang$"
-	lang-file = "lang.lang"
+  name = "T3 Highlight Language Definition"
+  name-regex = "^(?i)lang$"
+  file-regex = "\.lang$"
+  lang-file = "lang.lang"
 }
 @endverbatim
 
@@ -101,7 +100,7 @@ with the exception of the @\G assertion.
 libt3highlight uses the libt3config library for storing the highlighting
 description files. For the most part, the syntax of the files will be
 self-explanatory, but if you need more details, you can find them in <a
-href="http://os.ghalkes.nl/t3/doc/t3config">the libt3config documentation</a>.
+href="http://os.ghalkes.nl/t3/doc/libt3config">the libt3config documentation</a>.
 
 @section structure Overall Structure
 
@@ -116,9 +115,9 @@ this:
 format = 1
 
 %highlight {
-	start = "#"
-	end = "$"
-	style = "comment"
+  start = "#"
+  end = "$"
+  style = "comment"
 }
 @endverbatim
 
@@ -145,7 +144,7 @@ Files meant to be included by other files should not contain a @c format key.
 Only files intended to be used as complete language definitions should include
 the @c format key.
 
-@section highlight_definitions Highlight Definitions.
+@section highlight_definitions Highlight Definitions
 
 A highlight definition can have three forms: a single matching item using the
 @c regex key, a state definition using the @c start and @c end keys, and a
@@ -159,8 +158,8 @@ key. The style can be selected using the @c style key. For example:
 
 @verbatim
 %highlight {
-	regex = '\b(?:int|float|bool)\b'
-	style = "keyword"
+  regex = '\b(?:int|float|bool)\b'
+  style = "keyword"
 }
 @endverbatim
 
@@ -204,17 +203,17 @@ number of) backslashes before it.
 
 @verbatim
 %highlight {
-	start = '\$\{'
-	%highlight {
-		regex = '\\.'
-	}
-	end = '\}'
-	style = "variable"
-	nested = yes
+  start = '\$\{'
+  %highlight {
+    regex = '\\.'
+  }
+  end = '\}'
+  style = "variable"
+  nested = yes
 }
 @endverbatim
 
-@subsubsection dynamic_endpat Dynamic @c end Patterns
+@subsubsection dynamic_endpat Dynamic 'end' Patterns
 
 Sometimes a state is delimited by a symbol that is not known ahead of time.
 Examples of these are Shell here-docs, perl strings using q/qq/m/s etc.
@@ -227,10 +226,10 @@ Shell language:
 
 @verbatim
 %highlight {
-	start = '<<\s*(?<delim>\w+)'
-	extract = "delim"
-	end = '^(?&delim)$'
-	style = "string"
+  start = '<<\s*(?<delim>\w+)'
+  extract = "delim"
+  end = '^(?&delim)$'
+  style = "string"
 }
 @endverbatim
 
@@ -247,7 +246,7 @@ key, which specifies how many states to exit. The default for @c end patterns is
 one, and for non-state highlights it is zero. By setting the @c exit key to a
 one for a non-state highlight, you effectively create an extra @c end pattern.
 
-@subsubsection on_entry Pushing Additional States on Matching @c start
+@subsubsection on_entry Pushing Additional States on Matching 'start'
 
 To match complex state based elements libt3highlight provides an extra feature.
 When a @c start pattern is matched, additional states can be put on the stack.
@@ -260,19 +259,19 @@ example <tt>s/abc/def/</tt>. To match this, an extra state can be used:
 
 @verbatim
 %highlight {
-	start = '\bs(?<delim>.)'
-	extract = "delim"
-	%on-entry {
-		end = '(?&delim)'
-	}
-	end = '(?&delim)'
-	style = 'string'
+  start = '\bs(?<delim>.)'
+  extract = "delim"
+  %on-entry {
+    end = '(?&delim)'
+  }
+  end = '(?&delim)'
+  style = 'string'
 }
 @endverbatim
 
 Note that the @c on-entry key is a list of states, which will be pushed onto
-the stack. Thus the last element in the @c on-entry list will be active after the
-@c start pattern matched.
+the stack. Thus the last element in the @c on-entry list will be active after
+the @c start pattern matched.
 
 In an @c on-entry element, the @c end, @c highlight, @c style, @c delim-stlye,
 @c exit and @c use entries are valid. Their meaning is the same as for normal
@@ -280,46 +279,46 @@ state definitions. The @c end pattern may be a dynamic pattern, using the named
 sub-pattern that was extracted from the @c start pattern that caused the @c
 on-entry state to be created.
 
-@subsection use_definition Using Predefined Highlights.
+@subsection use_definition Using Predefined Highlights
 
-It is possible to create named highlights. These must be defined by creating one
-or more @c @%define sections. The @c @%define sections must contain named
+It is possible to create named highlights. These must be defined by creating
+one or more @c @%define sections. The @c @%define sections must contain named
 sections which contain @%highlight definitions. For example:
 
 @verbatim
 %define {
-	types {
-		%highlight {
-			regex = '\b(?:int|float|bool)\b'
-			style = "keyword"
-		}
-	}
-	hash-comment {
-		%highlight {
-			start = '#'
-			end = '$'
-			style = "comment"
-		}
-	}
+  types {
+    %highlight {
+      regex = '\b(?:int|float|bool)\b'
+      style = "keyword"
+    }
+  }
+  hash-comment {
+    %highlight {
+      start = '#'
+      end = '$'
+      style = "comment"
+    }
+  }
 }
 @endverbatim
 
-will define a named highlight @c types and a highlight named @c hash-comment, which
-can be used as follows:
+will define a named highlight @c types and a highlight named @c hash-comment,
+which can be used as follows:
 
 @verbatim
 %highlight {
-	use = "types"
+  use = "types"
 }
 %highlight {
-	use = "hash-comment"
+  use = "hash-comment"
 }
 @endverbatim
 
-There is no check for multiple highlights with the same name, and only the first
-defined highlight with a certain name is used.
+There is no check for multiple highlights with the same name, and only the
+first defined highlight with a certain name is used.
 
-@section style_names Style Names.
+@section style_names Style Names
 
 As shown in the previous section, the style to be used for highlighting items
 in the text is determined by a string value. Although the names are not
@@ -355,11 +354,11 @@ This list may be extended in the future. However, because libt3highlight is
 also used for highlighting in environments where the display possibilities are
 limited, the number of styles will remain small.
 
-@section tips_and_tricks Tips and Tricks.
+@section tips_and_tricks Tips and Tricks
 
 This section lists useful tips and tricks for writing highlight files.
 
-@subsection define_lang Using the Whole Language as a Named Definition.
+@subsection define_lang Using the Whole Language as a Named Definition
 
 To make it easier to embed a complete language into another, it is useful to
 write the whole language definition as a named highlight definition. This
@@ -368,7 +367,7 @@ includes the definition file and a single highlight definition to use the named
 highlight, should be created. See the definition of the C language in
 <tt>c.lang</tt> as an example.
 
-@subsection c_string C-style Strings.
+@subsection c_string C-style Strings
 
 The difficulty in C-style strings, is that they can be continued on the next
 line by including a backslash as the last character on the line. However, it
@@ -391,24 +390,27 @@ the line. This state is then exited when the new line is started:
 
 @verbatim
 %highlight {
-	start = '"'
-	%highlight {
-		regex = '\\.'
-		style = "string-escape"
-	}
-	%highlight {
-		start = '\\$'
-		end = '^'
-	}
-	end = '"|$'
-	style = "string"
+  start = '"'
+  %highlight {
+    regex = '\\.'
+    style = "string-escape"
+  }
+  %highlight {
+    start = '\\$'
+    end = '^'
+  }
+  end = '"|$'
+  style = "string"
 }
 @endverbatim
 
+By entering a new sub state, we avoid matching the @c end pattern. Thus the
+string is continued on the next line.
+
 @note In versions before 0.2.0 a single pattern could be written using the PCRE
-@\G assertion. However, due to a change in the matching process for optimization
-purposes, this assertion will be true at every point in the input. Therefore, it
-is no longer usable.
+@\G assertion. However, due to a change in the matching process for
+optimization purposes, this assertion will be true at every point in the input.
+Therefore, it is no longer usable.
 
 */
 
@@ -443,6 +445,9 @@ Multiple strings may be concatenated by using a plus sign (+). To split a
 string accross multiple lines, use string concatenation using the plus sign,
 where a plus sign must appear before the newline after each substring.
 
+Further documentation about the libt3config format can be found in the
+<a href="http://os.ghalkes.nl/t3/doc/libt3config">libt3config documentation</a>.
+
 @section example Example
 
 Below is a section from the @b html style, which shows the different parts of a
@@ -457,48 +462,48 @@ expand-escapes = yes
 %translate { search = ">" ; replace = "&gt;" }
 
 documents {
-	# The actual html style also includes a "standalone" document type. This has
-	# been omitted for brevity.
-	separate-css {
-		description = "HTML 4.01 strict with style sheet reference (use css tag)"
-		header = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">\n<html><head>\n' +
-			'<meta http-equiv="Content-Type" content="text/html; charset=%{charset}">' +
-			'<!--Generated by t3highlight-->\n' +
-			'<link href="%{css}" rel="stylesheet" type="text/css">' +
-			'<title>%{name}</title></head>\n<body><pre>\n'
-		footer = '</pre></body></html>\n'
-	}
-	raw {
-		description = "HTML without header, for embedding"
-		header = "<!--Generated by t3highlight-->\n<pre>"
-		footer = "</pre>"
-	}
+  # The actual html style also includes a "standalone" document type. This has
+  # been omitted for brevity.
+  separate-css {
+    description = "HTML 4.01 strict with style sheet reference (use css tag)"
+    header = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">\n<html><head>\n' +
+      '<meta http-equiv="Content-Type" content="text/html; charset=%{charset}">' +
+      '<!--Generated by t3highlight-->\n' +
+      '<link href="%{css}" rel="stylesheet" type="text/css">' +
+      '<title>%{name}</title></head>\n<body><pre>\n'
+    footer = '</pre></body></html>\n'
+  }
+  raw {
+    description = "HTML without header, for embedding"
+    header = "<!--Generated by t3highlight-->\n<pre>"
+    footer = "</pre>"
+  }
 }
 
 styles {
-	normal {
-		start = ""
-		end = ""
-	}
-	keyword {
-		start = '<span class="hl-keyword">'
-		end = '</span>'
-	}
-	string {
-		start = '<span class="hl-string">'
-		end = '</span>'
-	}
-	string-escape {
-		start = '<span class="hl-string-escape">'
-		end = '</span>'
-	}
-	comment {
-		start = '<span class="hl-comment">'
-		end = '</span>'
-	}
-	# More styles follow. These have been omitted for brevity. In a complete style
-	# definition file, start and end strings should be included for all possible
-	# style names.
+  normal {
+    start = ""
+    end = ""
+  }
+  keyword {
+    start = '<span class="hl-keyword">'
+    end = '</span>'
+  }
+  string {
+    start = '<span class="hl-string">'
+    end = '</span>'
+  }
+  string-escape {
+    start = '<span class="hl-string-escape">'
+    end = '</span>'
+  }
+  comment {
+    start = '<span class="hl-comment">'
+    end = '</span>'
+  }
+  # More styles follow. These have been omitted for brevity. In a complete style
+  # definition file, start and end strings should be included for all possible
+  # style names.
 }
 @endverbatim
 
