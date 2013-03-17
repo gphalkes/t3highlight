@@ -23,7 +23,7 @@ typedef struct {
 		used;
 } vector_base_t;
 
-#define VECTOR(type, name) struct { type *data; size_t allocated, used; } name
+#define VECTOR(type) struct { type *data; size_t allocated, used; }
 #define VECTOR_INIT(name) do { (name).data = NULL; (name).allocated = 0; (name).used = 0; } while (0)
 #define VECTOR_ITERATE(name, func) do { size_t _i; for (_i = 0; _i < (name).used; _i++) func(&(name).data[_i]); } while (0)
 #define VECTOR_RESERVE(name) _t3_highlight_vector_reserve((vector_base_t *) &name, sizeof((name).data[0]))

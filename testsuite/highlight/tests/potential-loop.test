@@ -1,4 +1,6 @@
-format = 1
+format = 2
+
+allow-empty-start = false
 
 %highlight {
 	start = "(?=a)|b"

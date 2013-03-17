@@ -104,12 +104,12 @@ href="http://os.ghalkes.nl/t3/doc/libt3config">the libt3config documentation</a>
 
 @section structure Overall Structure
 
-A complete highlighting description file for libt3highlight consists of a
-file format specifier, which must have the value @c 1, an optional list of
-named highlight definitions which can be used elsewhere, and a list of highlight
-definitions constituting the highlighting. A simple example, which marks any
-text from a hash sign (@#) up to the end of the line as a comment looks like
-this:
+A complete highlighting description file for libt3highlight consists of a file
+format specifier, which must have the value @c 1 or @c 2, an optional list of
+named highlight definitions which can be used elsewhere, and a list of
+highlight definitions constituting the highlighting. A simple example, which
+marks any text from a hash sign (@#) up to the end of the line as a comment
+looks like this:
 
 @verbatim
 format = 1
@@ -173,9 +173,15 @@ the @c start regular expression is matched, everything up to and including the
 first text matching the (optional) @c end regular expression is styled using
 the style selected with the @c style key. If the text matching the @c start and
 @c end regexes must be styled differently from the rest of the text, the
-<code>delim-style</code> key can be used. The @c start regex is not allowed to
-match the empty string. Although it is legal to write regexes which would match
-the empty string, only the first non-empty match is considered.
+<code>delim-style</code> key can be used.
+
+In format @c 2 files, the @c start regex is allowed to match the empty string.
+However, there may not be cycles of states of only empty-matching @c start and
+@c end patterns. In format @c 1 files, or files which have the
+@c allow-empty-start top-level boolean set to @c false (only valid in format
+@c 2 files), the @c start regex is not allowed to match the empty string.
+Although it is legal to write regexes which would match the empty string, only
+the first non-empty match is considered.
 
 A state definition can also have sub-highlights. This is done by simply adding
 @c @%highlight sections inside the highlight definition. If the sub-highlights

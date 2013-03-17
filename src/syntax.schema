@@ -109,7 +109,10 @@ types {
 allowed-keys {
 	format {
 		type = "int"
-		%constraint = "{format version unsupported} % = 1"
+		%constraint = "{format version unsupported} % >= 1 & % <= 2"
+	}
+	allow-empty-start {
+		type = "bool"
 	}
 	highlight {
 		type = "list"
@@ -121,3 +124,4 @@ allowed-keys {
 	}
 }
 %constraint = "{'format' and 'highlight' are required} highlight & format"
+%constraint = "{'allow-empty-start' requires format version >= 2} !allow-empty-start | format >= 2"

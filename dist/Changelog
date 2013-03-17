@@ -1,3 +1,12 @@
+Version 0.3.0:
+	New features:
+	- Start patterns for states may now match the empty string, provided they
+	  do not cause a cycle of states reachable through only empty-string
+	  matches.
+
+	Bug fixes:
+	- The shell patterns have been improved to recognize keywords better.
+
 Version 0.2.4:
 	Bug fixes:
 	- Compile with Large File Support if such support is available on the

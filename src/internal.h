@@ -23,6 +23,10 @@
    subtract from EXIT_STATE. I.e. -3 equals exit = 2, -4 equals exit = 3, etc. */
 #define EXIT_STATE (-2)
 
+/* WARNING: make sure any flags defined here don't clash with the ones in
+   highlight.h */
+#define T3_HIGHLIGHT_ALLOW_EMPTY_START (1<<15)
+
 typedef struct {
 	pcre *regex;
 	pcre_extra *extra;
@@ -48,7 +52,7 @@ typedef struct {
 } highlight_t;
 
 typedef struct {
-	VECTOR(highlight_t, highlights);
+	VECTOR(highlight_t) highlights;
 	int attribute_idx;
 } state_t;
 
@@ -64,8 +68,10 @@ typedef struct {
 	dynamic_state_t *dynamic;
 } state_mapping_t;
 
+typedef VECTOR(state_t) states_t;
+
 struct t3_highlight_t {
-	VECTOR(state_t, states);
+	states_t states;
 	char *lang_file;
 	int flags;
 };

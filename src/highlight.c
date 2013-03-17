@@ -29,7 +29,7 @@
 
 struct t3_highlight_match_t {
 	const t3_highlight_t *highlight;
-	VECTOR(state_mapping_t, mapping);
+	VECTOR(state_mapping_t) mapping;
 	size_t start,
 		match_start,
 		end;
@@ -50,7 +50,7 @@ typedef struct {
 	t3_highlight_t *highlight;
 	t3_config_t *syntax;
 	int flags;
-	VECTOR(use_mapping_t, use_map);
+	VECTOR(use_mapping_t) use_map;
 } highlight_context_t;
 
 typedef struct {
@@ -74,6 +74,7 @@ static const char syntax_schema[] = {
 
 static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights, int idx, t3_highlight_error_t *error);
 static void free_state(state_t *state);
+static t3_bool check_empty_cycle(t3_highlight_t *highlight, t3_highlight_error_t *error, int flags);
 
 t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, const char *),
 		void *map_style_data, int flags, t3_highlight_error_t *error)
@@ -84,6 +85,10 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	t3_config_error_t local_error;
 	highlight_context_t context;
 
+	/* Sanatize flags */
+	flags &= T3_HIGHLIGHT_UTF8_NOCHECK | T3_HIGHLIGHT_USE_PATH | T3_HIGHLIGHT_VERBOSE_ERROR;
+
+	/* Validate the syntax using the schema. */
 	if ((schema = t3_config_read_schema_buffer(syntax_schema, sizeof(syntax_schema), &local_error, NULL)) == NULL) {
 		if (error != NULL)
 			error->error = local_error.error != T3_ERR_OUT_OF_MEMORY ? T3_ERR_INTERNAL : local_error.error;
@@ -98,6 +103,10 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	t3_config_delete_schema(schema);
 	schema = NULL;
 
+	/* Check whether to allow empty start patterns. */
+	if (t3_config_get_int(t3_config_get(syntax, "format")) > 1 &&
+			(t3_config_get(syntax, "allow-empty-start") == NULL || t3_config_get_bool(t3_config_get(syntax, "allow-empty-start"))))
+		flags |= T3_HIGHLIGHT_ALLOW_EMPTY_START;
 
 	if (map_style == NULL)
 		RETURN_ERROR(T3_ERR_BAD_ARG, flags);
@@ -106,24 +115,28 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
 	VECTOR_INIT(result->states);
 
-	highlights = t3_config_get(syntax, "highlight");
-
 	if (!VECTOR_RESERVE(result->states))
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
 	VECTOR_LAST(result->states) = null_state;
+
+	/* Set up initialization. */
+	highlights = t3_config_get(syntax, "highlight");
 	context.map_style = map_style;
 	context.map_style_data = map_style_data;
 	context.highlight = result;
 	context.syntax = syntax;
 	context.flags = flags;
-	/* FIXME: we should pre-allocate the first 256 items, such that we are unlikely to
-	   ever need to reallocate while matching. */
 	VECTOR_INIT(context.use_map);
 	if (!init_state(&context, highlights, 0, error)) {
 		free(context.use_map.data);
 		goto return_error;
 	}
 	free(context.use_map.data);
+
+	/* If we allow empty start patterns, we need to analyze whether they don't result
+	   in infinite loops. */
+	if ((flags & T3_HIGHLIGHT_ALLOW_EMPTY_START) && !check_empty_cycle(result, error, flags))
+		goto return_error;
 
 	result->flags = flags;
 	result->lang_file = NULL;
@@ -460,6 +473,70 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 	free(highlight);
 }
 
+static t3_bool check_empty_cycle_from_state(states_t *states, size_t state, t3_highlight_error_t *error, int flags) {
+	int min_length, next_state, depth;
+	size_t i, j;
+
+	typedef struct { int state, depth; } state_stack_t;
+	VECTOR(state_stack_t) state_stack;
+	VECTOR_INIT(state_stack);
+
+	if (!VECTOR_RESERVE(state_stack))
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+
+	VECTOR_LAST(state_stack).state = state;
+	VECTOR_LAST(state_stack).depth = 0;
+
+	while (state_stack.used) {
+		state = VECTOR_LAST(state_stack).state;
+		depth = VECTOR_LAST(state_stack).depth;
+
+		state_stack.used--;
+		for (i = 0; i < states->data[state].highlights.used; i++) {
+			next_state = states->data[state].highlights.data[i].next_state;
+			if (next_state == NO_CHANGE)
+				continue;
+
+			/* This should be pretty much impossible to happen, so we just continue
+			   as if this pattern matches at least one byte. */
+			if (pcre_fullinfo(states->data[state].highlights.data[i].regex.regex,
+					states->data[state].highlights.data[i].regex.extra, PCRE_INFO_MINLENGTH, &min_length) != 0)
+				continue;
+
+			if (min_length <= 0) {
+				if (next_state < 0) {
+					if (-next_state - 1 <= depth)
+						RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
+				} else {
+					for (j = 0; j < state_stack.used; j++) {
+						if (state_stack.data[j].state == next_state)
+							RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
+					}
+					if (!VECTOR_RESERVE(state_stack))
+						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+					VECTOR_LAST(state_stack).state = next_state;
+					VECTOR_LAST(state_stack).depth = depth + 1;
+				}
+			}
+		}
+	}
+	VECTOR_FREE(state_stack);
+	return t3_true;
+
+return_error:
+	VECTOR_FREE(state_stack);
+	return t3_false;
+}
+
+static t3_bool check_empty_cycle(t3_highlight_t *highlight, t3_highlight_error_t *error, int flags) {
+	size_t i;
+	for (i = 0; i < highlight->states.used; i++) {
+		if (!check_empty_cycle_from_state(&highlight->states, i, error, flags))
+			return t3_false;
+	}
+	return t3_true;
+}
+
 static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highlight_t *dynamic,
 		const char *dynamic_line, int dynamic_length, const char *dynamic_pattern)
 {
@@ -592,11 +669,13 @@ static void match_internal(match_context_t *context) {
 		} else {
 			regex = &context->state->highlights.data[j].regex;
 			/* For items that do not change state, we do not want an empty match
-			   ever (makes no progress). Furthermore, start highlights have to make
-			   progress, to ensure that we do not end up in an infinite loop of
-			   state entry and exit, or nesting.
-			*/
-			if (context->state->highlights.data[j].next_state >= NO_CHANGE)
+			   ever (makes no progress). */
+			if (context->state->highlights.data[j].next_state == NO_CHANGE)
+				options |= PCRE_NOTEMPTY;
+			/* The default behaviour is to not allow start patterns to be empty, such
+			   that progress will be guaranteed. */
+			else if (context->state->highlights.data[j].next_state > NO_CHANGE &&
+					!(context->match->highlight->flags & T3_HIGHLIGHT_ALLOW_EMPTY_START))
 				options |= PCRE_NOTEMPTY;
 		}
 
@@ -780,6 +859,8 @@ const char *t3_highlight_strerror(int error) {
 			return _("'use' specifies undefined highlight");
 		case T3_ERR_INVALID_NAME:
 			return _("invalid sub-pattern name");
+		case T3_ERR_EMPTY_CYCLE:
+			return _("empty start pattern cycle");
 	}
 }
 
