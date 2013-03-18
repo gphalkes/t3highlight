@@ -189,10 +189,10 @@ static t3_bool match_name(const t3_config_t *config, const void *data) {
 static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *regex, int next_state,
 		const highlight_t *action, t3_highlight_error_t *error)
 {
-	highlight_t nest_action;
-	nest_action.next_state = next_state;
+	highlight_t new_highlight;
+	new_highlight.next_state = next_state;
 
-	nest_action.dynamic = NULL;
+	new_highlight.dynamic = NULL;
 	if (action->dynamic != NULL && action->dynamic->name != NULL && next_state <= EXIT_STATE) {
 		char *regex_with_define;
 		t3_bool result;
@@ -202,29 +202,29 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 		if ((regex_with_define = malloc(strlen(t3_config_get_string(regex)) + strlen(action->dynamic->name) + 18)) == NULL)
 			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, context->flags);
 		sprintf(regex_with_define, "(?(DEFINE)(?<%s>))%s", action->dynamic->name, t3_config_get_string(regex));
-		nest_action.regex.extra = NULL;
-		result = compile_highlight(regex_with_define, &nest_action.regex, context->flags, error, regex);
+		new_highlight.regex.extra = NULL;
+		result = compile_highlight(regex_with_define, &new_highlight.regex, context->flags, error, regex);
 
 		/* Throw away the results of the compilation, because we don't actually need it. */
 		free(regex_with_define);
-		pcre_free(nest_action.regex.regex);
-		pcre_free(nest_action.regex.extra);
+		pcre_free(new_highlight.regex.regex);
+		pcre_free(new_highlight.regex.extra);
 
 		/* If the compilation failed, abort the whole thing. */
 		if (!result)
 			goto return_error;
 
-		nest_action.regex.regex = NULL;
-		nest_action.regex.extra = NULL;
+		new_highlight.regex.regex = NULL;
+		new_highlight.regex.extra = NULL;
 		/* Save the regular expression, because we need it to build the actual regex once the
 		   start pattern is matched. */
 		action->dynamic->pattern = t3_config_take_string(regex);
 	} else {
-		if (!compile_highlight(t3_config_get_string(regex), &nest_action.regex, context->flags, error, regex))
+		if (!compile_highlight(t3_config_get_string(regex), &new_highlight.regex, context->flags, error, regex))
 			goto return_error;
 	}
 
-	nest_action.attribute_idx = action->attribute_idx;
+	new_highlight.attribute_idx = action->attribute_idx;
 	if (!VECTOR_RESERVE(context->highlight->states.data[action->next_state].highlights))
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, context->flags);
 
@@ -233,12 +233,12 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 	for ( ; regex != NULL && strcmp(t3_config_get_name(regex), "highlight") != 0; regex = t3_config_get_next(regex)) {}
 
 	if (regex == NULL && context->highlight->states.data[action->next_state].highlights.used > 0) {
-		VECTOR_LAST(context->highlight->states.data[action->next_state].highlights) = nest_action;
+		VECTOR_LAST(context->highlight->states.data[action->next_state].highlights) = new_highlight;
 	} else {
 		memmove(context->highlight->states.data[action->next_state].highlights.data + 1,
 			context->highlight->states.data[action->next_state].highlights.data,
 			(context->highlight->states.data[action->next_state].highlights.used - 1) * sizeof(highlight_t));
-		context->highlight->states.data[action->next_state].highlights.data[0] = nest_action;
+		context->highlight->states.data[action->next_state].highlights.data[0] = new_highlight;
 	}
 	return t3_true;
 
@@ -352,7 +352,6 @@ static t3_bool set_on_entry(highlight_t *action, highlight_context_t *context, t
 return_error:
 	return t3_false;
 }
-
 
 static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights, int idx, t3_highlight_error_t *error) {
 	t3_config_t *regex, *style, *use;
@@ -516,7 +515,7 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 }
 
 static t3_bool check_empty_cycle_from_state(states_t *states, size_t state, t3_highlight_error_t *error, int flags) {
-	int min_length, next_state, depth;
+	int min_length, depth;
 	size_t i, j;
 
 	typedef struct { int state, depth; } state_stack_t;
@@ -535,29 +534,67 @@ static t3_bool check_empty_cycle_from_state(states_t *states, size_t state, t3_h
 
 		state_stack.used--;
 		for (i = 0; i < states->data[state].highlights.used; i++) {
-			next_state = states->data[state].highlights.data[i].next_state;
-			if (next_state == NO_CHANGE)
+			highlight_t *highlight = &states->data[state].highlights.data[i];
+
+			if (highlight->next_state == NO_CHANGE)
 				continue;
+
+			if (highlight->regex.regex == NULL) {
+				if (highlight->next_state < NO_CHANGE) {
+					/* FIXME: need to check the pattern with an empty replacement (we built that earlier).
+					   For now just report a cycle. */
+					if (-highlight->next_state - 1 <= depth)
+						RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
+					continue;
+				} else {
+					/* This is a use pattern. For those we can simply push them on the
+					   stack at the same depth, and they will be handled correctly. */
+					if (!VECTOR_RESERVE(state_stack))
+						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+					VECTOR_LAST(state_stack).state = highlight->next_state;
+					VECTOR_LAST(state_stack).depth = depth;
+					continue;
+				}
+			}
 
 			/* This should be pretty much impossible to happen, so we just continue
 			   as if this pattern matches at least one byte. */
-			if (pcre_fullinfo(states->data[state].highlights.data[i].regex.regex,
-					states->data[state].highlights.data[i].regex.extra, PCRE_INFO_MINLENGTH, &min_length) != 0)
+			if (pcre_fullinfo(highlight->regex.regex, highlight->regex.extra, PCRE_INFO_MINLENGTH, &min_length) != 0)
 				continue;
 
-			if (min_length <= 0) {
-				if (next_state < 0) {
-					if (-next_state - 1 <= depth)
-						RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
-				} else {
-					for (j = 0; j < state_stack.used; j++) {
-						if (state_stack.data[j].state == next_state)
-							RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
-					}
+			/* If this pattern can not match the empty string, we don't have to
+			   consider it any further. */
+			if (min_length > 0)
+				continue;
+
+			/* For exit patterns, the only thing that counts is whether we jump
+			   to a place inside the cycle, or out of it completely. */
+			if (highlight->next_state < 0) {
+				if (-highlight->next_state - 1 <= depth)
+					RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
+				continue;
+			}
+
+			/* If we push a state onto the stack that is already on it, we've
+			   found a cycle. */
+			for (j = 0; j < state_stack.used; j++) {
+				if (state_stack.data[j].state == highlight->next_state)
+					RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
+			}
+			/* Push the next state onto the stack, so we can go from there later on. */
+			if (!VECTOR_RESERVE(state_stack))
+				RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+			VECTOR_LAST(state_stack).state = highlight->next_state;
+			VECTOR_LAST(state_stack).depth = depth + 1;
+
+			/* For on-entry states, we simply push all of them. Note that they are
+			   are at increasing depth. */
+			if (highlight->dynamic != NULL && highlight->dynamic->on_entry_cnt > 0) {
+				for (j = 0; (int) j < highlight->dynamic->on_entry_cnt; j++) {
 					if (!VECTOR_RESERVE(state_stack))
 						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-					VECTOR_LAST(state_stack).state = next_state;
-					VECTOR_LAST(state_stack).depth = depth + 1;
+					VECTOR_LAST(state_stack).state = highlight->dynamic->on_entry->state;
+					VECTOR_LAST(state_stack).depth = depth + 2 + j;
 				}
 			}
 		}
@@ -697,6 +734,7 @@ static void match_internal(match_context_t *context) {
 		if (context->state->highlights.data[j].regex.regex == NULL) {
 			if (context->state->highlights.data[j].next_state >= 0) {
 				state_t *save_state;
+				/* FIXME: this can be checked before hand. */
 				/* Don't keep on going into use definitions. At level 50, we probably
 				   ended up in a cycle, so just stop it. */
 				if (context->recursion_depth > 50)
