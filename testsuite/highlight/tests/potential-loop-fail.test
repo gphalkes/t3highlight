@@ -1,0 +1,35 @@
+format = 2
+
+allow-empty-start = true
+
+%highlight {
+	start = "(?=a)|b"
+	end = "(?=a)|b"
+	%highlight {
+		regex = "c"
+	}
+	style = "keyword"
+	delim-style = "comment"
+}
+%highlight {
+	start = "(?=a)|b"
+	end = "(?=a)|b"
+	%highlight {
+		regex = "c"
+	}
+	style = "string"
+	delim-style = "misc"
+}
+%highlight {
+	start = "(?=a)|b"
+	end = "(?=a)|b"
+	%highlight {
+		regex = "c"
+	}
+	style = "string"
+	delim-style = "misc"
+}
+
+#TEST
+==
+==

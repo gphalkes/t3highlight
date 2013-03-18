@@ -198,17 +198,22 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 		t3_bool result;
 
 		/* Create the full regex pattern, including a fake define for the named
-		   back reference, and try to compile the pattern. */
+		   back reference, and try to compile the pattern to check if it is valid. */
 		if ((regex_with_define = malloc(strlen(t3_config_get_string(regex)) + strlen(action->dynamic->name) + 18)) == NULL)
 			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, context->flags);
 		sprintf(regex_with_define, "(?(DEFINE)(?<%s>))%s", action->dynamic->name, t3_config_get_string(regex));
 		nest_action.regex.extra = NULL;
 		result = compile_highlight(regex_with_define, &nest_action.regex, context->flags, error, regex);
+
+		/* Throw away the results of the compilation, because we don't actually need it. */
 		free(regex_with_define);
 		pcre_free(nest_action.regex.regex);
 		pcre_free(nest_action.regex.extra);
+
+		/* If the compilation failed, abort the whole thing. */
 		if (!result)
-			return t3_false;
+			goto return_error;
+
 		nest_action.regex.regex = NULL;
 		nest_action.regex.extra = NULL;
 		/* Save the regular expression, because we need it to build the actual regex once the
@@ -216,7 +221,7 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 		action->dynamic->pattern = t3_config_take_string(regex);
 	} else {
 		if (!compile_highlight(t3_config_get_string(regex), &nest_action.regex, context->flags, error, regex))
-			return t3_false;
+			goto return_error;
 	}
 
 	nest_action.attribute_idx = action->attribute_idx;
@@ -236,9 +241,118 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 		context->highlight->states.data[action->next_state].highlights.data[0] = nest_action;
 	}
 	return t3_true;
+
 return_error:
 	return t3_false;
 }
+
+/** Set the @c dynamic member of the ::highlight_t.
+
+    The @c dynamic member is used for storing the data for dynamic end patterns
+    and for the on-entry list.
+*/
+static t3_bool set_dynamic(highlight_t *action, const t3_config_t *highlights, t3_highlight_error_t *error, int flags) {
+	const char *dynamic = t3_config_get_string(t3_config_get(highlights, "extract"));
+	t3_config_t *on_entry = t3_config_get(highlights, "on-entry");
+
+	if (dynamic == NULL && on_entry == NULL)
+		return t3_true;
+
+	if ((action->dynamic = malloc(sizeof(dynamic_highlight_t))) == NULL)
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+	action->dynamic->name = NULL;
+	action->dynamic->pattern = NULL;
+	action->dynamic->on_entry = NULL;
+
+	if (on_entry != NULL) {
+		int i;
+		action->dynamic->on_entry_cnt = t3_config_get_length(on_entry);
+		if ((action->dynamic->on_entry = malloc(sizeof(on_entry_info_t) * action->dynamic->on_entry_cnt)) == NULL)
+			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+		for (i = 0; i < action->dynamic->on_entry_cnt; i++)
+			action->dynamic->on_entry[i].end_pattern = NULL;
+	}
+
+	if (dynamic != NULL) {
+		if (dynamic[strspn(dynamic,
+				"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")] != 0)
+		{
+			t3_config_t *extract = t3_config_get(highlights, "extract");
+			const char *file_name = t3_config_get_file_name(extract);
+			RETURN_ERROR_FULL(T3_ERR_INVALID_NAME, t3_config_get_line_number(extract),
+				file_name == NULL ? NULL : _t3_highlight_strdup(file_name),
+				t3_config_take_string(t3_config_get(highlights, "extract")), flags);
+		}
+		action->dynamic->name = t3_config_take_string(t3_config_get(highlights, "extract"));
+	}
+	return t3_true;
+
+return_error:
+	return t3_false;
+}
+
+/** Fill the @c on_entry list.
+
+    FIXME: write full docs!
+*/
+static t3_bool set_on_entry(highlight_t *action, highlight_context_t *context, t3_config_t *highlights, t3_highlight_error_t *error) {
+	t3_config_t *regex, *style;
+	highlight_t parent_action;
+	dynamic_highlight_t parent_dynamic;
+	t3_config_t *sub_highlights;
+	int style_attr_idx;
+	int idx;
+
+	t3_config_t *on_entry = t3_config_get(highlights, "on-entry");
+
+	if (on_entry == NULL)
+		return t3_true;
+
+	parent_action = *action;
+	parent_dynamic = *action->dynamic;
+
+	parent_action.dynamic = &parent_dynamic;
+
+	for (on_entry = t3_config_get(on_entry, NULL), idx = 0; on_entry != NULL;
+			on_entry = t3_config_get_next(on_entry), idx++)
+	{
+		action->dynamic->on_entry[idx].state = context->highlight->states.used;
+		parent_action.next_state = action->dynamic->on_entry[idx].state;
+
+		if ((style = t3_config_get(on_entry, "style")) != NULL)
+			parent_action.attribute_idx = style_attr_idx =
+				context->map_style(context->map_style_data, t3_config_get_string(style));
+
+		if ((style = t3_config_get(on_entry, "delim-style")) != NULL)
+			parent_action.attribute_idx = context->map_style(context->map_style_data, t3_config_get_string(style));
+
+		if (!VECTOR_RESERVE(context->highlight->states))
+			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, context->flags);
+		VECTOR_LAST(context->highlight->states) = null_state;
+		VECTOR_LAST(context->highlight->states).attribute_idx = style_attr_idx;
+		if ((sub_highlights = t3_config_get(on_entry, "highlight")) != NULL) {
+			if (!init_state(context, sub_highlights, action->dynamic->on_entry[idx].state, error))
+				goto return_error;
+		}
+		/* If the highlight specifies an end regex, create an extra action for that and paste that
+		   to in the list of sub-highlights. Depending on whether end is specified before or after
+		   the highlight list, it will be pre- or appended. */
+		if ((regex = t3_config_get(on_entry, "end")) != NULL) {
+			int return_state = NO_CHANGE - t3_config_get_int(t3_config_get(on_entry, "exit"));
+			if (return_state == NO_CHANGE)
+				return_state = EXIT_STATE;
+			if (!add_delim_highlight(context, regex, return_state, &parent_action, error))
+				goto return_error;
+			action->dynamic->on_entry[idx].end_pattern = parent_action.dynamic->pattern;
+			parent_action.dynamic->pattern = NULL;
+		}
+	}
+	return t3_true;
+
+return_error:
+	return t3_false;
+}
+
 
 static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights, int idx, t3_highlight_error_t *error) {
 	t3_config_t *regex, *style, *use;
@@ -255,52 +369,21 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 		action.dynamic = NULL;
 		if ((regex = t3_config_get(highlights, "regex")) != NULL) {
 			if (!compile_highlight(t3_config_get_string(regex), &action.regex, context->flags, error, regex))
-				return t3_false;
+				goto return_error;
 
 			action.attribute_idx = style_attr_idx;
 			action.next_state = NO_CHANGE - t3_config_get_int(t3_config_get(highlights, "exit"));
 		} else if ((regex = t3_config_get(highlights, "start")) != NULL) {
 			t3_config_t *sub_highlights;
-			t3_config_t *on_entry;
-			const char *dynamic;
 
 			action.attribute_idx = (style = t3_config_get(highlights, "delim-style")) == NULL ?
 				style_attr_idx : context->map_style(context->map_style_data, t3_config_get_string(style));
 
 			if (!compile_highlight(t3_config_get_string(regex), &action.regex, context->flags, error, regex))
-				return t3_false;
+				goto return_error;
 
-			dynamic = t3_config_get_string(t3_config_get(highlights, "extract"));
-			on_entry = t3_config_get(highlights, "on-entry");
-			if (dynamic != NULL || on_entry != NULL) {
-				if ((action.dynamic = malloc(sizeof(dynamic_highlight_t))) == NULL)
-					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, context->flags);
-				action.dynamic->name = NULL;
-				action.dynamic->pattern = NULL;
-				action.dynamic->on_entry = NULL;
-
-				if (on_entry != NULL) {
-					int i;
-					action.dynamic->on_entry_cnt = t3_config_get_length(on_entry);
-					if ((action.dynamic->on_entry = malloc(sizeof(on_entry_info_t) * action.dynamic->on_entry_cnt)) == NULL)
-						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, context->flags);
-					for (i = 0; i < action.dynamic->on_entry_cnt; i++)
-						action.dynamic->on_entry[i].end_pattern = NULL;
-				}
-
-				if (dynamic != NULL) {
-					if (dynamic[strspn(dynamic,
-							"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")] != 0)
-					{
-						t3_config_t *extract = t3_config_get(highlights, "extract");
-						const char *file_name = t3_config_get_file_name(extract);
-						RETURN_ERROR_FULL(T3_ERR_INVALID_NAME, t3_config_get_line_number(extract),
-							file_name == NULL ? NULL : _t3_highlight_strdup(file_name),
-							t3_config_take_string(t3_config_get(highlights, "extract")), context->flags);
-					}
-					action.dynamic->name = t3_config_take_string(t3_config_get(highlights, "extract"));
-				}
-			}
+			if (!set_dynamic(&action, highlights, error, context->flags))
+				goto return_error;
 
 			/* Create new state to which start will switch. */
 			action.next_state = context->highlight->states.used;
@@ -315,49 +398,8 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 					goto return_error;
 			}
 
-			if (on_entry != NULL) {
-				highlight_t parent_action = action;
-				dynamic_highlight_t parent_dynamic = *action.dynamic;
-				int idx;
-
-				parent_action.dynamic = &parent_dynamic;
-
-				for (on_entry = t3_config_get(on_entry, NULL), idx = 0; on_entry != NULL;
-						on_entry = t3_config_get_next(on_entry), idx++)
-				{
-					action.dynamic->on_entry[idx].state = context->highlight->states.used;
-					parent_action.next_state = action.dynamic->on_entry[idx].state;
-
-					if ((style = t3_config_get(on_entry, "style")) != NULL)
-						parent_action.attribute_idx = style_attr_idx =
-							context->map_style(context->map_style_data, t3_config_get_string(style));
-
-					if ((style = t3_config_get(on_entry, "delim-style")) != NULL)
-						parent_action.attribute_idx = context->map_style(context->map_style_data, t3_config_get_string(style));
-
-					if (!VECTOR_RESERVE(context->highlight->states))
-						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, context->flags);
-					VECTOR_LAST(context->highlight->states) = null_state;
-					VECTOR_LAST(context->highlight->states).attribute_idx = style_attr_idx;
-					if ((sub_highlights = t3_config_get(on_entry, "highlight")) != NULL) {
-						if (!init_state(context, sub_highlights, action.dynamic->on_entry[idx].state, error))
-							goto return_error;
-					}
-					/* If the highlight specifies an end regex, create an extra action for that and paste that
-					   to in the list of sub-highlights. Depending on whether end is specified before or after
-					   the highlight list, it will be pre- or appended. */
-					if ((regex = t3_config_get(on_entry, "end")) != NULL) {
-						int return_state = NO_CHANGE - t3_config_get_int(t3_config_get(on_entry, "exit"));
-						if (return_state == NO_CHANGE)
-							return_state = EXIT_STATE;
-						if (!add_delim_highlight(context, regex, return_state, &parent_action, error))
-							goto return_error;
-						else
-							action.dynamic->on_entry[idx].end_pattern = parent_action.dynamic->pattern;
-						parent_action.dynamic->pattern = NULL;
-					}
-				}
-			}
+			if (!set_on_entry(&action, context, highlights, error))
+				goto return_error;
 
 			/* If the highlight specifies an end regex, create an extra action for that and paste that
 			   to in the list of sub-highlights. Depending on whether end is specified before or after

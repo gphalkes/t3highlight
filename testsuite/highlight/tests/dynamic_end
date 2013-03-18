@@ -1,0 +1,18 @@
+format = 1
+
+%highlight {
+	start = '(?<delim>mark)'
+	extract = 'delim'
+	end = '^(?&delim)'
+	style = 'comment'
+}
+
+#TEST
+On your mark
+This mark will not end the highlight
+mark But that one will
+==
+On your <comment>mark</comment>
+<comment>This mark will not end the highlight</comment>
+<comment>mark</comment> But that one will
+==

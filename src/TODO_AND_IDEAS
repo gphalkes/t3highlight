@@ -6,14 +6,13 @@ DESIGN GOALS:
 
 TODO:
 Library:
-- Add an interface for language detection
-	- Only provide an interface to test a line. This will allow a program to use
-	  it as it sees fit.
-	- Support and detect Emacs language identifiers (-*- <name> -*- or something)
-		and vi/vim modelines (only first and last 5 lines)
-	- Do we wish to support language switching?
+- refactor and comment the code, because it is messy and very unclear. This
+  also requires explaining the data structures and their use.
+- split highlight.c into smaller units, because it has become to big. Obvious
+  candidate for splitting out: the match handling part
+- see if using the JIT helps speed things up. Testcase: libtool (a huge shell
+  script)
 
 Generic:
-- define a list of default style names to use
 
 IDEAS:

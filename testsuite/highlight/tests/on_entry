@@ -1,0 +1,21 @@
+format = 1
+
+%highlight {
+	start = 'jump'
+	%on-entry {
+		end = 'higher!'
+		style = 'string'
+	}
+	%on-entry {
+		end = 'how high\?'
+		style = 'comment'
+	}
+	style = 'keyword'
+	end = '\.'
+}
+
+#TEST
+When I say jump, you ask "how high?". And I will say "higher!".
+==
+When I say <keyword>jump</keyword><comment>, you ask "</comment><comment>how high?</comment><string>". And I will say "</string><string>higher!</string><keyword>"</keyword><keyword>.</keyword>
+==
