@@ -31,5 +31,9 @@ allow-empty-start = true
 }
 
 #TEST
+acca
+bccb
 ==
+acca
+<comment>b</comment><keyword>c</keyword><keyword>c</keyword><comment>b</comment>
 ==

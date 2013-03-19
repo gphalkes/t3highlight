@@ -11,7 +11,7 @@ fi
 
 (
 	cd work
-	for i in `ls ../tests/*`; do
+	for i in `LANG=C ls ../tests/*`; do
 		echo "==== Testcase $i ===="
 		../_runtest.sh "$i" 2>&1
 	done

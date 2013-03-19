@@ -32,10 +32,12 @@ struct t3_highlight_match_t {
 	VECTOR(state_mapping_t) mapping;
 	size_t start,
 		match_start,
-		end;
+		end,
+		last_progress;
 	int state,
 		begin_attribute,
-		match_attribute;
+		match_attribute,
+		last_progress_state;
 	t3_bool utf8_checked;
 };
 
@@ -536,25 +538,17 @@ static t3_bool check_empty_cycle_from_state(states_t *states, size_t state, t3_h
 		for (i = 0; i < states->data[state].highlights.used; i++) {
 			highlight_t *highlight = &states->data[state].highlights.data[i];
 
-			if (highlight->next_state == NO_CHANGE)
+			if (highlight->next_state <= NO_CHANGE)
 				continue;
 
 			if (highlight->regex.regex == NULL) {
-				if (highlight->next_state < NO_CHANGE) {
-					/* FIXME: need to check the pattern with an empty replacement (we built that earlier).
-					   For now just report a cycle. */
-					if (-highlight->next_state - 1 <= depth)
-						RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
-					continue;
-				} else {
-					/* This is a use pattern. For those we can simply push them on the
-					   stack at the same depth, and they will be handled correctly. */
-					if (!VECTOR_RESERVE(state_stack))
-						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-					VECTOR_LAST(state_stack).state = highlight->next_state;
-					VECTOR_LAST(state_stack).depth = depth;
-					continue;
-				}
+				/* This is a use pattern. For those we can simply push them on the
+				   stack at the same depth, and they will be handled correctly. */
+				if (!VECTOR_RESERVE(state_stack))
+					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+				VECTOR_LAST(state_stack).state = highlight->next_state;
+				VECTOR_LAST(state_stack).depth = depth;
+				continue;
 			}
 
 			/* This should be pretty much impossible to happen, so we just continue
@@ -567,16 +561,10 @@ static t3_bool check_empty_cycle_from_state(states_t *states, size_t state, t3_h
 			if (min_length > 0)
 				continue;
 
-			/* For exit patterns, the only thing that counts is whether we jump
-			   to a place inside the cycle, or out of it completely. */
-			if (highlight->next_state < 0) {
-				if (-highlight->next_state - 1 <= depth)
-					RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
-				continue;
-			}
-
 			/* If we push a state onto the stack that is already on it, we've
 			   found a cycle. */
+			if ((int) state == highlight->next_state)
+				RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
 			for (j = 0; j < state_stack.used; j++) {
 				if (state_stack.data[j].state == highlight->next_state)
 					RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
@@ -821,16 +809,31 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 	match->start = match->end;
 	match->begin_attribute = context.state->attribute_idx;
 
+	if (match->last_progress != match->end) {
+		match->last_progress = match->end;
+		match->last_progress_state = match->state;
+	} else if (match->last_progress_state < match->state) {
+		match->last_progress_state = match->state;
+	}
+
 	for (match->match_start = match->end; match->match_start <= size; match->match_start +=
 			(match->highlight->flags & T3_HIGHLIGHT_UTF8) ? step_utf8(line[match->match_start]) : 1)
 	{
 		match_internal(&context);
 
 		if (context.best != NULL) {
-			match->end = context.best_end;
-			match->state = find_state(match, context.best->next_state, context.best->dynamic,
+			int next_state = find_state(match, context.best->next_state, context.best->dynamic,
 				line + context.extract_start, context.extract_end - context.extract_start,
 				context.best->dynamic != NULL ? context.best->dynamic->pattern : NULL);
+
+			/* Check if we have come full circle. If so, continue to the next byte and start over. */
+			if (match->last_progress == match->end &&
+					context.best->next_state > NO_CHANGE &&
+					match->last_progress_state == next_state)
+				continue;
+
+			match->end = context.best_end;
+			match->state = next_state;
 			if (context.best->dynamic != NULL && context.best->dynamic->on_entry != NULL) {
 				int i;
 				for (i = 0; i < context.best->dynamic->on_entry_cnt; i++) {
@@ -857,6 +860,8 @@ void t3_highlight_reset(t3_highlight_match_t *match, int state) {
 	match->match_attribute = 0;
 	match->state = state;
 	match->utf8_checked = t3_false;
+	match->last_progress = 0;
+	match->last_progress_state = -1;
 }
 
 t3_highlight_match_t *t3_highlight_new_match(const t3_highlight_t *highlight) {
@@ -920,6 +925,8 @@ int t3_highlight_get_state(t3_highlight_match_t *match) {
 int t3_highlight_next_line(t3_highlight_match_t *match) {
 	match->end = 0;
 	match->utf8_checked = t3_false;
+	match->last_progress = 0;
+	match->last_progress_state = -1;
 	return match->state;
 }
 

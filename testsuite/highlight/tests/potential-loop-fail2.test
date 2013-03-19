@@ -1,0 +1,18 @@
+format = 2
+
+allow-empty-start = true
+
+%highlight {
+	start = "(?=a)|b"
+	end = "b"
+	%highlight {
+		regex = "c"
+	}
+	style = "keyword"
+	delim-style = "comment"
+	nested = true
+}
+
+#TEST
+==
+==
