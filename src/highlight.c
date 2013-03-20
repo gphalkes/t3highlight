@@ -27,52 +27,6 @@
 #define _(x) (x)
 #endif
 
-struct t3_highlight_match_t {
-	const t3_highlight_t *highlight;
-	VECTOR(state_mapping_t) mapping;
-	size_t start,
-		match_start,
-		end,
-		last_progress;
-	int state,
-		begin_attribute,
-		match_attribute,
-		last_progress_state;
-	t3_bool utf8_checked;
-};
-
-typedef struct {
-	const char *name;
-	int state;
-} use_mapping_t;
-
-typedef struct {
-	int (*map_style)(void *, const char *);
-	void *map_style_data;
-	t3_highlight_t *highlight;
-	t3_config_t *syntax;
-	int flags;
-	VECTOR(use_mapping_t) use_map;
-} highlight_context_t;
-
-typedef struct {
-	t3_highlight_match_t *match;
-	const char *line;
-	size_t size;
-	state_t *state;
-	int ovector[30],
-		best_end,
-		extract_start,
-		extract_end;
-	highlight_t *best;
-} match_context_t;
-
-typedef struct {
-	size_t i;
-	int state;
-} state_stack_t;
-
-
 static const state_t null_state = { { NULL, 0, 0 }, 0 };
 
 static const char syntax_schema[] = {
@@ -81,8 +35,6 @@ static const char syntax_schema[] = {
 
 static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights, int idx, t3_highlight_error_t *error);
 static void free_state(state_t *state);
-static t3_bool check_empty_start_cycle(t3_highlight_t *highlight, t3_highlight_error_t *error, int flags);
-static t3_bool check_use_cycle(t3_highlight_t *syntax, t3_highlight_error_t *error, int flags);
 
 t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, const char *),
 		void *map_style_data, int flags, t3_highlight_error_t *error)
@@ -141,12 +93,12 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	}
 	free(context.use_map.data);
 
-	if (!check_use_cycle(result, error, flags))
+	if (!_t3_check_use_cycle(result, error, flags))
 		goto return_error;
 
 	/* If we allow empty start patterns, we need to analyze whether they don't result
 	   in infinite loops. */
-	if ((flags & T3_HIGHLIGHT_ALLOW_EMPTY_START) && !check_empty_start_cycle(result, error, flags))
+	if ((flags & T3_HIGHLIGHT_ALLOW_EMPTY_START) && !_t3_check_empty_start_cycle(result, error, flags))
 		goto return_error;
 
 	result->flags = flags;
@@ -163,8 +115,8 @@ return_error:
 	return NULL;
 }
 
-static t3_bool compile_highlight(const char *highlight, full_pcre_t *action, int flags, t3_highlight_error_t *error,
-		const t3_config_t *context)
+t3_bool _t3_compile_highlight(const char *highlight, full_pcre_t *action, int flags,
+	t3_highlight_error_t *error, const t3_config_t *context)
 {
 	const char *error_message;
 	int error_offset, local_error;
@@ -214,7 +166,7 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, context->flags);
 		sprintf(regex_with_define, "(?(DEFINE)(?<%s>))%s", action->dynamic->name, t3_config_get_string(regex));
 		new_highlight.regex.extra = NULL;
-		result = compile_highlight(regex_with_define, &new_highlight.regex, context->flags, error, regex);
+		result = _t3_compile_highlight(regex_with_define, &new_highlight.regex, context->flags, error, regex);
 
 		/* Throw away the results of the compilation, because we don't actually need it. */
 		free(regex_with_define);
@@ -231,7 +183,7 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 		   start pattern is matched. */
 		action->dynamic->pattern = t3_config_take_string(regex);
 	} else {
-		if (!compile_highlight(t3_config_get_string(regex), &new_highlight.regex, context->flags, error, regex))
+		if (!_t3_compile_highlight(t3_config_get_string(regex), &new_highlight.regex, context->flags, error, regex))
 			goto return_error;
 	}
 
@@ -378,7 +330,7 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 		action.regex.extra = NULL;
 		action.dynamic = NULL;
 		if ((regex = t3_config_get(highlights, "regex")) != NULL) {
-			if (!compile_highlight(t3_config_get_string(regex), &action.regex, context->flags, error, regex))
+			if (!_t3_compile_highlight(t3_config_get_string(regex), &action.regex, context->flags, error, regex))
 				goto return_error;
 
 			action.attribute_idx = style_attr_idx;
@@ -389,7 +341,7 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 			action.attribute_idx = (style = t3_config_get(highlights, "delim-style")) == NULL ?
 				style_attr_idx : context->map_style(context->map_style_data, t3_config_get_string(style));
 
-			if (!compile_highlight(t3_config_get_string(regex), &action.regex, context->flags, error, regex))
+			if (!_t3_compile_highlight(t3_config_get_string(regex), &action.regex, context->flags, error, regex))
 				goto return_error;
 
 			if (!set_dynamic(&action, highlights, error, context->flags))
@@ -408,6 +360,9 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 					goto return_error;
 			}
 
+			/* Set the on_entry patterns, if any. Note that this calls add_delim_highlight for
+			   the end patterns, which frobs the dynamic->pattern member. Thus this must be
+			   called before the add_delim_highlight call for this patterns own end pattern. */
 			if (!set_on_entry(&action, context, highlights, error))
 				goto return_error;
 
@@ -523,468 +478,6 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 	VECTOR_FREE(highlight->states);
 	free(highlight->lang_file);
 	free(highlight);
-}
-
-static t3_bool check_empty_start_cycle_from_state(states_t *states, size_t state, t3_highlight_error_t *error, int flags) {
-	int min_length;
-	size_t j;
-
-	VECTOR(state_stack_t) state_stack;
-	VECTOR_INIT(state_stack);
-
-	if (!VECTOR_RESERVE(state_stack))
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-
-	VECTOR_LAST(state_stack).state = state;
-	VECTOR_LAST(state_stack).i = 0;
-
-	while (state_stack.used) {
-		state_stack_t *current = &VECTOR_LAST(state_stack);
-
-		if (current->i == states->data[current->state].highlights.used) {
-			state_stack.used--;
-			continue;
-		}
-
-		for (; current->i < states->data[current->state].highlights.used; current->i++) {
-			highlight_t *highlight = &states->data[current->state].highlights.data[current->i];
-
-			if (highlight->next_state <= NO_CHANGE)
-				continue;
-
-			if (highlight->regex.regex == NULL) {
-				/* This is a use pattern. For those we can simply push them on the
-				   stack, and they will be handled correctly. */
-				if (!VECTOR_RESERVE(state_stack))
-					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-				VECTOR_LAST(state_stack).state = highlight->next_state;
-				VECTOR_LAST(state_stack).i = 0;
-				continue;
-			}
-
-			/* This should be pretty much impossible to happen, so we just continue
-			   as if this pattern matches at least one byte. */
-			if (pcre_fullinfo(highlight->regex.regex, highlight->regex.extra, PCRE_INFO_MINLENGTH, &min_length) != 0)
-				continue;
-
-			/* If this pattern can not match the empty string, we don't have to
-			   consider it any further. */
-			if (min_length > 0)
-				continue;
-
-			/* If we push a state onto the stack that is already on it, we've
-			   found a cycle. */
-			for (j = 0; j < state_stack.used; j++) {
-				if (state_stack.data[j].state == highlight->next_state)
-					RETURN_ERROR(T3_ERR_EMPTY_START_CYCLE, flags);
-			}
-			/* Push the next state onto the stack, so we can go from there later on. */
-			if (!VECTOR_RESERVE(state_stack))
-				RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-			VECTOR_LAST(state_stack).state = highlight->next_state;
-			VECTOR_LAST(state_stack).i = 0;
-
-			/* For on-entry states, we simply push all of them. */
-			if (highlight->dynamic != NULL && highlight->dynamic->on_entry_cnt > 0) {
-				for (j = 0; (int) j < highlight->dynamic->on_entry_cnt; j++) {
-					if (!VECTOR_RESERVE(state_stack))
-						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-					VECTOR_LAST(state_stack).state = highlight->dynamic->on_entry->state;
-					VECTOR_LAST(state_stack).i = 0;
-				}
-			}
-			current->i++;
-			break;
-		}
-	}
-	VECTOR_FREE(state_stack);
-	return t3_true;
-
-return_error:
-	VECTOR_FREE(state_stack);
-	return t3_false;
-}
-
-static t3_bool check_empty_start_cycle(t3_highlight_t *highlight, t3_highlight_error_t *error, int flags) {
-	size_t i;
-	for (i = 0; i < highlight->states.used; i++) {
-		if (!check_empty_start_cycle_from_state(&highlight->states, i, error, flags))
-			return t3_false;
-	}
-	return t3_true;
-}
-
-
-static t3_bool check_use_cycle(t3_highlight_t *syntax, t3_highlight_error_t *error, int flags) {
-	size_t i, j;
-
-	VECTOR(state_stack_t) state_stack;
-	VECTOR_INIT(state_stack);
-
-	for (i = 0; i < syntax->states.used; i++) {
-		if (!VECTOR_RESERVE(state_stack))
-			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-
-		VECTOR_LAST(state_stack).state = i;
-		VECTOR_LAST(state_stack).i = 0;
-
-		while (state_stack.used) {
-			state_stack_t *current = &VECTOR_LAST(state_stack);
-
-			if (current->i == syntax->states.data[current->state].highlights.used) {
-				state_stack.used--;
-				continue;
-			}
-
-			for (; current->i < syntax->states.data[current->state].highlights.used; current->i++) {
-				highlight_t *highlight = &syntax->states.data[current->state].highlights.data[current->i];
-
-				if (highlight->regex.regex != NULL)
-					continue;
-				if (highlight->next_state <= NO_CHANGE)
-					continue;
-
-				/* If we push a state onto the stack that is already on it, we've
-				   found a cycle. */
-				for (j = 0; j < state_stack.used; j++) {
-					if (state_stack.data[j].state == highlight->next_state)
-						RETURN_ERROR(T3_ERR_USE_CYCLE, flags);
-				}
-
-				/* Push the next state onto the stack, so we can go from there later on. */
-				if (!VECTOR_RESERVE(state_stack))
-					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-				VECTOR_LAST(state_stack).state = highlight->next_state;
-				VECTOR_LAST(state_stack).i = 0;
-
-				current->i++;
-				break;
-			}
-		}
-	}
-	VECTOR_FREE(state_stack);
-	return t3_true;
-
-return_error:
-	VECTOR_FREE(state_stack);
-	return t3_false;
-}
-
-static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highlight_t *dynamic,
-		const char *dynamic_line, int dynamic_length, const char *dynamic_pattern)
-{
-	size_t i;
-
-	if (highlight <= EXIT_STATE) {
-		int return_state;
-		for (return_state = match->state; highlight < EXIT_STATE && return_state > 0; highlight++)
-			return_state = match->mapping.data[return_state].parent;
-		return return_state > 0 ? match->mapping.data[return_state].parent : 0;
-	}
-
-	if (highlight == NO_CHANGE)
-		return match->state;
-
-	/* Check if the state is already mapped. */
-	for (i = match->state + 1; i < match->mapping.used; i++) {
-		if (match->mapping.data[i].parent == match->state && match->mapping.data[i].highlight == highlight &&
-				/* Either neither is a match with dynamic back reference, or both are.
-				   For safety we ensure that the found state actually has information
-				   about a dynamic back reference. */
-				(dynamic == NULL ||
-				(dynamic != NULL && match->mapping.data[i].dynamic != NULL &&
-				dynamic_length == match->mapping.data[i].dynamic->extracted_length &&
-				memcmp(dynamic_line, match->mapping.data[i].dynamic->extracted, dynamic_length) == 0)))
-			return i;
-	}
-
-	if (!VECTOR_RESERVE(match->mapping))
-		return 0;
-	VECTOR_LAST(match->mapping).parent = match->state;
-	VECTOR_LAST(match->mapping).highlight = highlight;
-
-	VECTOR_LAST(match->mapping).dynamic = NULL;
-	if (dynamic != NULL && dynamic->name != NULL) {
-		int replace_count = 0, i;
-		char *pattern, *patptr;
-		dynamic_state_t *new_dynamic;
-
-		for (i = 0; i < dynamic_length; i++) {
-			if (dynamic_line[i] == 0 || (dynamic_line[i] == '\\' && i + 1 < dynamic_length && dynamic_line[i + 1] == 'E'))
-				replace_count++;
-		}
-		/* Build the following pattern:
-		   (?(DEFINE)(?<%s>\Q%s\E))%s
-		   Note that the pattern between \Q and \E must be escaped for 0 bytes and \E.
-		*/
-
-		/* 22 bytes for fixed prefix and 0 byte, dynamic_length for the matched text,
-		   5 * replace_count for replacing 0 bytes and the \ in any \E's in the matched text,
-		   the length of the name of the pattern to insert and the length of the original
-		   regular expression to be inserted. */
-		if ((pattern = malloc(21 + dynamic_length + replace_count * 5 + strlen(dynamic->name) + strlen(dynamic_pattern))) == NULL) {
-			/* Undo VECTOR_RESERVE performed above. */
-			match->mapping.used--;
-			return 0;
-		}
-		if ((new_dynamic = malloc(sizeof(dynamic_state_t))) == NULL) {
-			/* Undo VECTOR_RESERVE performed above. */
-			match->mapping.used--;
-			free(pattern);
-			return 0;
-		}
-		if ((new_dynamic->extracted = malloc(dynamic_length)) == NULL) {
-			/* Undo VECTOR_RESERVE performed above. */
-			match->mapping.used--;
-			free(new_dynamic);
-			free(pattern);
-			return 0;
-		}
-		new_dynamic->extracted_length = dynamic_length;
-		memcpy(new_dynamic->extracted, dynamic_line, dynamic_length);
-
-		sprintf(pattern, "(?(DEFINE)(?<%s>\\Q", dynamic->name);
-		patptr = pattern + strlen(pattern);
-		for (i = 0; i < dynamic_length; i++) {
-			if (dynamic_line[i] == 0 || (dynamic_line[i] == '\\' && i + 1 < dynamic_length && dynamic_line[i + 1] == 'E')) {
-				*patptr++ = '\\';
-				*patptr++ = 'E';
-				*patptr++ = '\\';
-				*patptr++ = dynamic_line[i] == 0 ? '0' : '\\';
-				*patptr++ = '\\';
-				*patptr++ = 'Q';
-			} else {
-				*patptr++ = dynamic_line[i];
-			}
-		}
-		strcpy(patptr, "\\E))");
-		strcat(patptr, dynamic_pattern);
-		if (!compile_highlight(pattern, &new_dynamic->regex, match->highlight->flags & ~T3_HIGHLIGHT_VERBOSE_ERROR, NULL, NULL)) {
-			/* Undo VECTOR_RESERVE performed above. */
-			match->mapping.used--;
-			free(new_dynamic->extracted);
-			free(new_dynamic);
-			free(pattern);
-			return 0;
-		}
-		VECTOR_LAST(match->mapping).dynamic = new_dynamic;
-		free(pattern);
-	}
-	return match->mapping.used - 1;
-}
-
-static void match_internal(match_context_t *context) {
-	size_t j;
-
-	for (j = 0; j < context->state->highlights.used; j++) {
-		full_pcre_t *regex;
-		int options = PCRE_NO_UTF8_CHECK;
-
-		/* If the regex member == NULL, this highlight is either a pointer to
-		   another state which we should search here ("use"), or it is an end
-		   pattern with a dynamic back reference. */
-		if (context->state->highlights.data[j].regex.regex == NULL) {
-			if (context->state->highlights.data[j].next_state >= 0) {
-				state_t *save_state;
-				save_state = context->state;
-				context->state = &context->match->highlight->states.data[context->state->highlights.data[j].next_state];
-				match_internal(context);
-				context->state = save_state;
-				continue;
-			}
-			regex = &context->match->mapping.data[context->match->state].dynamic->regex;
-		} else {
-			regex = &context->state->highlights.data[j].regex;
-			/* For items that do not change state, we do not want an empty match
-			   ever (makes no progress). */
-			if (context->state->highlights.data[j].next_state == NO_CHANGE)
-				options |= PCRE_NOTEMPTY;
-			/* The default behaviour is to not allow start patterns to be empty, such
-			   that progress will be guaranteed. */
-			else if (context->state->highlights.data[j].next_state > NO_CHANGE &&
-					!(context->match->highlight->flags & T3_HIGHLIGHT_ALLOW_EMPTY_START))
-				options |= PCRE_NOTEMPTY;
-		}
-
-		if (pcre_exec(regex->regex, regex->extra,
-				context->line, context->size, context->match->match_start, options, context->ovector,
-				sizeof(context->ovector) / sizeof(context->ovector[0])) >= 0 && context->ovector[1] > context->best_end)
-		{
-			context->best = &context->state->highlights.data[j];
-			context->best_end = context->ovector[1];
-			if (context->best->dynamic != NULL && context->best->dynamic->name != NULL) {
-				int string_number = pcre_get_stringnumber(context->best->regex.regex, context->best->dynamic->name);
-				if (string_number == PCRE_ERROR_NOSUBSTRING || string_number > 10) {
-					context->extract_start = 0;
-					context->extract_end = 0;
-				} else {
-					context->extract_start = context->ovector[string_number * 2];
-					context->extract_end = context->ovector[string_number * 2 + 1];
-				}
-			}
-
-		}
-	}
-
-}
-
-static int step_utf8(char first) {
-	switch (first & 0xf0) {
-		case 0xf0:
-			return 4;
-		case 0xe0:
-			return 3;
-		case 0xc0:
-		case 0xd0:
-			return 2;
-		default:
-			return 1;
-	}
-}
-
-t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t size) {
-	match_context_t context;
-
-	if ((match->highlight->flags & (T3_HIGHLIGHT_UTF8 | T3_HIGHLIGHT_UTF8_NOCHECK)) == T3_HIGHLIGHT_UTF8 && !match->utf8_checked) {
-		if (!t3_highlight_utf8check(line, size)) {
-			match->state = 0;
-			match->begin_attribute = 0;
-			match->match_attribute = 0;
-			match->start = match->match_start = match->end = -1;
-			return t3_false;
-		}
-		match->utf8_checked = t3_true;
-	}
-
-	context.match = match;
-	context.line = line;
-	context.size = size;
-	context.state = &match->highlight->states.data[match->mapping.data[match->state].highlight];
-	context.best = NULL;
-	context.best_end = -1;
-
-	match->start = match->end;
-	match->begin_attribute = context.state->attribute_idx;
-
-	if (match->last_progress != match->end) {
-		match->last_progress = match->end;
-		match->last_progress_state = match->state;
-	} else if (match->last_progress_state < match->state) {
-		match->last_progress_state = match->state;
-	}
-
-	for (match->match_start = match->end; match->match_start <= size; match->match_start +=
-			(match->highlight->flags & T3_HIGHLIGHT_UTF8) ? step_utf8(line[match->match_start]) : 1)
-	{
-		match_internal(&context);
-
-		if (context.best != NULL) {
-			int next_state = find_state(match, context.best->next_state, context.best->dynamic,
-				line + context.extract_start, context.extract_end - context.extract_start,
-				context.best->dynamic != NULL ? context.best->dynamic->pattern : NULL);
-
-			/* Check if we have come full circle. If so, continue to the next byte and start over. */
-			if (match->last_progress == match->end &&
-					context.best->next_state > NO_CHANGE &&
-					match->last_progress_state == next_state)
-				continue;
-
-			match->end = context.best_end;
-			match->state = next_state;
-			if (context.best->dynamic != NULL && context.best->dynamic->on_entry != NULL) {
-				int i;
-				for (i = 0; i < context.best->dynamic->on_entry_cnt; i++) {
-					match->state = find_state(match, context.best->dynamic->on_entry[i].state, context.best->dynamic,
-						line + context.extract_start, context.extract_end - context.extract_start,
-						context.best->dynamic->on_entry[i].end_pattern);
-				}
-			}
-			match->match_attribute = context.best->attribute_idx;
-			return t3_true;
-		}
-	}
-
-	match->match_start = size;
-	match->end = size;
-	return t3_false;
-}
-
-void t3_highlight_reset(t3_highlight_match_t *match, int state) {
-	match->start = 0;
-	match->match_start = 0;
-	match->end = 0;
-	match->begin_attribute = 0;
-	match->match_attribute = 0;
-	match->state = state;
-	match->utf8_checked = t3_false;
-	match->last_progress = 0;
-	match->last_progress_state = -1;
-}
-
-t3_highlight_match_t *t3_highlight_new_match(const t3_highlight_t *highlight) {
-	t3_highlight_match_t *result = malloc(sizeof(t3_highlight_match_t));
-	if (result == NULL)
-		return NULL;
-
-	VECTOR_INIT(result->mapping);
-	if (!VECTOR_RESERVE(result->mapping)) {
-		free(result);
-		return NULL;
-	}
-
-	result->highlight = highlight;
-	memset(&VECTOR_LAST(result->mapping), 0, sizeof(state_mapping_t));
-	t3_highlight_reset(result, 0);
-	return result;
-}
-
-static void free_dynamic(state_mapping_t *mapping) {
-	if (mapping->dynamic == NULL)
-		return;
-	free(mapping->dynamic->extracted);
-	pcre_free(mapping->dynamic->regex.regex);
-	pcre_free(mapping->dynamic->regex.extra);
-	free(mapping->dynamic);
-}
-
-void t3_highlight_free_match(t3_highlight_match_t *match) {
-	if (match == NULL)
-		return;
-	VECTOR_ITERATE(match->mapping, free_dynamic);
-	VECTOR_FREE(match->mapping);
-	free(match);
-}
-
-size_t t3_highlight_get_start(t3_highlight_match_t *match) {
-	return match->start;
-}
-
-size_t t3_highlight_get_match_start(t3_highlight_match_t *match) {
-	return match->match_start;
-}
-
-size_t t3_highlight_get_end(t3_highlight_match_t *match) {
-	return match->end;
-}
-
-int t3_highlight_get_begin_attr(t3_highlight_match_t *match) {
-	return match->begin_attribute;
-}
-
-int t3_highlight_get_match_attr(t3_highlight_match_t *match) {
-	return match->match_attribute;
-}
-
-int t3_highlight_get_state(t3_highlight_match_t *match) {
-	return match->state;
-}
-
-int t3_highlight_next_line(t3_highlight_match_t *match) {
-	match->end = 0;
-	match->utf8_checked = t3_false;
-	match->last_progress = 0;
-	match->last_progress_state = -1;
-	return match->state;
 }
 
 const char *t3_highlight_strerror(int error) {

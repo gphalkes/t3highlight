@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SOURCES.libt3highlight.la := highlight.c vector.c highlight_shared.c io.c utf8.c
+SOURCES.libt3highlight.la := highlight.c vector.c highlight_shared.c io.c utf8.c match.c analyse.c
 
 LDLIBS.libt3highlight.la += -lt3config
 LDFLAGS.libt3highlight.la += -L../include/t3config/.libs

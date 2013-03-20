@@ -76,6 +76,53 @@ struct t3_highlight_t {
 	int flags;
 };
 
+struct t3_highlight_match_t {
+	const t3_highlight_t *highlight;
+	VECTOR(state_mapping_t) mapping;
+	size_t start,
+		match_start,
+		end,
+		last_progress;
+	int state,
+		begin_attribute,
+		match_attribute,
+		last_progress_state;
+	t3_bool utf8_checked;
+};
+
+typedef struct {
+	const char *name;
+	int state;
+} use_mapping_t;
+
+typedef struct {
+	int (*map_style)(void *, const char *);
+	void *map_style_data;
+	t3_highlight_t *highlight;
+	t3_config_t *syntax;
+	int flags;
+	VECTOR(use_mapping_t) use_map;
+} highlight_context_t;
+
+typedef struct {
+	t3_highlight_match_t *match;
+	const char *line;
+	size_t size;
+	state_t *state;
+	int ovector[30],
+		best_end,
+		extract_start,
+		extract_end;
+	highlight_t *best;
+} match_context_t;
+
+typedef struct {
+	size_t i;
+	int state;
+} state_stack_t;
+
+
+
 #define RETURN_ERROR_FULL(_error, _line_number, _file_name, _extra, _flags) do { \
 	if (error != NULL) { \
 		error->error = (_error); \
@@ -91,4 +138,8 @@ struct t3_highlight_t {
 
 
 T3_HIGHLIGHT_LOCAL char *_t3_highlight_strdup(const char *str);
+T3_HIGHLIGHT_LOCAL t3_bool _t3_compile_highlight(const char *highlight, full_pcre_t *action, int flags,
+	t3_highlight_error_t *error, const t3_config_t *context);
+T3_HIGHLIGHT_LOCAL t3_bool _t3_check_empty_start_cycle(t3_highlight_t *highlight, t3_highlight_error_t *error, int flags);
+T3_HIGHLIGHT_LOCAL t3_bool _t3_check_use_cycle(t3_highlight_t *syntax, t3_highlight_error_t *error, int flags);
 #endif
