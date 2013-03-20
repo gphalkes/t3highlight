@@ -21,3 +21,6 @@ src/highlight_errors.h
 
 testsuite/highlight/work
 testsuite/highlight/testlog*
+doc/internals/datastructures.aux
+doc/internals/datastructures.log
+doc/internals/datastructures.pdf

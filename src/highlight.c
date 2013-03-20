@@ -517,22 +517,19 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 }
 
 static t3_bool check_empty_cycle_from_state(states_t *states, size_t state, t3_highlight_error_t *error, int flags) {
-	int min_length, depth;
+	int min_length;
 	size_t i, j;
 
-	typedef struct { int state, depth; } state_stack_t;
-	VECTOR(state_stack_t) state_stack;
+	VECTOR(int) state_stack;
 	VECTOR_INIT(state_stack);
 
 	if (!VECTOR_RESERVE(state_stack))
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
 
-	VECTOR_LAST(state_stack).state = state;
-	VECTOR_LAST(state_stack).depth = 0;
+	VECTOR_LAST(state_stack) = state;
 
 	while (state_stack.used) {
-		state = VECTOR_LAST(state_stack).state;
-		depth = VECTOR_LAST(state_stack).depth;
+		state = VECTOR_LAST(state_stack);
 
 		state_stack.used--;
 		for (i = 0; i < states->data[state].highlights.used; i++) {
@@ -546,8 +543,7 @@ static t3_bool check_empty_cycle_from_state(states_t *states, size_t state, t3_h
 				   stack at the same depth, and they will be handled correctly. */
 				if (!VECTOR_RESERVE(state_stack))
 					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-				VECTOR_LAST(state_stack).state = highlight->next_state;
-				VECTOR_LAST(state_stack).depth = depth;
+				VECTOR_LAST(state_stack) = highlight->next_state;
 				continue;
 			}
 
@@ -566,23 +562,20 @@ static t3_bool check_empty_cycle_from_state(states_t *states, size_t state, t3_h
 			if ((int) state == highlight->next_state)
 				RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
 			for (j = 0; j < state_stack.used; j++) {
-				if (state_stack.data[j].state == highlight->next_state)
+				if (state_stack.data[j] == highlight->next_state)
 					RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
 			}
 			/* Push the next state onto the stack, so we can go from there later on. */
 			if (!VECTOR_RESERVE(state_stack))
 				RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-			VECTOR_LAST(state_stack).state = highlight->next_state;
-			VECTOR_LAST(state_stack).depth = depth + 1;
+			VECTOR_LAST(state_stack) = highlight->next_state;
 
-			/* For on-entry states, we simply push all of them. Note that they are
-			   are at increasing depth. */
+			/* For on-entry states, we simply push all of them. */
 			if (highlight->dynamic != NULL && highlight->dynamic->on_entry_cnt > 0) {
 				for (j = 0; (int) j < highlight->dynamic->on_entry_cnt; j++) {
 					if (!VECTOR_RESERVE(state_stack))
 						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-					VECTOR_LAST(state_stack).state = highlight->dynamic->on_entry->state;
-					VECTOR_LAST(state_stack).depth = depth + 2 + j;
+					VECTOR_LAST(state_stack) = highlight->dynamic->on_entry->state;
 				}
 			}
 		}
