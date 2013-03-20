@@ -176,12 +176,12 @@ the style selected with the @c style key. If the text matching the @c start and
 <code>delim-style</code> key can be used.
 
 In format @c 2 files, the @c start regex is allowed to match the empty string.
-However, there may not be cycles of states of only empty-matching @c start and
-@c end patterns. In format @c 1 files, or files which have the
-@c allow-empty-start top-level boolean set to @c false (only valid in format
-@c 2 files), the @c start regex is not allowed to match the empty string.
-Although it is legal to write regexes which would match the empty string, only
-the first non-empty match is considered.
+However, there may not be cycles of states of empty-matching @c start patterns.
+In format @c 1 files, or files which have the @c allow-empty-start top-level
+boolean set to @c false (only valid in format @c 2 files), the @c start regex
+is not allowed to match the empty string. Although it is legal to write regexes
+which would match the empty string, only the first non-empty match is
+considered.
 
 A state definition can also have sub-highlights. This is done by simply adding
 @c @%highlight sections inside the highlight definition. If the sub-highlights

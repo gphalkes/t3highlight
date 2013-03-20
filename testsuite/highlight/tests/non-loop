@@ -1,0 +1,30 @@
+format = 2
+
+%define {
+	some-state {
+		%highlight {
+			start = ""
+			end = "c"
+		}
+	}
+}
+
+%highlight {
+	start = ""
+	%highlight {
+		use = "some-state"
+	}
+	end = "a"
+}
+
+%highlight {
+	start = ""
+	%highlight {
+		use = "some-state"
+	}
+	end = "a"
+}
+
+#TEST
+==
+==

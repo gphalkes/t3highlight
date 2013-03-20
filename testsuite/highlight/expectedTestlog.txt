@@ -2,10 +2,16 @@
 ==== Testcase ../tests/clang ====
 ==== Testcase ../tests/double_recursion ====
 ==== Testcase ../tests/dynamic_end ====
-==== Testcase ../tests/invalid_use ====
+==== Testcase ../tests/empty-loop-use ====
+Error loading highlighting patterns: /home/gertjan/projects/tilde/t3highlight/testsuite/highlight/work/pattern:0: empty start-pattern cycle
 ==== Testcase ../tests/nested ====
+==== Testcase ../tests/non-loop ====
 ==== Testcase ../tests/on_entry ====
-==== Testcase ../tests/potential-loop-fail.test ====
-==== Testcase ../tests/potential-loop-fail2.test ====
-Error loading highlighting patterns: /home/gertjan/projects/tilde/t3highlight/testsuite/highlight/work/pattern:0: empty start pattern cycle
-==== Testcase ../tests/potential-loop.test ====
+==== Testcase ../tests/potential-loop ====
+==== Testcase ../tests/potential-loop-fail1 ====
+==== Testcase ../tests/potential-loop-fail2 ====
+Error loading highlighting patterns: /home/gertjan/projects/tilde/t3highlight/testsuite/highlight/work/pattern:0: empty start-pattern cycle
+==== Testcase ../tests/use-loop1 ====
+Error loading highlighting patterns: /home/gertjan/projects/tilde/t3highlight/testsuite/highlight/work/pattern:0: use-pattern cycle
+==== Testcase ../tests/use-loop2 ====
+Error loading highlighting patterns: /home/gertjan/projects/tilde/t3highlight/testsuite/highlight/work/pattern:0: use-pattern cycle

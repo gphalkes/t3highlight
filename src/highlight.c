@@ -65,8 +65,13 @@ typedef struct {
 		extract_start,
 		extract_end;
 	highlight_t *best;
-	int recursion_depth;
 } match_context_t;
+
+typedef struct {
+	size_t i;
+	int state;
+} state_stack_t;
+
 
 static const state_t null_state = { { NULL, 0, 0 }, 0 };
 
@@ -76,7 +81,8 @@ static const char syntax_schema[] = {
 
 static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights, int idx, t3_highlight_error_t *error);
 static void free_state(state_t *state);
-static t3_bool check_empty_cycle(t3_highlight_t *highlight, t3_highlight_error_t *error, int flags);
+static t3_bool check_empty_start_cycle(t3_highlight_t *highlight, t3_highlight_error_t *error, int flags);
+static t3_bool check_use_cycle(t3_highlight_t *syntax, t3_highlight_error_t *error, int flags);
 
 t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, const char *),
 		void *map_style_data, int flags, t3_highlight_error_t *error)
@@ -135,9 +141,12 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 	}
 	free(context.use_map.data);
 
+	if (!check_use_cycle(result, error, flags))
+		goto return_error;
+
 	/* If we allow empty start patterns, we need to analyze whether they don't result
 	   in infinite loops. */
-	if ((flags & T3_HIGHLIGHT_ALLOW_EMPTY_START) && !check_empty_cycle(result, error, flags))
+	if ((flags & T3_HIGHLIGHT_ALLOW_EMPTY_START) && !check_empty_start_cycle(result, error, flags))
 		goto return_error;
 
 	result->flags = flags;
@@ -516,34 +525,40 @@ void t3_highlight_free(t3_highlight_t *highlight) {
 	free(highlight);
 }
 
-static t3_bool check_empty_cycle_from_state(states_t *states, size_t state, t3_highlight_error_t *error, int flags) {
+static t3_bool check_empty_start_cycle_from_state(states_t *states, size_t state, t3_highlight_error_t *error, int flags) {
 	int min_length;
-	size_t i, j;
+	size_t j;
 
-	VECTOR(int) state_stack;
+	VECTOR(state_stack_t) state_stack;
 	VECTOR_INIT(state_stack);
 
 	if (!VECTOR_RESERVE(state_stack))
 		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
 
-	VECTOR_LAST(state_stack) = state;
+	VECTOR_LAST(state_stack).state = state;
+	VECTOR_LAST(state_stack).i = 0;
 
 	while (state_stack.used) {
-		state = VECTOR_LAST(state_stack);
+		state_stack_t *current = &VECTOR_LAST(state_stack);
 
-		state_stack.used--;
-		for (i = 0; i < states->data[state].highlights.used; i++) {
-			highlight_t *highlight = &states->data[state].highlights.data[i];
+		if (current->i == states->data[current->state].highlights.used) {
+			state_stack.used--;
+			continue;
+		}
+
+		for (; current->i < states->data[current->state].highlights.used; current->i++) {
+			highlight_t *highlight = &states->data[current->state].highlights.data[current->i];
 
 			if (highlight->next_state <= NO_CHANGE)
 				continue;
 
 			if (highlight->regex.regex == NULL) {
 				/* This is a use pattern. For those we can simply push them on the
-				   stack at the same depth, and they will be handled correctly. */
+				   stack, and they will be handled correctly. */
 				if (!VECTOR_RESERVE(state_stack))
 					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-				VECTOR_LAST(state_stack) = highlight->next_state;
+				VECTOR_LAST(state_stack).state = highlight->next_state;
+				VECTOR_LAST(state_stack).i = 0;
 				continue;
 			}
 
@@ -559,25 +574,27 @@ static t3_bool check_empty_cycle_from_state(states_t *states, size_t state, t3_h
 
 			/* If we push a state onto the stack that is already on it, we've
 			   found a cycle. */
-			if ((int) state == highlight->next_state)
-				RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
 			for (j = 0; j < state_stack.used; j++) {
-				if (state_stack.data[j] == highlight->next_state)
-					RETURN_ERROR(T3_ERR_EMPTY_CYCLE, flags);
+				if (state_stack.data[j].state == highlight->next_state)
+					RETURN_ERROR(T3_ERR_EMPTY_START_CYCLE, flags);
 			}
 			/* Push the next state onto the stack, so we can go from there later on. */
 			if (!VECTOR_RESERVE(state_stack))
 				RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-			VECTOR_LAST(state_stack) = highlight->next_state;
+			VECTOR_LAST(state_stack).state = highlight->next_state;
+			VECTOR_LAST(state_stack).i = 0;
 
 			/* For on-entry states, we simply push all of them. */
 			if (highlight->dynamic != NULL && highlight->dynamic->on_entry_cnt > 0) {
 				for (j = 0; (int) j < highlight->dynamic->on_entry_cnt; j++) {
 					if (!VECTOR_RESERVE(state_stack))
 						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-					VECTOR_LAST(state_stack) = highlight->dynamic->on_entry->state;
+					VECTOR_LAST(state_stack).state = highlight->dynamic->on_entry->state;
+					VECTOR_LAST(state_stack).i = 0;
 				}
 			}
+			current->i++;
+			break;
 		}
 	}
 	VECTOR_FREE(state_stack);
@@ -588,13 +605,69 @@ return_error:
 	return t3_false;
 }
 
-static t3_bool check_empty_cycle(t3_highlight_t *highlight, t3_highlight_error_t *error, int flags) {
+static t3_bool check_empty_start_cycle(t3_highlight_t *highlight, t3_highlight_error_t *error, int flags) {
 	size_t i;
 	for (i = 0; i < highlight->states.used; i++) {
-		if (!check_empty_cycle_from_state(&highlight->states, i, error, flags))
+		if (!check_empty_start_cycle_from_state(&highlight->states, i, error, flags))
 			return t3_false;
 	}
 	return t3_true;
+}
+
+
+static t3_bool check_use_cycle(t3_highlight_t *syntax, t3_highlight_error_t *error, int flags) {
+	size_t i, j;
+
+	VECTOR(state_stack_t) state_stack;
+	VECTOR_INIT(state_stack);
+
+	for (i = 0; i < syntax->states.used; i++) {
+		if (!VECTOR_RESERVE(state_stack))
+			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+
+		VECTOR_LAST(state_stack).state = i;
+		VECTOR_LAST(state_stack).i = 0;
+
+		while (state_stack.used) {
+			state_stack_t *current = &VECTOR_LAST(state_stack);
+
+			if (current->i == syntax->states.data[current->state].highlights.used) {
+				state_stack.used--;
+				continue;
+			}
+
+			for (; current->i < syntax->states.data[current->state].highlights.used; current->i++) {
+				highlight_t *highlight = &syntax->states.data[current->state].highlights.data[current->i];
+
+				if (highlight->regex.regex != NULL)
+					continue;
+				if (highlight->next_state <= NO_CHANGE)
+					continue;
+
+				/* If we push a state onto the stack that is already on it, we've
+				   found a cycle. */
+				for (j = 0; j < state_stack.used; j++) {
+					if (state_stack.data[j].state == highlight->next_state)
+						RETURN_ERROR(T3_ERR_USE_CYCLE, flags);
+				}
+
+				/* Push the next state onto the stack, so we can go from there later on. */
+				if (!VECTOR_RESERVE(state_stack))
+					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+				VECTOR_LAST(state_stack).state = highlight->next_state;
+				VECTOR_LAST(state_stack).i = 0;
+
+				current->i++;
+				break;
+			}
+		}
+	}
+	VECTOR_FREE(state_stack);
+	return t3_true;
+
+return_error:
+	VECTOR_FREE(state_stack);
+	return t3_false;
 }
 
 static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highlight_t *dynamic,
@@ -703,8 +776,6 @@ static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highli
 static void match_internal(match_context_t *context) {
 	size_t j;
 
-	context->recursion_depth++;
-
 	for (j = 0; j < context->state->highlights.used; j++) {
 		full_pcre_t *regex;
 		int options = PCRE_NO_UTF8_CHECK;
@@ -715,11 +786,6 @@ static void match_internal(match_context_t *context) {
 		if (context->state->highlights.data[j].regex.regex == NULL) {
 			if (context->state->highlights.data[j].next_state >= 0) {
 				state_t *save_state;
-				/* FIXME: this can be checked before hand. */
-				/* Don't keep on going into use definitions. At level 50, we probably
-				   ended up in a cycle, so just stop it. */
-				if (context->recursion_depth > 50)
-					continue;
 				save_state = context->state;
 				context->state = &context->match->highlight->states.data[context->state->highlights.data[j].next_state];
 				match_internal(context);
@@ -760,7 +826,6 @@ static void match_internal(match_context_t *context) {
 		}
 	}
 
-	context->recursion_depth--;
 }
 
 static int step_utf8(char first) {
@@ -797,7 +862,6 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 	context.state = &match->highlight->states.data[match->mapping.data[match->state].highlight];
 	context.best = NULL;
 	context.best_end = -1;
-	context.recursion_depth = 0;
 
 	match->start = match->end;
 	match->begin_attribute = context.state->attribute_idx;
@@ -939,8 +1003,10 @@ const char *t3_highlight_strerror(int error) {
 			return _("'use' specifies undefined highlight");
 		case T3_ERR_INVALID_NAME:
 			return _("invalid sub-pattern name");
-		case T3_ERR_EMPTY_CYCLE:
-			return _("empty start pattern cycle");
+		case T3_ERR_EMPTY_START_CYCLE:
+			return _("empty start-pattern cycle");
+		case T3_ERR_USE_CYCLE:
+			return _("use-pattern cycle");
 	}
 }
 

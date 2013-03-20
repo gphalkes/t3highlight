@@ -53,7 +53,9 @@ extern "C" {
 /** Error code: an 'extract' directive uses an invalid name. */
 #define T3_ERR_INVALID_NAME (-92)
 /** Error code: a cycle of empty start states was detected. */
-#define T3_ERR_EMPTY_CYCLE (-91)
+#define T3_ERR_EMPTY_START_CYCLE (-91)
+/** Error code: a cycle of empty start states was detected. */
+#define T3_ERR_USE_CYCLE (-90)
 /*@}*/
 
 /** @name Flags for ::t3_highlight_load. */

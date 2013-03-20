@@ -24,3 +24,5 @@ testsuite/highlight/testlog*
 doc/internals/datastructures.aux
 doc/internals/datastructures.log
 doc/internals/datastructures.pdf
+doc/internals/structs.fig.bak
+doc/internals/structs.pdf
