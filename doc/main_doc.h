@@ -12,8 +12,8 @@ Documentation on where libt3highlight looks for highlighting description files
 and how it finds the appropriate file is @ref users_doc "here". If you are
 interested in writing your own highlighting description, the explanation of the
 file format is @ref syntax "here". Furthermore there is a @ref style "page" on
-the style definition files used by t3highlight. Finally there is the <a
-class="el" href="modules.html">API documentation</a>.
+the style definition files used by the @b t3highlight program. Finally there is
+the <a class="el" href="modules.html">API documentation</a>.
 
 */
 

@@ -51,8 +51,10 @@ typedef struct {
 		attribute_idx;
 } pattern_t;
 
+typedef VECTOR(pattern_t) patterns_t;
+
 typedef struct {
-	VECTOR(pattern_t) patterns;
+	patterns_t patterns;
 	int attribute_idx;
 } state_t;
 

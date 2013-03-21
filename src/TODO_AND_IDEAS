@@ -6,10 +6,6 @@ DESIGN GOALS:
 
 TODO:
 Library:
-- refactor and comment the code, because it is messy and very unclear. This
-  also requires explaining the data structures and their use.
-- split highlight.c into smaller units, because it has become to big. Obvious
-  candidate for splitting out: the match handling part
 - see if using the JIT helps speed things up. Testcase: libtool (a huge shell
   script)
 
