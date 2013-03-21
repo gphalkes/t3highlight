@@ -293,7 +293,7 @@ static void free_dynamic(state_mapping_t *mapping) {
 		return;
 	free(mapping->dynamic->extracted);
 	pcre_free(mapping->dynamic->regex.regex);
-	pcre_free(mapping->dynamic->regex.extra);
+	free_pcre_study(mapping->dynamic->regex.extra);
 	free(mapping->dynamic);
 }
 

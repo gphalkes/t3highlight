@@ -6,8 +6,6 @@ DESIGN GOALS:
 
 TODO:
 Library:
-- see if using the JIT helps speed things up. Testcase: libtool (a huge shell
-  script)
 
 Generic:
 

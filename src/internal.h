@@ -18,6 +18,13 @@
 #include "highlight_api.h"
 #include "vector.h"
 
+#if defined(PCRE_MAJOR) && defined(PCRE_MINOR) && PCRE_MAJOR >= 8 && PCRE_MINOR >= 20
+#define free_pcre_study pcre_free_study
+#else
+#define free_pcre_study pcre_free
+#endif
+
+
 #define NO_CHANGE (-1)
 /* EXIT_STATE is equal to exit = 1. For higher values of the exit attribute,
    subtract from EXIT_STATE. I.e. -3 equals exit = 2, -4 equals exit = 3, etc. */

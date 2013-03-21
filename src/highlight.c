@@ -143,6 +143,7 @@ t3_bool _t3_compile_highlight(const char *highlight, full_pcre_t *regex, const t
 		}
 		return t3_false;
 	}
+	regex->extra = NULL;
 	regex->extra = pcre_study(regex->regex, 0, &study_error);
 	return t3_true;
 }
@@ -182,7 +183,7 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 		/* Throw away the results of the compilation, because we don't actually need it. */
 		free(regex_with_define);
 		pcre_free(new_pattern.regex.regex);
-		pcre_free(new_pattern.regex.extra);
+		free_pcre_study(new_pattern.regex.extra);
 
 		/* If the compilation failed, abort the whole thing. */
 		if (!result)
@@ -235,6 +236,7 @@ static t3_bool set_extra(highlight_context_t *context, pattern_t *pattern, const
 	pattern->extra->dynamic_name = NULL;
 	pattern->extra->dynamic_pattern = NULL;
 	pattern->extra->on_entry = NULL;
+	pattern->extra->on_entry_cnt = 0;
 
 	if (on_entry != NULL) {
 		int i;
@@ -456,13 +458,13 @@ return_error:
 		free(pattern.extra);
 	}
 	pcre_free(pattern.regex.regex);
-	pcre_free(pattern.regex.extra);
+	free_pcre_study(pattern.regex.extra);
 	return t3_false;
 }
 
 static void free_highlight(pattern_t *highlight) {
 	pcre_free(highlight->regex.regex);
-	pcre_free(highlight->regex.extra);
+	free_pcre_study(highlight->regex.extra);
 	if (highlight->extra != NULL) {
 		free(highlight->extra->dynamic_name);
 		free(highlight->extra->dynamic_pattern);
