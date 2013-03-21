@@ -269,7 +269,7 @@ static t3_bool set_on_entry(highlight_context_t *context, pattern_t *pattern, co
 	pattern_t parent_pattern;
 	pattern_extra_t parent_extra;
 	t3_config_t *sub_highlights;
-	int style_attr_idx;
+	int style_attr_idx = 0;
 	int idx;
 
 	t3_config_t *on_entry = t3_config_get(highlights, "on-entry");
@@ -279,7 +279,6 @@ static t3_bool set_on_entry(highlight_context_t *context, pattern_t *pattern, co
 
 	parent_pattern = *pattern;
 	parent_extra = *pattern->extra;
-
 	parent_pattern.extra = &parent_extra;
 
 	for (on_entry = t3_config_get(on_entry, NULL), idx = 0; on_entry != NULL;

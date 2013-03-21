@@ -572,7 +572,7 @@ int main(int argc, char *argv[]) {
 	set_tag("charset", "UTF-8");
 
 	highlight_file(highlight);
-
+#ifdef DEBUG
 	for (i = 0; styles[i].tag != NULL; i++) {
 		free(styles[i].tag);
 		free(styles[i].start);
@@ -580,6 +580,13 @@ int main(int argc, char *argv[]) {
 	}
 	free(styles);
 
+	tag_t *tag;
+	for (tag = tags; tag != NULL; ) {
+		tag_t *ptr = tag;
+		tag = tag->next;
+		free(ptr);
+	}
 	t3_highlight_free(highlight);
+#endif
 	return EXIT_SUCCESS;
 }
