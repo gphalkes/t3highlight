@@ -36,7 +36,7 @@ static const char syntax_schema[] = {
 #include "syntax.bytes"
 };
 
-static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights, int idx);
+static t3_bool init_state(highlight_context_t *context, const t3_config_t *highlights, int idx);
 static void free_state(state_t *state);
 
 t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, const char *),
@@ -156,7 +156,7 @@ static t3_bool match_name(const t3_config_t *config, const void *data) {
 #define ERROR context->error
 #define FLAGS context->flags
 
-static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *regex, int next_state, const pattern_t *pattern) {
+static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *regex, int next_state, pattern_t *pattern) {
 	pattern_t new_pattern;
 	patterns_t *patterns;
 
@@ -223,7 +223,7 @@ return_error:
     The @c extra member is used for storing the data for dynamic end patterns
     and for the on-entry list.
 */
-static t3_bool set_extra(pattern_t *pattern, const t3_config_t *highlights, highlight_context_t *context) {
+static t3_bool set_extra(highlight_context_t *context, pattern_t *pattern, const t3_config_t *highlights) {
 	const char *dynamic = t3_config_get_string(t3_config_get(highlights, "extract"));
 	t3_config_t *on_entry = t3_config_get(highlights, "on-entry");
 
@@ -263,13 +263,10 @@ return_error:
 	return t3_false;
 }
 
-/** Fill the @c on_entry list.
-
-    FIXME: write full docs!
-*/
-static t3_bool set_on_entry(pattern_t *pattern, highlight_context_t *context, t3_config_t *highlights) {
+/** Fill the @c on_entry list. */
+static t3_bool set_on_entry(highlight_context_t *context, pattern_t *pattern, const t3_config_t *highlights) {
 	t3_config_t *regex, *style;
-	pattern_t parent_action;
+	pattern_t parent_pattern;
 	pattern_extra_t parent_extra;
 	t3_config_t *sub_highlights;
 	int style_attr_idx;
@@ -280,23 +277,23 @@ static t3_bool set_on_entry(pattern_t *pattern, highlight_context_t *context, t3
 	if (on_entry == NULL)
 		return t3_true;
 
-	parent_action = *pattern;
+	parent_pattern = *pattern;
 	parent_extra = *pattern->extra;
 
-	parent_action.extra = &parent_extra;
+	parent_pattern.extra = &parent_extra;
 
 	for (on_entry = t3_config_get(on_entry, NULL), idx = 0; on_entry != NULL;
 			on_entry = t3_config_get_next(on_entry), idx++)
 	{
 		pattern->extra->on_entry[idx].state = context->highlight->states.used;
-		parent_action.next_state = pattern->extra->on_entry[idx].state;
+		parent_pattern.next_state = pattern->extra->on_entry[idx].state;
 
 		if ((style = t3_config_get(on_entry, "style")) != NULL)
-			parent_action.attribute_idx = style_attr_idx =
+			parent_pattern.attribute_idx = style_attr_idx =
 				context->map_style(context->map_style_data, t3_config_get_string(style));
 
 		if ((style = t3_config_get(on_entry, "delim-style")) != NULL)
-			parent_action.attribute_idx = context->map_style(context->map_style_data, t3_config_get_string(style));
+			parent_pattern.attribute_idx = context->map_style(context->map_style_data, t3_config_get_string(style));
 
 		if (!VECTOR_RESERVE(context->highlight->states))
 			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
@@ -313,10 +310,10 @@ static t3_bool set_on_entry(pattern_t *pattern, highlight_context_t *context, t3
 			int return_state = NO_CHANGE - t3_config_get_int(t3_config_get(on_entry, "exit"));
 			if (return_state == NO_CHANGE)
 				return_state = EXIT_STATE;
-			if (!add_delim_highlight(context, regex, return_state, &parent_action))
+			if (!add_delim_highlight(context, regex, return_state, &parent_pattern))
 				goto return_error;
-			pattern->extra->on_entry[idx].end_pattern = parent_action.extra->dynamic_pattern;
-			parent_action.extra->dynamic_pattern = NULL;
+			pattern->extra->on_entry[idx].end_pattern = parent_pattern.extra->dynamic_pattern;
+			parent_pattern.extra->dynamic_pattern = NULL;
 		}
 	}
 	return t3_true;
@@ -325,7 +322,52 @@ return_error:
 	return t3_false;
 }
 
-static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights, int idx) {
+static t3_bool map_use(highlight_context_t *context, const t3_config_t *use, int *mapped_state) {
+	size_t i;
+
+	t3_config_t *definition = t3_config_get(t3_config_find(t3_config_get(context->syntax, "define"),
+		match_name, t3_config_get_string(use), NULL), t3_config_get_string(use));
+
+	if (definition == NULL) {
+		_t3_highlight_set_error(context->error, T3_ERR_UNDEFINED_USE, t3_config_get_line_number(use),
+			t3_config_get_file_name(use), t3_config_get_string(use), context->flags);
+		goto return_error;
+	}
+
+	/* Lookup the name in the use_map. If the definition was already
+	   compiled before, we don't have to do it again, but we can simply
+	   refer to the previous definition. */
+	for (i = 0; i < context->use_map.used; i++) {
+		if (strcmp(t3_config_get_string(use), context->use_map.data[i].name) == 0)
+			break;
+	}
+
+	if (i == context->use_map.used) {
+		/* If we didn't already compile the defintion, do it now. */
+		*mapped_state = context->highlight->states.used;
+
+		if (!VECTOR_RESERVE(context->use_map))
+			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		VECTOR_LAST(context->use_map).name = t3_config_get_string(use);
+		VECTOR_LAST(context->use_map).state = *mapped_state;
+
+		if (!VECTOR_RESERVE(context->highlight->states))
+			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		VECTOR_LAST(context->highlight->states) = null_state;
+
+		if (!init_state(context, t3_config_get(definition, "highlight"), *mapped_state))
+			return t3_false;
+	} else {
+		*mapped_state = context->use_map.data[i].state;
+	}
+
+	return t3_true;
+
+return_error:
+	return t3_false;
+}
+
+static t3_bool init_state(highlight_context_t *context, const t3_config_t *highlights, int idx) {
 	t3_config_t *regex, *style, *use;
 	pattern_t pattern;
 	int style_attr_idx;
@@ -353,7 +395,7 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 			if (!_t3_compile_highlight(t3_config_get_string(regex), &pattern.regex, regex, context->flags, context->error))
 				goto return_error;
 
-			if (!set_extra(&pattern, highlights, context))
+			if (!set_extra(context, &pattern, highlights))
 				goto return_error;
 
 			/* Create new state to which start will switch. */
@@ -372,7 +414,7 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 			/* Set the on_entry patterns, if any. Note that this calls add_delim_highlight for
 			   the end patterns, which frobs the extra->dynamic_pattern member. Thus this must be
 			   called before the add_delim_highlight call for this patterns own end pattern. */
-			if (!set_on_entry(&pattern, context, highlights))
+			if (!set_on_entry(context, &pattern, highlights))
 				goto return_error;
 
 			/* If the highlight specifies an end regex, create an extra pattern for that and paste that
@@ -390,47 +432,9 @@ static t3_bool init_state(highlight_context_t *context, t3_config_t *highlights,
 					!add_delim_highlight(context, t3_config_get(highlights, "start"), pattern.next_state, &pattern))
 				goto return_error;
 		} else if ((use = t3_config_get(highlights, "use")) != NULL) {
-			size_t i;
-
-			t3_config_t *definition = t3_config_get(t3_config_find(t3_config_get(context->syntax, "define"),
-				match_name, t3_config_get_string(use), NULL), t3_config_get_string(use));
-
-			if (definition == NULL) {
-				_t3_highlight_set_error(context->error, T3_ERR_UNDEFINED_USE, t3_config_get_line_number(use),
-					t3_config_get_file_name(use), t3_config_get_string(use), context->flags);
+			/* regex = NULL (set above) signifies that this is a link to another state. */
+			if (!map_use(context, use, &pattern.next_state))
 				goto return_error;
-			}
-			/* regex = NULL signifies that this is a link to another state. We
-			   also have to set extra to NULL, to prevent segfaults on free. */
-			pattern.regex.regex = NULL;
-			pattern.regex.extra = NULL;
-
-			/* Lookup the name in the use_map. If the definition was already
-			   compiled before, we don't have to do it again, but we can simply
-			   refer to the previous definition. */
-			for (i = 0; i < context->use_map.used; i++) {
-				if (strcmp(t3_config_get_string(use), context->use_map.data[i].name) == 0)
-					break;
-			}
-
-			if (i == context->use_map.used) {
-				/* If we didn't already compile the defintion, do it now. */
-				pattern.next_state = context->highlight->states.used;
-
-				if (!VECTOR_RESERVE(context->use_map))
-					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
-				VECTOR_LAST(context->use_map).name = t3_config_get_string(use);
-				VECTOR_LAST(context->use_map).state = pattern.next_state;
-
-				if (!VECTOR_RESERVE(context->highlight->states))
-					RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
-				VECTOR_LAST(context->highlight->states) = null_state;
-
-				if (!init_state(context, t3_config_get(definition, "highlight"), pattern.next_state))
-					return t3_false;
-			} else {
-				pattern.next_state = context->use_map.data[i].state;
-			}
 		} else {
 			RETURN_ERROR(T3_ERR_INTERNAL);
 		}
