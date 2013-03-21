@@ -38,23 +38,32 @@ typedef struct {
 } on_entry_info_t;
 
 typedef struct {
-	char *name;
-	char *pattern;
+	char *dynamic_name;
+	char *dynamic_pattern;
 	on_entry_info_t *on_entry;
 	int on_entry_cnt;
-} dynamic_highlight_t;
+} pattern_extra_t;
 
 typedef struct {
 	full_pcre_t regex;
-	dynamic_highlight_t *dynamic; /* Only set for start patterns. */
+	pattern_extra_t *extra; /* Only set for start patterns. */
 	int next_state, /* Values: NO_CHANGE, EXIT_STATE or smaller,  or a value >= 0. */
 		attribute_idx;
-} highlight_t;
+} pattern_t;
 
 typedef struct {
-	VECTOR(highlight_t) highlights;
+	VECTOR(pattern_t) patterns;
 	int attribute_idx;
 } state_t;
+
+typedef VECTOR(state_t) states_t;
+
+struct t3_highlight_t {
+	states_t states;
+	char *lang_file;
+	int flags;
+};
+
 
 typedef struct {
 	full_pcre_t regex;
@@ -64,17 +73,9 @@ typedef struct {
 
 typedef struct {
 	int parent;
-	int highlight;
+	int highlight_state;
 	dynamic_state_t *dynamic;
 } state_mapping_t;
-
-typedef VECTOR(state_t) states_t;
-
-struct t3_highlight_t {
-	states_t states;
-	char *lang_file;
-	int flags;
-};
 
 struct t3_highlight_match_t {
 	const t3_highlight_t *highlight;
@@ -95,6 +96,7 @@ typedef struct {
 	int state;
 } use_mapping_t;
 
+/* Structs to make passing a large number of arguments easier. */
 typedef struct {
 	int (*map_style)(void *, const char *);
 	void *map_style_data;
@@ -113,7 +115,7 @@ typedef struct {
 		best_end,
 		extract_start,
 		extract_end;
-	highlight_t *best;
+	pattern_t *best;
 } match_context_t;
 
 typedef struct {

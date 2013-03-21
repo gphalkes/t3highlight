@@ -14,8 +14,6 @@
 % Disable underscore as an active character, because we will be typing it a
 % lot, and never to indicate subscripts.
 \catcode`\_=12\relax
-\newcommand{\state}{{\tt state_t}\xspace}
-\newcommand{\highlight}{{\tt highlight_t}\xspace}
 
 \begin{document}
 \maketitle
@@ -27,37 +25,39 @@ language definition file are written using {\it italics}. Names of data
 structures and their members are written using {\tt monospace}.
 
 \section{State Storage}
-The base internal data structure is a the \state. This
+The base internal data structure is a the {\tt state_t}. This
 represents a list of highlighting patterns, corresponding to a
 {\it highlight} (usually written as {\it \%highlight}) list in the
 language definition file. A {\it highlight} sub-list, as created by a
-{\it start} pattern, is represented by a separate \state.
+{\it start} pattern, is represented by a separate {\tt state_t}.
 
-The toplevel {\tt highlight} list is always at index 0 in the list of \state{}s
-in the {\tt t3_highlight_t}. groups of patterns defined in the {\tt define}
-section of the language definition are stored as separate \state{}s.
+The toplevel {\it highlight} list is always at index 0 in the array of
+{\tt state_t}s in the {\tt t3_highlight_t}. groups of patterns defined in the
+{\it define} section of the language definition are stored as separate
+{\tt state_t}s.
 
-Each \state consists of a list of \highlight{}s. Each \highlight corresponds to
-either the {\it regex} or {\it start} pattern in a {\it highlight} list entry.
-The {\it end} pattern of a state is put at either the start or the end of the
-list of {\it highlight}s in the sub-state, depending on whether it is defined
-before or after the {\it highlight} list. Thus, the {\it start} pattern is part
-of the enclosing state, while the {\it end} pattern is part of the state itself.
+Each {\tt state_t} consists of a array of {\tt pattern_t}s. Each {\tt pattern_t}
+corresponds to either the {\it regex} or {\it start} pattern in a
+{\it highlight} list entry. The {\it end} pattern of a state is put at either
+the start or the end of the array of {\tt pattern}s in the sub-state,
+depending on whether it is defined before or after the {\it highlight} list.
+Thus, the {\it start} pattern is part of the enclosing state, while the
+{\it end} pattern is part of the state itself.
 
 \subsection{Next State}
-The {\tt next_state} member of the \highlight indicates which \state should be
-used after matching the {\tt regex}. The value {\tt NO_CHANGE} (-1), indicates
-that there should be no change in state after matching. Values greater than
-{\tt NO_CHANGE} (i.e.\ 0 and greater) indicate a specific state to change to,
-which is used for {\it start} patterns and {\it use} patterns. Finally, values
-of {\tt EXIT_STATE} (-2) and smaller, indicate that this pattern is an end
-pattern, and the parent state ({\tt EXIT_STATE}) or one of its ancestors
-(values smaller than {\tt EXIT_STATE}) should be returned to.
+The {\tt next_state} member of the {\tt pattern_t} indicates which
+{\tt state_t} should be used after matching the {\tt regex}. The value
+{\tt NO_CHANGE} (-1), indicates that there should be no change in state after
+matching. Values greater than {\tt NO_CHANGE} (0) indicate a specific state to
+change to, which is used for {\it start} patterns and {\it use} patterns.
+Finally, values of {\tt EXIT_STATE} (-2) and smaller, indicate that this
+pattern is an end pattern, and the parent state ({\tt EXIT_STATE}) or one of
+its ancestors (values smaller than {\tt EXIT_STATE}) should be returned to.
 
 It is important to note that the state numbers named here (i.e.\ the indices in
-the {\tt t3_highlight_t}s \state list), are not the same as the states saved in
-the {\tt t3_highlight_match_t}. See Section~\ref{sec:state-tree} for details on
-the correspondence between them.
+the {\tt t3_highlight_t}s {\tt state_t} array), are not the same as the states
+saved in the {\tt t3_highlight_match_t}. See Section~\ref{sec:state-tree} for
+details on the correspondence between them.
 
 \footnotetext[1]{The {\tt regex} member will be set to {\tt NULL} for dynamic
 {\it end} patterns and for {\it use} patterns. These can be distinguished by
@@ -65,83 +65,87 @@ the setting of the {\tt next_state} member, which will be {\tt EXIT_STATE} or
 less for dynamic {\it end} patterns.}
 
 \subsection{Use Patterns}
-A {\it use} pattern is saved as a separate \state, signified by a {\tt NULL}
-{\tt regex} member in the \highlight\footnotemark[1]. This allows referencing
-other patterns without incurring a large memory penalty. Furthermore, it allows
-for cyclic referencing, which can be useful for recursive embeddings such as
-counting parenthesis.
+A {\it use} pattern is saved as a separate {\tt state_t}, signified by a
+{\tt NULL} {\tt regex} member in the {\tt pattern_t}\footnotemark[1]. This
+allows referencing other patterns without incurring a large memory penalty.
+Furthermore, it allows for cyclic referencing, which can be useful for
+recursive embeddings such as shell varia ble references within variable
+references.
 
 \subsection{Dynamic End Patterns}
 If the state uses a dynamic {\it end} pattern, the regular expression for the
 pattern can not be compiled, until the match of the corresponding {\it start}
-pattern. To signal this, the {\tt regex} member of the {\it end} pattern's \highlight is set
-to {\tt NULL}\footnotemark[1]. The actual end pattern is created at run time
-and stored in the {\tt state_mapping_t} (c.f.\ Section~\ref{sec:state-tree}).
+pattern. To signal this, the {\tt regex} member of the {\it end}'s
+{\tt pattern_t} is set to {\tt NULL}\footnotemark[1]. The actual end pattern is
+created at run time and stored in the {\tt state_mapping_t}
+(c.f.\ Section~\ref{sec:state-tree}).
 
-\footnotetext[2]{The {\tt dynamic} member will be set for both dynamic end
+\footnotetext[2]{The {\tt extra} member will be set for both dynamic end
 patterns and for on-entry states.}
 
-The \highlight corresponding to {\it start} pattern will have its {\tt dynamic}
-member set to a {\tt dynamic_highlight_t}, to hold the supplementary data
-required\footnotemark[2]. Specifically, it will hold the name to be extracted
-(c.f.\ {\it extract}) and the {\it end} pattern.
+The {\tt pattern_t} corresponding to {\it start} pattern will have its
+{\tt extra} member set to a {\tt pattern_extra_t}, to hold the supplementary
+data required\footnotemark[2]. Specifically, it will hold the name to be
+extracted (c.f.\ {\it extract}) and the {\it end} pattern.
 
 \subsection{On-entry States}
-On-entry states are saved as a list in the {\tt dynamic} member\footnotemark[2].
-For each on-entry state, the index in the \state{}s list is saved. Furthermore,
-because on-entry states can use dynamic end patterns referreing to the
-enclosing normal state, each on-entry state optionally holds the end pattern
-required for matching the end state.
+On-entry states are saved as a array in the {\tt extra} member\footnotemark[2].
+For each on-entry state, the index in the {\tt state_t}s array is saved.
+Furthermore, because on-entry states can use dynamic end patterns referreing to
+the enclosing normal state, each on-entry state optionally holds the end
+pattern required for matching the end state.
 
-\section{Matching and the Flattened State Tree\label{sec:state-tree}}
+\section{Matching and the Dynamic State Tree\label{sec:state-tree}}
 The main design goal of libt3highlight is to have a single integer state at the
 start of each line. Originally, this was achieved by having a simple state
-tree, where each node was numbered and had a parent index. However, with the
-introduction of dynamic end patterns, this could not work anymore. Thus instead
-of using the \state list index as the start-of-line state, an intermediate
-data structure was introduced. This is the flattened state tree (FST), which is
+tree, stored as an array, where each node had a parent index. However, with the
+introduction of dynamic end patterns, this could not work anymore due to the
+extra dynamic state that needs to be stored. Thus instead of using the
+{\tt state_t} array index as the start-of-line state, an intermediate data
+structure was introduced. This is the flattened state tree (DST), which is
 stored in the t3_highlight_match_t.
 
-The FST is a vector of {\tt state_mapping_t} objects. Each {\tt
-state_mapping_t} holds an index in the \state{}s list in the {\tt
-t3_highlight_t} structure ({\tt highlight}), a {\tt parent} member referring to
-the previous FST state visited in matching, and an optional {\tt dynamic}
-member holding data about dynamic end patterns.
+The DST is a vector of {\tt state_mapping_t} objects. Each
+{\tt state_mapping_t} holds an index in the {\tt state_t}s array in the
+{\tt t3_highlight_t} structure ({\tt highligh_state}), a {\tt parent} member
+referring to the previous DST state visited in matching, and an optional
+{\tt extra} member holding data about dynamic end patterns.
 
 The {\tt parent} member thus refers to the {\tt state_mapping_t} object that
-represents the previous FST state, and transitively to the whole path taken in
-the \state tree. This is important when trying to find an existing entry in the
-{\tt state_mapping_t} list which corresponds to the next state. Three conditions
+represents the previous DST state, and transitively to the whole path taken in
+the {\tt state_t} tree. This is important when trying to find an existing entry
+in the {\tt state_mapping_t} array which corresponds to the next state, as it
+obviates the need to check the entire chain of parent indices. Three conditions
 must be met for the entry to be matched:
 
 \begin{itemize}
 \item The {\tt parent} member must equal the current {\tt state_mapping_t}.
-\item The {\tt highlight} member must equal the {\tt next_state} member in the
-	\highlight.
-\item The {\tt dynamic} must be unset in both the {\tt state_mapping_t} and the
-	\highlight, or the {\tt extracted} member in the {\tt dynamic_state_t}
-	referred to by the {\tt state_mapping_t} must be equal to the text
-	extracted from the match.
+\item The {\tt highlight_state} member must equal the {\tt next_state} member
+	in the {\tt pattern_t}.
+\item The {\tt extra} member of {\tt pattern_t} must be unset or have its
+	{\tt dynamic_name} unset, or the {\tt extracted} member in the
+	{\tt dynamic_state_t} referred to by the {\tt state_mapping_t} must be
+	equal to the text extracted from the match.
 \end{itemize}
 
-When these three conditions are met, the existing FST-state can be reused. If
-no FST state exists which matches the new state, a new state will be created.
-It may seem that this will create a large and ever-growing number of FST states.
+When these three conditions are met, the existing DST-state can be reused. If
+no DST state exists which matches the new state, a new state will be created.
+It may seem that this will create a large and ever-growing number of DST states.
 However, note that for the case where the highlighting patterns form a simple
 tree without dynamic patterns, the maximum number of states is equal to the
-number of \state{}s in the {\tt t3_highlight_t}. Only for circular {\it use}
+number of {\tt state_t}s in the {\tt t3_highlight_t}. Only for circular {\it use}
 patterns and dynamic end patterns can a potentially infinite number of states
 be created. But, even though this is possible, it is very unlikely that the
 number of states grows beyond a reasonable number in practice.
 
 \begin{description}
 \item[Use patterns] are never used in the flattened state tree. When a
-\state corresponding to a {\it use} pattern is encountered during matching, a
+{\tt state_t} corresponding to a {\it use} pattern is encountered during matching, a
 recursion step is made, which checks all the patterns in the {\it use} pattern
 and returns the results.
 \item[Dynamic-end patterns] require that a new regex is compiled based on the
 matched text and the saved regex pattern. This is a fairly expensive operation.
-\item[On-entry states] are simply added to the FST like any other state, when
+\item[On-entry states] are simply added to the DST like any other state, when
 a state is entered which specifies them.
 \end{description}
 \end{multicols}

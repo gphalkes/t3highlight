@@ -103,9 +103,11 @@ typedef struct {
 */
 typedef struct {
 	int error;
-	int line_number;
-	char *file_name;
-	char *extra;
+	int line_number; /**< Line number where the error occured, but only if ::T3_HIGHLIGHT_VERBOSE_ERROR is set. */
+	char *file_name; /**< File name in which the error occured or @c NULL, but only if ::T3_HIGHLIGHT_VERBOSE_ERROR is set.
+	                      Must be Free'd. */
+	char *extra; /**< Further information about the error or @c NULL, but only if ::T3_HIGHLIGHT_VERBOSE_ERROR is set.
+	                  Must be Free'd. */
 } t3_highlight_error_t;
 
 /** List the known languages.
@@ -145,7 +147,9 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load(const char *name,
 
     Other parameters and return value are equal to ::t3_highlight_load. The
     file-regex member in the language definition in the lang.map file is used
-    to determine which highlighting patterns should be loaded.
+    to determine which highlighting patterns should be loaded. The returned
+    data structure is not modified by any call to the library except
+    ::t3_highlight_free, and can be used across threads.
 */
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_filename(const char *name,
 	int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
@@ -243,6 +247,8 @@ T3_HIGHLIGHT_API t3_bool t3_highlight_match(t3_highlight_match_t *match, const c
 /** Allocate and initialize a new ::t3_highlight_match_t structure.
     @param highlight The ::t3_highlight_t structure this ::t3_highlight_match_t
         structure will be used for.
+
+    The returned structure will can not be shared across threads.
 */
 T3_HIGHLIGHT_API t3_highlight_match_t *t3_highlight_new_match(const t3_highlight_t *highlight);
 /** Free ::t3_highlight_match_t structure.

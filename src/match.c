@@ -20,29 +20,29 @@
 #include "highlight_errors.h"
 #include "internal.h"
 
-static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highlight_t *dynamic,
+static int find_state(t3_highlight_match_t *match, int highlight_state, pattern_extra_t *extra,
 		const char *dynamic_line, int dynamic_length, const char *dynamic_pattern)
 {
 	size_t i;
 
-	if (highlight <= EXIT_STATE) {
+	if (highlight_state <= EXIT_STATE) {
 		int return_state;
-		for (return_state = match->state; highlight < EXIT_STATE && return_state > 0; highlight++)
+		for (return_state = match->state; highlight_state < EXIT_STATE && return_state > 0; highlight_state++)
 			return_state = match->mapping.data[return_state].parent;
 		return return_state > 0 ? match->mapping.data[return_state].parent : 0;
 	}
 
-	if (highlight == NO_CHANGE)
+	if (highlight_state == NO_CHANGE)
 		return match->state;
 
 	/* Check if the state is already mapped. */
 	for (i = match->state + 1; i < match->mapping.used; i++) {
-		if (match->mapping.data[i].parent == match->state && match->mapping.data[i].highlight == highlight &&
+		if (match->mapping.data[i].parent == match->state && match->mapping.data[i].highlight_state == highlight_state &&
 				/* Either neither is a match with dynamic back reference, or both are.
 				   For safety we ensure that the found state actually has information
 				   about a dynamic back reference. */
-				(dynamic == NULL ||
-				(dynamic != NULL && match->mapping.data[i].dynamic != NULL &&
+				(extra == NULL ||
+				(extra != NULL && extra->dynamic_name != NULL && match->mapping.data[i].dynamic != NULL &&
 				dynamic_length == match->mapping.data[i].dynamic->extracted_length &&
 				memcmp(dynamic_line, match->mapping.data[i].dynamic->extracted, dynamic_length) == 0)))
 			return i;
@@ -51,10 +51,10 @@ static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highli
 	if (!VECTOR_RESERVE(match->mapping))
 		return 0;
 	VECTOR_LAST(match->mapping).parent = match->state;
-	VECTOR_LAST(match->mapping).highlight = highlight;
+	VECTOR_LAST(match->mapping).highlight_state = highlight_state;
 
 	VECTOR_LAST(match->mapping).dynamic = NULL;
-	if (dynamic != NULL && dynamic->name != NULL) {
+	if (extra != NULL && extra->dynamic_name != NULL) {
 		int replace_count = 0, i;
 		char *pattern, *patptr;
 		dynamic_state_t *new_dynamic;
@@ -72,7 +72,7 @@ static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highli
 		   5 * replace_count for replacing 0 bytes and the \ in any \E's in the matched text,
 		   the length of the name of the pattern to insert and the length of the original
 		   regular expression to be inserted. */
-		if ((pattern = malloc(21 + dynamic_length + replace_count * 5 + strlen(dynamic->name) + strlen(dynamic_pattern))) == NULL) {
+		if ((pattern = malloc(21 + dynamic_length + replace_count * 5 + strlen(extra->dynamic_name) + strlen(dynamic_pattern))) == NULL) {
 			/* Undo VECTOR_RESERVE performed above. */
 			match->mapping.used--;
 			return 0;
@@ -93,7 +93,7 @@ static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highli
 		new_dynamic->extracted_length = dynamic_length;
 		memcpy(new_dynamic->extracted, dynamic_line, dynamic_length);
 
-		sprintf(pattern, "(?(DEFINE)(?<%s>\\Q", dynamic->name);
+		sprintf(pattern, "(?(DEFINE)(?<%s>\\Q", extra->dynamic_name);
 		patptr = pattern + strlen(pattern);
 		for (i = 0; i < dynamic_length; i++) {
 			if (dynamic_line[i] == 0 || (dynamic_line[i] == '\\' && i + 1 < dynamic_length && dynamic_line[i + 1] == 'E')) {
@@ -126,32 +126,32 @@ static int find_state(t3_highlight_match_t *match, int highlight, dynamic_highli
 static void match_internal(match_context_t *context) {
 	size_t j;
 
-	for (j = 0; j < context->state->highlights.used; j++) {
+	for (j = 0; j < context->state->patterns.used; j++) {
 		full_pcre_t *regex;
 		int options = PCRE_NO_UTF8_CHECK;
 
 		/* If the regex member == NULL, this highlight is either a pointer to
 		   another state which we should search here ("use"), or it is an end
 		   pattern with a dynamic back reference. */
-		if (context->state->highlights.data[j].regex.regex == NULL) {
-			if (context->state->highlights.data[j].next_state >= 0) {
+		if (context->state->patterns.data[j].regex.regex == NULL) {
+			if (context->state->patterns.data[j].next_state >= 0) {
 				state_t *save_state;
 				save_state = context->state;
-				context->state = &context->match->highlight->states.data[context->state->highlights.data[j].next_state];
+				context->state = &context->match->highlight->states.data[context->state->patterns.data[j].next_state];
 				match_internal(context);
 				context->state = save_state;
 				continue;
 			}
 			regex = &context->match->mapping.data[context->match->state].dynamic->regex;
 		} else {
-			regex = &context->state->highlights.data[j].regex;
+			regex = &context->state->patterns.data[j].regex;
 			/* For items that do not change state, we do not want an empty match
 			   ever (makes no progress). */
-			if (context->state->highlights.data[j].next_state == NO_CHANGE)
+			if (context->state->patterns.data[j].next_state == NO_CHANGE)
 				options |= PCRE_NOTEMPTY;
 			/* The default behaviour is to not allow start patterns to be empty, such
 			   that progress will be guaranteed. */
-			else if (context->state->highlights.data[j].next_state > NO_CHANGE &&
+			else if (context->state->patterns.data[j].next_state > NO_CHANGE &&
 					!(context->match->highlight->flags & T3_HIGHLIGHT_ALLOW_EMPTY_START))
 				options |= PCRE_NOTEMPTY;
 		}
@@ -160,10 +160,10 @@ static void match_internal(match_context_t *context) {
 				context->line, context->size, context->match->match_start, options, context->ovector,
 				sizeof(context->ovector) / sizeof(context->ovector[0])) >= 0 && context->ovector[1] > context->best_end)
 		{
-			context->best = &context->state->highlights.data[j];
+			context->best = &context->state->patterns.data[j];
 			context->best_end = context->ovector[1];
-			if (context->best->dynamic != NULL && context->best->dynamic->name != NULL) {
-				int string_number = pcre_get_stringnumber(context->best->regex.regex, context->best->dynamic->name);
+			if (context->best->extra != NULL && context->best->extra->dynamic_name != NULL) {
+				int string_number = pcre_get_stringnumber(context->best->regex.regex, context->best->extra->dynamic_name);
 				if (string_number == PCRE_ERROR_NOSUBSTRING || string_number > 10) {
 					context->extract_start = 0;
 					context->extract_end = 0;
@@ -209,7 +209,7 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 	context.match = match;
 	context.line = line;
 	context.size = size;
-	context.state = &match->highlight->states.data[match->mapping.data[match->state].highlight];
+	context.state = &match->highlight->states.data[match->mapping.data[match->state].highlight_state];
 	context.best = NULL;
 	context.best_end = -1;
 
@@ -229,9 +229,9 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 		match_internal(&context);
 
 		if (context.best != NULL) {
-			int next_state = find_state(match, context.best->next_state, context.best->dynamic,
+			int next_state = find_state(match, context.best->next_state, context.best->extra,
 				line + context.extract_start, context.extract_end - context.extract_start,
-				context.best->dynamic != NULL ? context.best->dynamic->pattern : NULL);
+				context.best->extra != NULL ? context.best->extra->dynamic_pattern : NULL);
 
 			/* Check if we have come full circle. If so, continue to the next byte and start over. */
 			if (match->last_progress == match->end &&
@@ -241,12 +241,12 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 
 			match->end = context.best_end;
 			match->state = next_state;
-			if (context.best->dynamic != NULL && context.best->dynamic->on_entry != NULL) {
+			if (context.best->extra != NULL && context.best->extra->on_entry != NULL) {
 				int i;
-				for (i = 0; i < context.best->dynamic->on_entry_cnt; i++) {
-					match->state = find_state(match, context.best->dynamic->on_entry[i].state, context.best->dynamic,
+				for (i = 0; i < context.best->extra->on_entry_cnt; i++) {
+					match->state = find_state(match, context.best->extra->on_entry[i].state, context.best->extra,
 						line + context.extract_start, context.extract_end - context.extract_start,
-						context.best->dynamic->on_entry[i].end_pattern);
+						context.best->extra->on_entry[i].end_pattern);
 				}
 			}
 			match->match_attribute = context.best->attribute_idx;

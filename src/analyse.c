@@ -37,13 +37,13 @@ static t3_bool check_empty_start_cycle_from_state(states_t *states, size_t state
 	while (state_stack.used) {
 		state_stack_t *current = &VECTOR_LAST(state_stack);
 
-		if (current->i == states->data[current->state].highlights.used) {
+		if (current->i == states->data[current->state].patterns.used) {
 			state_stack.used--;
 			continue;
 		}
 
-		for (; current->i < states->data[current->state].highlights.used; current->i++) {
-			highlight_t *highlight = &states->data[current->state].highlights.data[current->i];
+		for (; current->i < states->data[current->state].patterns.used; current->i++) {
+			pattern_t *highlight = &states->data[current->state].patterns.data[current->i];
 
 			if (highlight->next_state <= NO_CHANGE)
 				continue;
@@ -81,11 +81,11 @@ static t3_bool check_empty_start_cycle_from_state(states_t *states, size_t state
 			VECTOR_LAST(state_stack).i = 0;
 
 			/* For on-entry states, we simply push all of them. */
-			if (highlight->dynamic != NULL && highlight->dynamic->on_entry_cnt > 0) {
-				for (j = 0; (int) j < highlight->dynamic->on_entry_cnt; j++) {
+			if (highlight->extra != NULL && highlight->extra->on_entry_cnt > 0) {
+				for (j = 0; (int) j < highlight->extra->on_entry_cnt; j++) {
 					if (!VECTOR_RESERVE(state_stack))
 						RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
-					VECTOR_LAST(state_stack).state = highlight->dynamic->on_entry->state;
+					VECTOR_LAST(state_stack).state = highlight->extra->on_entry->state;
 					VECTOR_LAST(state_stack).i = 0;
 				}
 			}
@@ -127,13 +127,13 @@ t3_bool _t3_check_use_cycle(t3_highlight_t *syntax, t3_highlight_error_t *error,
 		while (state_stack.used) {
 			state_stack_t *current = &VECTOR_LAST(state_stack);
 
-			if (current->i == syntax->states.data[current->state].highlights.used) {
+			if (current->i == syntax->states.data[current->state].patterns.used) {
 				state_stack.used--;
 				continue;
 			}
 
-			for (; current->i < syntax->states.data[current->state].highlights.used; current->i++) {
-				highlight_t *highlight = &syntax->states.data[current->state].highlights.data[current->i];
+			for (; current->i < syntax->states.data[current->state].patterns.used; current->i++) {
+				pattern_t *highlight = &syntax->states.data[current->state].patterns.data[current->i];
 
 				if (highlight->regex.regex != NULL)
 					continue;
