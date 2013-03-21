@@ -106,6 +106,7 @@ typedef struct {
 	t3_config_t *syntax;
 	int flags;
 	VECTOR(use_mapping_t) use_map;
+	t3_highlight_error_t *error;
 } highlight_context_t;
 
 typedef struct {
@@ -126,24 +127,14 @@ typedef struct {
 } state_stack_t;
 
 
-
-#define RETURN_ERROR_FULL(_error, _line_number, _file_name, _extra, _flags) do { \
-	if (error != NULL) { \
-		error->error = (_error); \
-		if (_flags & T3_HIGHLIGHT_VERBOSE_ERROR) { \
-			error->line_number = _line_number; \
-			error->file_name = _file_name; \
-			error->extra = _extra; \
-		} \
-	} \
-	goto return_error; \
-} while (0)
-#define RETURN_ERROR(_error, _flags) RETURN_ERROR_FULL(_error, 0, NULL, NULL, _flags)
+#define RETURN_ERROR(code) do { _t3_highlight_set_error(ERROR, code, 0, NULL, NULL, FLAGS); goto return_error; } while (0)
 
 
 T3_HIGHLIGHT_LOCAL char *_t3_highlight_strdup(const char *str);
-T3_HIGHLIGHT_LOCAL t3_bool _t3_compile_highlight(const char *highlight, full_pcre_t *action, int flags,
-	t3_highlight_error_t *error, const t3_config_t *context);
-T3_HIGHLIGHT_LOCAL t3_bool _t3_check_empty_start_cycle(t3_highlight_t *highlight, t3_highlight_error_t *error, int flags);
-T3_HIGHLIGHT_LOCAL t3_bool _t3_check_use_cycle(t3_highlight_t *syntax, t3_highlight_error_t *error, int flags);
+T3_HIGHLIGHT_LOCAL t3_bool _t3_compile_highlight(const char *highlight, full_pcre_t *regex, const t3_config_t *error_context,
+	int flags, t3_highlight_error_t *error);
+T3_HIGHLIGHT_LOCAL t3_bool _t3_check_empty_start_cycle(highlight_context_t *context);
+T3_HIGHLIGHT_LOCAL t3_bool _t3_check_use_cycle(highlight_context_t *context);
+T3_HIGHLIGHT_LOCAL void _t3_highlight_set_error(t3_highlight_error_t *error,
+	int code, int line_number, const char *file_name, const char *extra, int flags);
 #endif

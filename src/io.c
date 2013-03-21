@@ -20,6 +20,9 @@
 #include "highlight.h"
 #include "internal.h"
 
+#define ERROR error
+#define FLAGS flags
+
 #ifndef HAS_STRDUP
 /** strdup implementation if none is provided by the environment. */
 char *_t3_highlight_strdup(const char *str) {
@@ -45,23 +48,33 @@ static t3_config_t *load_single_map(const char *name, int flags, t3_highlight_er
 	t3_config_opts_t opts;
 	FILE *file;
 
-	if ((file = fopen(name, "r")) == NULL)
-		RETURN_ERROR_FULL(T3_ERR_ERRNO, 0, _t3_highlight_strdup(name), NULL, flags);
+	if ((file = fopen(name, "r")) == NULL) {
+		_t3_highlight_set_error(error, T3_ERR_ERRNO, 0, name, NULL, flags);
+		goto return_error;
+	}
 
 	opts.flags = (flags & T3_HIGHLIGHT_VERBOSE_ERROR) ? (T3_CONFIG_VERBOSE_ERROR | T3_CONFIG_ERROR_FILE_NAME) : 0;
 	map = t3_config_read_file(file, &local_error, &opts);
 	fclose(file);
-	if (map == NULL)
-		RETURN_ERROR_FULL(local_error.error, local_error.line_number, local_error.file_name, local_error.extra, flags);
+	if (map == NULL) {
+		_t3_highlight_set_error(error, local_error.error, local_error.line_number, local_error.file_name, local_error.extra, flags);
+		free(local_error.file_name);
+		free(local_error.extra);
+		goto return_error;
+	}
 
 	if ((schema = t3_config_read_schema_buffer(map_schema, sizeof(map_schema), &local_error, NULL)) == NULL) {
 		t3_config_delete(map);
-		RETURN_ERROR_FULL(local_error.error != T3_ERR_OUT_OF_MEMORY ? T3_ERR_INTERNAL : local_error.error, 0, NULL, NULL, flags);
+		RETURN_ERROR(local_error.error != T3_ERR_OUT_OF_MEMORY ? T3_ERR_INTERNAL : local_error.error);
 	}
 
-	if (!t3_config_validate(map, schema, &local_error, T3_CONFIG_VERBOSE_ERROR | T3_CONFIG_ERROR_FILE_NAME))
-		RETURN_ERROR_FULL((flags & T3_HIGHLIGHT_VERBOSE_ERROR) ? local_error.error : T3_ERR_INVALID_FORMAT,
+	if (!t3_config_validate(map, schema, &local_error, T3_CONFIG_VERBOSE_ERROR | T3_CONFIG_ERROR_FILE_NAME)) {
+		_t3_highlight_set_error(error, (flags & T3_HIGHLIGHT_VERBOSE_ERROR) ? local_error.error : T3_ERR_INVALID_FORMAT,
 			local_error.line_number, local_error.file_name, local_error.extra, flags);
+		free(local_error.file_name);
+		free(local_error.extra);
+		goto return_error;
+	}
 	t3_config_delete_schema(schema);
 
 	return map;
@@ -89,7 +102,7 @@ static t3_config_t *load_map(int flags, t3_highlight_error_t *error) {
 	char *xdg_map;
 
 	if ((full_map = t3_config_new()) == NULL)
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 	if (!t3_config_add_plist(full_map, "lang", error == NULL ? NULL : &error->error))
 		goto return_error;
 
@@ -125,7 +138,7 @@ t3_highlight_lang_t *t3_highlight_list(int flags, t3_highlight_error_t *error) {
 	for (count = 0, ptr = t3_config_get(lang, NULL); ptr != NULL; count++, ptr = t3_config_get_next(ptr)) {}
 
 	if ((retval = malloc((count + 1) * sizeof(t3_highlight_lang_t))) == NULL)
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 
 	for (count = 0, ptr = t3_config_get(lang, NULL); ptr != NULL; count++, ptr = t3_config_get_next(ptr)) {
 		retval[count].name = t3_config_take_string(t3_config_get(ptr, "name"));
@@ -237,11 +250,15 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 	path[path[0] == NULL ? 0 : 1] = DATADIR;
 
 	if (flags & T3_HIGHLIGHT_USE_PATH) {
-		if ((file = t3_config_open_from_path(path, name, 0)) == NULL)
-			RETURN_ERROR_FULL(T3_ERR_ERRNO, 0, _t3_highlight_strdup(name), NULL, flags);
+		if ((file = t3_config_open_from_path(path, name, 0)) == NULL) {
+			_t3_highlight_set_error(error, T3_ERR_ERRNO, 0, name, NULL, flags);
+			goto return_error;
+		}
 	} else {
-		if ((file = fopen(name, "r")) == NULL)
-			RETURN_ERROR_FULL(T3_ERR_ERRNO, 0, _t3_highlight_strdup(name), NULL, flags);
+		if ((file = fopen(name, "r")) == NULL) {
+			_t3_highlight_set_error(error, T3_ERR_ERRNO, 0, name, NULL, flags);
+			goto return_error;
+		}
 	}
 
 	opts.flags = T3_CONFIG_INCLUDE_DFLT;
@@ -250,9 +267,12 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 	opts.include_callback.dflt.path = path;
 	opts.include_callback.dflt.flags = 0;
 
-	if ((config = t3_config_read_file(file, &config_error, &opts)) == NULL)
-		RETURN_ERROR_FULL(config_error.error, config_error.line_number, config_error.file_name == NULL ?
-			_t3_highlight_strdup(name) : config_error.file_name, config_error.extra, flags);
+	if ((config = t3_config_read_file(file, &config_error, &opts)) == NULL) {
+		_t3_highlight_set_error(error, config_error.error, config_error.line_number,
+			config_error.file_name == NULL ? name : config_error.file_name, config_error.extra, flags);
+		free(config_error.file_name);
+		goto return_error;
+	}
 
 	free(xdg_path);
 	xdg_path = NULL;
@@ -267,7 +287,7 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 	}
 
 	if ((result->lang_file = _t3_highlight_strdup(name)) == NULL)
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY, flags);
+		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
 
 	t3_config_delete(config);
 
@@ -306,12 +326,12 @@ char *t3_highlight_detect(const char *line, size_t line_length, t3_bool first, i
 		return NULL;
 
 	if ((pcre = pcre_compile("-\\*-\\s*(?:mode:\\s*)([^\\s;]);?.*-\\*-", PCRE_CASELESS, &error_message, &error_offset, NULL)) == NULL)
-		RETURN_ERROR(T3_ERR_INTERNAL, flags);
+		RETURN_ERROR(T3_ERR_INTERNAL);
 	if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector, sizeof(ovector) / sizeof(ovector[0])) > 0)
 		goto pattern_succeeded;
 	pcre_free(pcre);
 	if ((pcre = pcre_compile("\\s(?:vim?|ex): .*[: ]syntax=([^\\s:]+)", 0, &error_message, &error_offset, NULL)) == NULL)
-		RETURN_ERROR(T3_ERR_INTERNAL, flags);
+		RETURN_ERROR(T3_ERR_INTERNAL);
 	if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector, sizeof(ovector) / sizeof(ovector[0])) > 0)
 		goto pattern_succeeded;
 	pcre_free(pcre);
