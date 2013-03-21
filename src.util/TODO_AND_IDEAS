@@ -3,4 +3,3 @@ TODO
 - handle encodings (better)
 - merge consecutive sections using the same attribute?
 - gettext
-- manual page
