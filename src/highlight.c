@@ -27,9 +27,6 @@
 #define _(x) (x)
 #endif
 
-#define ERROR error
-#define FLAGS flags
-
 static const state_t null_state = { { NULL, 0, 0 }, 0 };
 
 static const char syntax_schema[] = {
@@ -76,15 +73,21 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
 			(t3_config_get(syntax, "allow-empty-start") == NULL || t3_config_get_bool(t3_config_get(syntax, "allow-empty-start"))))
 		flags |= T3_HIGHLIGHT_ALLOW_EMPTY_START;
 
-	if (map_style == NULL)
-		RETURN_ERROR(T3_ERR_BAD_ARG);
+	if (map_style == NULL) {
+		_t3_highlight_set_error_simple(error, T3_ERR_BAD_ARG, flags);
+		goto return_error;
+	}
 
-	if ((result = malloc(sizeof(t3_highlight_t))) == NULL)
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+	if ((result = malloc(sizeof(t3_highlight_t))) == NULL) {
+		_t3_highlight_set_error_simple(error, T3_ERR_OUT_OF_MEMORY, flags);
+		goto return_error;
+	}
 	VECTOR_INIT(result->states);
 
-	if (!VECTOR_RESERVE(result->states))
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+	if (!VECTOR_RESERVE(result->states)) {
+		_t3_highlight_set_error_simple(error, T3_ERR_OUT_OF_MEMORY, flags);
+		goto return_error;
+	}
 	VECTOR_LAST(result->states) = null_state;
 
 	/* Set up initialization. */
@@ -152,11 +155,6 @@ static t3_bool match_name(const t3_config_t *config, const void *data) {
 	return t3_config_get(config, (const char *) data) != NULL;
 }
 
-#undef ERROR
-#undef FLAGS
-#define ERROR context->error
-#define FLAGS context->flags
-
 static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *regex, int next_state, pattern_t *pattern) {
 	pattern_t new_pattern;
 	patterns_t *patterns;
@@ -174,8 +172,10 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 
 		/* Create the full regex pattern, including a fake define for the named
 		   back reference, and try to compile the pattern to check if it is valid. */
-		if ((regex_with_define = malloc(strlen(t3_config_get_string(regex)) + strlen(pattern->extra->dynamic_name) + 18)) == NULL)
-			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		if ((regex_with_define = malloc(strlen(t3_config_get_string(regex)) + strlen(pattern->extra->dynamic_name) + 18)) == NULL) {
+			_t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
+			goto return_error;
+		}
 		sprintf(regex_with_define, "(?(DEFINE)(?<%s>))%s", pattern->extra->dynamic_name, t3_config_get_string(regex));
 		new_pattern.regex.extra = NULL;
 		result = _t3_compile_highlight(regex_with_define, &new_pattern.regex, regex, context->flags, context->error);
@@ -200,8 +200,10 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 	}
 
 	new_pattern.attribute_idx = pattern->attribute_idx;
-	if (!VECTOR_RESERVE(*patterns))
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+	if (!VECTOR_RESERVE(*patterns)) {
+		_t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
+		goto return_error;
+	}
 
 	/* Find the highlight entry, starting after the end entry. If it does not exist,
 	   the list of highlights was specified first. */
@@ -231,8 +233,10 @@ static t3_bool set_extra(highlight_context_t *context, pattern_t *pattern, const
 	if (dynamic == NULL && on_entry == NULL)
 		return t3_true;
 
-	if ((pattern->extra = malloc(sizeof(pattern_extra_t))) == NULL)
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+	if ((pattern->extra = malloc(sizeof(pattern_extra_t))) == NULL) {
+		_t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
+		goto return_error;
+	}
 	pattern->extra->dynamic_name = NULL;
 	pattern->extra->dynamic_pattern = NULL;
 	pattern->extra->on_entry = NULL;
@@ -241,8 +245,10 @@ static t3_bool set_extra(highlight_context_t *context, pattern_t *pattern, const
 	if (on_entry != NULL) {
 		int i;
 		pattern->extra->on_entry_cnt = t3_config_get_length(on_entry);
-		if ((pattern->extra->on_entry = malloc(sizeof(on_entry_info_t) * pattern->extra->on_entry_cnt)) == NULL)
-			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		if ((pattern->extra->on_entry = malloc(sizeof(on_entry_info_t) * pattern->extra->on_entry_cnt)) == NULL) {
+			_t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
+			goto return_error;
+		}
 		for (i = 0; i < pattern->extra->on_entry_cnt; i++)
 			pattern->extra->on_entry[i].end_pattern = NULL;
 	}
@@ -296,8 +302,10 @@ static t3_bool set_on_entry(highlight_context_t *context, pattern_t *pattern, co
 		if ((style = t3_config_get(on_entry, "delim-style")) != NULL)
 			parent_pattern.attribute_idx = context->map_style(context->map_style_data, t3_config_get_string(style));
 
-		if (!VECTOR_RESERVE(context->highlight->states))
-			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		if (!VECTOR_RESERVE(context->highlight->states)) {
+			_t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
+			goto return_error;
+		}
 		VECTOR_LAST(context->highlight->states) = null_state;
 		VECTOR_LAST(context->highlight->states).attribute_idx = style_attr_idx;
 		if ((sub_highlights = t3_config_get(on_entry, "highlight")) != NULL) {
@@ -347,13 +355,17 @@ static t3_bool map_use(highlight_context_t *context, const t3_config_t *use, int
 		/* If we didn't already compile the defintion, do it now. */
 		*mapped_state = context->highlight->states.used;
 
-		if (!VECTOR_RESERVE(context->use_map))
-			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		if (!VECTOR_RESERVE(context->use_map)) {
+			_t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
+			goto return_error;
+		}
 		VECTOR_LAST(context->use_map).name = t3_config_get_string(use);
 		VECTOR_LAST(context->use_map).state = *mapped_state;
 
-		if (!VECTOR_RESERVE(context->highlight->states))
-			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		if (!VECTOR_RESERVE(context->highlight->states)) {
+			_t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
+			goto return_error;
+		}
 		VECTOR_LAST(context->highlight->states) = null_state;
 
 		if (!init_state(context, t3_config_get(definition, "highlight"), *mapped_state))
@@ -401,8 +413,10 @@ static t3_bool init_state(highlight_context_t *context, const t3_config_t *highl
 
 			/* Create new state to which start will switch. */
 			pattern.next_state = context->highlight->states.used;
-			if (!VECTOR_RESERVE(context->highlight->states))
-				RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+			if (!VECTOR_RESERVE(context->highlight->states)) {
+				_t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
+				goto return_error;
+			}
 			VECTOR_LAST(context->highlight->states) = null_state;
 			VECTOR_LAST(context->highlight->states).attribute_idx = style_attr_idx;
 
@@ -437,10 +451,13 @@ static t3_bool init_state(highlight_context_t *context, const t3_config_t *highl
 			if (!map_use(context, use, &pattern.next_state))
 				goto return_error;
 		} else {
-			RETURN_ERROR(T3_ERR_INTERNAL);
+			_t3_highlight_set_error_simple(context->error, T3_ERR_INTERNAL, context->flags);
+			goto return_error;
 		}
-		if (!VECTOR_RESERVE(context->highlight->states.data[idx].patterns))
-			RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+		if (!VECTOR_RESERVE(context->highlight->states.data[idx].patterns)) {
+			_t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
+			goto return_error;
+		}
 		VECTOR_LAST(context->highlight->states.data[idx].patterns) = pattern;
 	}
 	return t3_true;
@@ -502,6 +519,11 @@ void _t3_highlight_set_error(t3_highlight_error_t *error, int code, int line_num
 		}
 	}
 }
+
+void _t3_highlight_set_error_simple(t3_highlight_error_t *error, int code, int flags) {
+	_t3_highlight_set_error(error, code, 0, NULL, NULL, flags);
+}
+
 
 const char *t3_highlight_strerror(int error) {
 	switch (error) {

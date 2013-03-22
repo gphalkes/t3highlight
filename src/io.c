@@ -20,9 +20,6 @@
 #include "highlight.h"
 #include "internal.h"
 
-#define ERROR error
-#define FLAGS flags
-
 #ifndef HAS_STRDUP
 /** strdup implementation if none is provided by the environment. */
 char *_t3_highlight_strdup(const char *str) {
@@ -65,7 +62,8 @@ static t3_config_t *load_single_map(const char *name, int flags, t3_highlight_er
 
 	if ((schema = t3_config_read_schema_buffer(map_schema, sizeof(map_schema), &local_error, NULL)) == NULL) {
 		t3_config_delete(map);
-		RETURN_ERROR(local_error.error != T3_ERR_OUT_OF_MEMORY ? T3_ERR_INTERNAL : local_error.error);
+		_t3_highlight_set_error_simple(error, local_error.error != T3_ERR_OUT_OF_MEMORY ? T3_ERR_INTERNAL : local_error.error, flags);
+		goto return_error;
 	}
 
 	if (!t3_config_validate(map, schema, &local_error, T3_CONFIG_VERBOSE_ERROR | T3_CONFIG_ERROR_FILE_NAME)) {
@@ -101,8 +99,10 @@ static t3_config_t *load_map(int flags, t3_highlight_error_t *error) {
 	t3_config_t *full_map = NULL, *map;
 	char *xdg_map;
 
-	if ((full_map = t3_config_new()) == NULL)
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+	if ((full_map = t3_config_new()) == NULL) {
+		_t3_highlight_set_error_simple(error, T3_ERR_OUT_OF_MEMORY, flags);
+		goto return_error;
+	}
 	if (!t3_config_add_plist(full_map, "lang", error == NULL ? NULL : &error->error))
 		goto return_error;
 
@@ -137,8 +137,10 @@ t3_highlight_lang_t *t3_highlight_list(int flags, t3_highlight_error_t *error) {
 	lang = t3_config_get(map, "lang");
 	for (count = 0, ptr = t3_config_get(lang, NULL); ptr != NULL; count++, ptr = t3_config_get_next(ptr)) {}
 
-	if ((retval = malloc((count + 1) * sizeof(t3_highlight_lang_t))) == NULL)
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+	if ((retval = malloc((count + 1) * sizeof(t3_highlight_lang_t))) == NULL) {
+		_t3_highlight_set_error_simple(error, T3_ERR_OUT_OF_MEMORY, flags);
+		goto return_error;
+	}
 
 	for (count = 0, ptr = t3_config_get(lang, NULL); ptr != NULL; count++, ptr = t3_config_get_next(ptr)) {
 		retval[count].name = t3_config_take_string(t3_config_get(ptr, "name"));
@@ -286,8 +288,10 @@ t3_highlight_t *t3_highlight_load(const char *name, int (*map_style)(void *, con
 		goto return_error;
 	}
 
-	if ((result->lang_file = _t3_highlight_strdup(name)) == NULL)
-		RETURN_ERROR(T3_ERR_OUT_OF_MEMORY);
+	if ((result->lang_file = _t3_highlight_strdup(name)) == NULL) {
+		_t3_highlight_set_error_simple(error, T3_ERR_OUT_OF_MEMORY, flags);
+		goto return_error;
+	}
 
 	t3_config_delete(config);
 
@@ -325,13 +329,17 @@ char *t3_highlight_detect(const char *line, size_t line_length, t3_bool first, i
 	if (line == NULL)
 		return NULL;
 
-	if ((pcre = pcre_compile("-\\*-\\s*(?:mode:\\s*)([^\\s;]);?.*-\\*-", PCRE_CASELESS, &error_message, &error_offset, NULL)) == NULL)
-		RETURN_ERROR(T3_ERR_INTERNAL);
+	if ((pcre = pcre_compile("-\\*-\\s*(?:mode:\\s*)([^\\s;]);?.*-\\*-", PCRE_CASELESS, &error_message, &error_offset, NULL)) == NULL) {
+		_t3_highlight_set_error_simple(error, T3_ERR_INTERNAL, flags);
+		goto return_error;
+	}
 	if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector, sizeof(ovector) / sizeof(ovector[0])) > 0)
 		goto pattern_succeeded;
 	pcre_free(pcre);
-	if ((pcre = pcre_compile("\\s(?:vim?|ex): .*[: ]syntax=([^\\s:]+)", 0, &error_message, &error_offset, NULL)) == NULL)
-		RETURN_ERROR(T3_ERR_INTERNAL);
+	if ((pcre = pcre_compile("\\s(?:vim?|ex): .*[: ]syntax=([^\\s:]+)", 0, &error_message, &error_offset, NULL)) == NULL) {
+		_t3_highlight_set_error_simple(error, T3_ERR_INTERNAL, flags);
+		goto return_error;
+	}
 	if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector, sizeof(ovector) / sizeof(ovector[0])) > 0)
 		goto pattern_succeeded;
 	pcre_free(pcre);
