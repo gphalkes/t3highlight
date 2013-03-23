@@ -237,7 +237,10 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 			if (match->last_progress == match->end &&
 					context.best->next_state > NO_CHANGE &&
 					match->last_progress_state == next_state)
+			{
+				context.best = NULL;
 				continue;
+			}
 
 			match->end = context.best_end;
 			match->state = next_state;
