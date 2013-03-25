@@ -33,7 +33,7 @@ static const char syntax_schema[] = {
 #include "syntax.bytes"
 };
 
-static t3_bool init_state(highlight_context_t *context, const t3_config_t *highlights, int idx);
+static t3_bool init_state(highlight_context_t *context, const t3_config_t *highlights, pattern_idx_t idx);
 static void free_state(state_t *state);
 
 t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, const char *),
@@ -155,7 +155,7 @@ static t3_bool match_name(const t3_config_t *config, const void *data) {
 	return t3_config_get(config, (const char *) data) != NULL;
 }
 
-static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *regex, int next_state, pattern_t *pattern) {
+static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *regex, pattern_idx_t next_state, pattern_t *pattern) {
 	pattern_t new_pattern;
 	patterns_t *patterns;
 
@@ -316,7 +316,7 @@ static t3_bool set_on_entry(highlight_context_t *context, pattern_t *pattern, co
 		   to in the list of sub-highlights. Depending on whether end is specified before or after
 		   the highlight list, it will be pre- or appended. */
 		if ((regex = t3_config_get(on_entry, "end")) != NULL) {
-			int return_state = NO_CHANGE - t3_config_get_int(t3_config_get(on_entry, "exit"));
+			pattern_idx_t return_state = NO_CHANGE - t3_config_get_int(t3_config_get(on_entry, "exit"));
 			if (return_state == NO_CHANGE)
 				return_state = EXIT_STATE;
 			if (!add_delim_highlight(context, regex, return_state, &parent_pattern))
@@ -331,7 +331,7 @@ return_error:
 	return t3_false;
 }
 
-static t3_bool map_use(highlight_context_t *context, const t3_config_t *use, int *mapped_state) {
+static t3_bool map_use(highlight_context_t *context, const t3_config_t *use, pattern_idx_t *mapped_state) {
 	size_t i;
 
 	t3_config_t *definition = t3_config_get(t3_config_find(t3_config_get(context->syntax, "define"),
@@ -380,7 +380,7 @@ return_error:
 	return t3_false;
 }
 
-static t3_bool init_state(highlight_context_t *context, const t3_config_t *highlights, int idx) {
+static t3_bool init_state(highlight_context_t *context, const t3_config_t *highlights, pattern_idx_t idx) {
 	t3_config_t *regex, *style, *use;
 	pattern_t pattern;
 	int style_attr_idx;
@@ -436,7 +436,7 @@ static t3_bool init_state(highlight_context_t *context, const t3_config_t *highl
 			   to in the list of sub-highlights. Depending on whether end is specified before or after
 			   the highlight list, it will be pre- or appended. */
 			if ((regex = t3_config_get(highlights, "end")) != NULL) {
-				int return_state = NO_CHANGE - t3_config_get_int(t3_config_get(highlights, "exit"));
+				pattern_idx_t return_state = NO_CHANGE - t3_config_get_int(t3_config_get(highlights, "exit"));
 				if (return_state == NO_CHANGE)
 					return_state = EXIT_STATE;
 				if (!add_delim_highlight(context, regex, return_state, &pattern))

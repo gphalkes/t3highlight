@@ -24,11 +24,18 @@
 #define free_pcre_study pcre_free
 #endif
 
+#ifdef DEBUG
+#define INDEX_TYPE(name) typedef enum { FAKE_CONST_##name = -1 } name
+#else
+#define INDEX_TYPE(name) typedef int name
+#endif
+INDEX_TYPE(pattern_idx_t);
+INDEX_TYPE(dst_idx_t);
 
-#define NO_CHANGE (-1)
+#define NO_CHANGE ((pattern_idx_t) -1)
 /* EXIT_STATE is equal to exit = 1. For higher values of the exit attribute,
    subtract from EXIT_STATE. I.e. -3 equals exit = 2, -4 equals exit = 3, etc. */
-#define EXIT_STATE (-2)
+#define EXIT_STATE ((pattern_idx_t) -2)
 
 /* WARNING: make sure any flags defined here don't clash with the ones in
    highlight.h */
@@ -41,7 +48,7 @@ typedef struct {
 
 typedef struct {
 	char *end_pattern;
-	int state;
+	pattern_idx_t state;
 } on_entry_info_t;
 
 typedef struct {
@@ -54,8 +61,8 @@ typedef struct {
 typedef struct {
 	full_pcre_t regex;
 	pattern_extra_t *extra; /* Only set for start patterns. */
-	int next_state, /* Values: NO_CHANGE, EXIT_STATE or smaller,  or a value >= 0. */
-		attribute_idx;
+	pattern_idx_t next_state; /* Values: NO_CHANGE, EXIT_STATE or smaller,  or a value >= 0. */
+	int attribute_idx;
 } pattern_t;
 
 typedef VECTOR(pattern_t) patterns_t;
@@ -81,8 +88,8 @@ typedef struct {
 } dynamic_state_t;
 
 typedef struct {
-	int parent;
-	int highlight_state;
+	dst_idx_t parent;
+	pattern_idx_t highlight_state;
 	dynamic_state_t *dynamic;
 } state_mapping_t;
 
@@ -93,8 +100,8 @@ struct t3_highlight_match_t {
 		match_start,
 		end,
 		last_progress;
-	int state,
-		begin_attribute,
+	dst_idx_t state;
+	int begin_attribute,
 		match_attribute,
 		last_progress_state;
 	t3_bool utf8_checked;
@@ -102,7 +109,7 @@ struct t3_highlight_match_t {
 
 typedef struct {
 	const char *name;
-	int state;
+	pattern_idx_t state;
 } use_mapping_t;
 
 /* Structs to make passing a large number of arguments easier. */
@@ -130,7 +137,7 @@ typedef struct {
 
 typedef struct {
 	size_t i;
-	int state;
+	pattern_idx_t state;
 } state_stack_t;
 
 

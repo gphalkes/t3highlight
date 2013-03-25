@@ -20,13 +20,13 @@
 #include "highlight_errors.h"
 #include "internal.h"
 
-static int find_state(t3_highlight_match_t *match, int highlight_state, pattern_extra_t *extra,
+static dst_idx_t find_state(t3_highlight_match_t *match, pattern_idx_t highlight_state, pattern_extra_t *extra,
 		const char *dynamic_line, int dynamic_length, const char *dynamic_pattern)
 {
 	size_t i;
 
 	if (highlight_state <= EXIT_STATE) {
-		int return_state;
+		dst_idx_t return_state;
 		for (return_state = match->state; highlight_state < EXIT_STATE && return_state > 0; highlight_state++)
 			return_state = match->mapping.data[return_state].parent;
 		return return_state > 0 ? match->mapping.data[return_state].parent : 0;
@@ -229,7 +229,7 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 		match_internal(&context);
 
 		if (context.best != NULL) {
-			int next_state = find_state(match, context.best->next_state, context.best->extra,
+			dst_idx_t next_state = find_state(match, context.best->next_state, context.best->extra,
 				line + context.extract_start, context.extract_end - context.extract_start,
 				context.best->extra != NULL ? context.best->extra->dynamic_pattern : NULL);
 
@@ -262,7 +262,7 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 	return t3_false;
 }
 
-void t3_highlight_reset(t3_highlight_match_t *match, int state) {
+void t3_highlight_reset(t3_highlight_match_t *match, dst_idx_t state) {
 	match->start = 0;
 	match->match_start = 0;
 	match->end = 0;

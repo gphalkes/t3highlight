@@ -20,7 +20,7 @@
 #include "highlight_errors.h"
 #include "internal.h"
 
-static t3_bool check_empty_start_cycle_from_state(highlight_context_t *context, size_t state) {
+static t3_bool check_empty_start_cycle_from_state(highlight_context_t *context, pattern_idx_t state) {
 	int min_length;
 	size_t j;
 	states_t *states = &context->highlight->states;
