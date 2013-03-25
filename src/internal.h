@@ -24,6 +24,12 @@
 #define free_pcre_study pcre_free
 #endif
 
+/* For debugging purposes, we define distinct enums to represent various
+   index types. This makes it possible to distinguish from the type, which
+   datastructure is supposed to be indexed by a variable. Furthermore, the
+   compiler will emit a warning when trying to assign one to the other. However,
+   as the integer type used is compiler dependent, we use a regular int for
+   non-debug builds. */
 #ifdef DEBUG
 #define INDEX_TYPE(name) typedef enum { FAKE_CONST_##name = -1 } name
 #else
