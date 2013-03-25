@@ -1,3 +1,9 @@
+Version 0.3.1:
+	Bug fixes:
+	- Fix incorrect analysis of on-entry states, which would allow a loop of
+	  empty start patterns, when more than one on-entry pattern was used in a
+	  single pattern.
+
 Version 0.3.0:
 	New features:
 	- Start patterns for states may now match the empty string, provided they

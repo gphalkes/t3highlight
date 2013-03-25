@@ -95,7 +95,7 @@ static t3_bool check_empty_start_cycle_from_state(highlight_context_t *context, 
 						_t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
 						goto return_error;
 					}
-					VECTOR_LAST(state_stack).state = highlight->extra->on_entry->state;
+					VECTOR_LAST(state_stack).state = highlight->extra->on_entry[j].state;
 					VECTOR_LAST(state_stack).i = 0;
 				}
 			}
