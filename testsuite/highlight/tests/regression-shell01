@@ -1,0 +1,13 @@
+%include = "sh.lang"
+
+#TEST
+$(x)
+==
+<misc>$(</misc>x<misc>)</misc>
+==
+
+#TEST
+cd "$(dirname "$1")" ; sha512sum -c "$OLDPWD/$2.sha512"
+==
+<keyword>cd</keyword> <string>"</string><misc>$(</misc>dirname <string>"</string><variable>$1</variable><string>"</string><misc>)</misc><string>"</string> ; sha512sum -c <string>"</string><variable>$OLDPWD</variable><string>/</string><variable>$2</variable><string>.sha512</string><string>"</string>
+==

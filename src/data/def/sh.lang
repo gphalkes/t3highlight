@@ -204,7 +204,7 @@
 			start = '(?=[^|&;()<> \t])'
 			%highlight { use = "sh-shell-nokeyword" }
 			%highlight { use = "sh-carry-over-line" }
-			end = '[<>]\('
+			end = '[<>]\(|(?=\))'
 		}
 	}
 

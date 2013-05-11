@@ -11,6 +11,7 @@ Error loading highlighting patterns: /home/gertjan/projects/tilde/t3highlight/te
 ==== Testcase ../tests/potential-loop-fail1 ====
 ==== Testcase ../tests/potential-loop-fail2 ====
 Error loading highlighting patterns: /home/gertjan/projects/tilde/t3highlight/testsuite/highlight/work/pattern:0: empty start-pattern cycle
+==== Testcase ../tests/regression-shell01 ====
 ==== Testcase ../tests/use-loop1 ====
 Error loading highlighting patterns: /home/gertjan/projects/tilde/t3highlight/testsuite/highlight/work/pattern:0: use-pattern cycle
 ==== Testcase ../tests/use-loop2 ====
