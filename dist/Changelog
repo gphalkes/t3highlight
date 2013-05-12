@@ -1,3 +1,8 @@
+Version 0.3.2:
+	Bug fixes:
+	- The shell patterns were updated to correctly exit from subshells and other
+	  constructs using the closing parenthesis as their terminator.
+
 Version 0.3.1:
 	Bug fixes:
 	- Fix incorrect analysis of on-entry states, which would allow a loop of
