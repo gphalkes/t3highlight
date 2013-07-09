@@ -140,7 +140,7 @@
 
 		# Integer constants
 		%highlight {
-			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+|\d+)[uU]?[lL]?\b'
+			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+|\d+)[uU]?[lL]{0,2}\b'
 			style = "number"
 		}
 		# Floating point constants
