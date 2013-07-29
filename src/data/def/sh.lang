@@ -116,7 +116,7 @@
 		# normal keywords should be matched again. So we return to the outer
 		# state again after matching.
 		%highlight {
-			regex = '(?<![^|&;()<> \t])(if|then|while|until|do)(?![^|&;()<> \t])'
+			regex = '(?<![^|&;()<> \t])(if|elif|then|while|until|do)(?![^|&;()<> \t])'
 			style = "keyword"
 		}
 		# After for and select a "name" i.e. a variable name without a $ is
