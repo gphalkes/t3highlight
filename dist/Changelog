@@ -1,3 +1,12 @@
+Version 0.3.3:
+	Bug fixes:
+	- Loop check in matching checked the end of the previoius match instead of
+	  the end of the newly found match, causing the check to be too
+	  conservative.
+	- The shell pattern was missing the elif keyword.
+	- The java pattern did not highlight string constants, even though they were
+	  being recognised.
+
 Version 0.3.2:
 	Bug fixes:
 	- The shell patterns were updated to correctly exit from subshells and other
