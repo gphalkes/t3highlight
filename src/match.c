@@ -234,7 +234,7 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 				context.best->extra != NULL ? context.best->extra->dynamic_pattern : NULL);
 
 			/* Check if we have come full circle. If so, continue to the next byte and start over. */
-			if (match->last_progress == match->end &&
+			if (match->last_progress == context.best_end &&
 					context.best->next_state > NO_CHANGE &&
 					match->last_progress_state == next_state)
 			{

@@ -119,7 +119,7 @@
 			regex = '(?<![^|&;()<> \t])(if|elif|then|while|until|do)(?![^|&;()<> \t])'
 			style = "keyword"
 		}
-		# After for and select a "name" i.e. a variable name without a $ is
+		# After "for" and "select" a "name" i.e. a variable name without a $ is
 		# expected. Then the word in must appear, or the end of the statement.
 		# Implemented using %on-entry to push the two different items that need
 		# to match.
@@ -152,7 +152,7 @@
 			%highlight { use = "sh-carry-over-line" }
 			delim-style = "keyword"
 		}
-		# The keyword case is nasty, because it expects a "word", which means
+		# The keyword "case" is nasty, because it expects a "word", which means
 		# any type of string, followed by in. After that a special environment
 		# is started which recognizes words, and goes to normal shell mode on
 		# detecting a closing parenthesis. That mode is closed on detecting

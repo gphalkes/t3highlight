@@ -46,6 +46,7 @@
 			start = '"'
 			%highlight { use = "java-escape" }
 			end = '"|$'
+			style = "string"
 		}
 		%highlight {
 			start = "'"
