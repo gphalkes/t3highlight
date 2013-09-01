@@ -74,6 +74,9 @@ static void list_document_types(const char *name);
     @param fmt The format string for the message. See fprintf(3) for details.
     @param ... The arguments for printing.
 */
+#ifdef __GNUC__
+void fatal(const char *fmt, ...) __attribute__((noreturn));
+#endif
 void fatal(const char *fmt, ...) {
 	va_list args;
 
