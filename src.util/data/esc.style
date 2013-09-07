@@ -61,7 +61,7 @@ styles {
 		end = "\033[0m"
 	}
 	deletion {
-		start = "\033[32;1m"
+		start = "\033[31;1m"
 		end = "\033[0m"
 	}
 }

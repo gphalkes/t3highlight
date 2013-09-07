@@ -41,7 +41,7 @@ format = 1
 			%highlight {
 				start = '^\+{3} .*'
 				%highlight {
-					regex = '^@@.*@@$'
+					regex = '^@@.*@@.*'
 					style = "keyword"
 				}
 				%highlight {
