@@ -1,3 +1,7 @@
+Version :
+	Bug fixes:
+	- Add override keyword for C++.
+
 Version 0.3.3:
 	Bug fixes:
 	- Loop check in matching checked the end of the previoius match instead of
