@@ -1,6 +1,8 @@
-Version :
+Version 0.3.4:
 	Bug fixes:
 	- Add override keyword for C++.
+	- Update the diff language spec to be more permissive.
+	- Correct color for deletions in t3highlight when outputing to terminal.
 
 Version 0.3.3:
 	Bug fixes:
