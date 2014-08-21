@@ -5,7 +5,7 @@
 		%highlight {
 			regex = '\b(?:and_eq|and|alignas|alignof|asm|auto|bitand|bitor|bool|' +
 				'break|case|catch|char16_t|char32_t|char|class|compl|constexpr|' +
-				'const_cast|const|continue|decltype|default|delete|double|' +
+				'const_cast|const|continue|decltype|default|delete|do|double|' +
 				'dynamic_cast|else|enum|explicit|export|extern|false|float|for|' +
 				'friend|goto|if|inline|int|long|mutable|namespace|new|noexcept|' +
 				'not_eq|not|nullptr|operator|or_eq|or|override|private|protected|public|' +
