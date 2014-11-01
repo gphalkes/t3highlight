@@ -530,7 +530,9 @@ static void highlight_file(t3_highlight_t *highlight) {
 int main(int argc, char *argv[]) {
 	t3_highlight_t *highlight;
 	t3_highlight_error_t error;
+#ifdef DEBUG
 	int i;
+#endif
 
 #ifdef USE_GETTEXT
 	setlocale(LC_ALL, "");
