@@ -1,3 +1,8 @@
+Version 0.3.5:
+	Bug fixes:
+	- Added omitted 'do' keyword for C++.
+	- Fix reads and writes of unallocated memory in analyzing patterns.
+
 Version 0.3.4:
 	Bug fixes:
 	- Add override keyword for C++.

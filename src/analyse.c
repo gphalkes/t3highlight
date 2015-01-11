@@ -37,15 +37,16 @@ static t3_bool check_empty_start_cycle_from_state(highlight_context_t *context, 
 	VECTOR_LAST(state_stack).i = 0;
 
 	while (state_stack.used) {
-		state_stack_t *current = &VECTOR_LAST(state_stack);
+		size_t current_idx = state_stack.used - 1;
+		#define CURRENT state_stack.data[current_idx]
 
-		if (current->i == states->data[current->state].patterns.used) {
+		if (CURRENT.i == states->data[CURRENT.state].patterns.used) {
 			state_stack.used--;
 			continue;
 		}
 
-		for (; current->i < states->data[current->state].patterns.used; current->i++) {
-			pattern_t *highlight = &states->data[current->state].patterns.data[current->i];
+		for (; CURRENT.i < states->data[CURRENT.state].patterns.used; CURRENT.i++) {
+			pattern_t *highlight = &states->data[CURRENT.state].patterns.data[CURRENT.i];
 
 			if (highlight->next_state <= NO_CHANGE)
 				continue;
@@ -99,7 +100,7 @@ static t3_bool check_empty_start_cycle_from_state(highlight_context_t *context, 
 					VECTOR_LAST(state_stack).i = 0;
 				}
 			}
-			current->i++;
+			CURRENT.i++;
 			break;
 		}
 	}
@@ -137,15 +138,16 @@ t3_bool _t3_check_use_cycle(highlight_context_t *context) {
 		VECTOR_LAST(state_stack).i = 0;
 
 		while (state_stack.used) {
-			state_stack_t *current = &VECTOR_LAST(state_stack);
+			size_t current_idx = state_stack.used - 1;
+			#define CURRENT state_stack.data[current_idx]
 
-			if (current->i == context->highlight->states.data[current->state].patterns.used) {
+			if (CURRENT.i == context->highlight->states.data[CURRENT.state].patterns.used) {
 				state_stack.used--;
 				continue;
 			}
 
-			for (; current->i < context->highlight->states.data[current->state].patterns.used; current->i++) {
-				pattern_t *highlight = &context->highlight->states.data[current->state].patterns.data[current->i];
+			for (; CURRENT.i < context->highlight->states.data[CURRENT.state].patterns.used; CURRENT.i++) {
+				pattern_t *highlight = &context->highlight->states.data[CURRENT.state].patterns.data[CURRENT.i];
 
 				if (highlight->regex.regex != NULL)
 					continue;
@@ -169,7 +171,7 @@ t3_bool _t3_check_use_cycle(highlight_context_t *context) {
 				VECTOR_LAST(state_stack).state = highlight->next_state;
 				VECTOR_LAST(state_stack).i = 0;
 
-				current->i++;
+				CURRENT.i++;
 				break;
 			}
 		}
