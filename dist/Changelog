@@ -1,3 +1,13 @@
+Version 0.4.0:
+	New features:
+	- The interface for detection of languages was changed to return a
+	  t3_highlight_lang_t struct, to allow accurate loading of the patterns
+	  from the detected language.
+	- A new function was added to retrieve the language detected from the
+	  file name.
+
+	This version is both an API and ABI break.
+
 Version 0.3.5:
 	Bug fixes:
 	- Added omitted 'do' keyword for C++.

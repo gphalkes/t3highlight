@@ -315,9 +315,10 @@ T3_HIGHLIGHT_API t3_bool t3_highlight_utf8check(const char *line, size_t size);
     @param line_length The length in bytes of the data in @p line.
     @param first Boolean indicating whether the @c first-line-regex patterns should be applied.
     @param flags Flags for loading of the map file.
+    @param lang The location to store the @c t3_highlight_lang_t (use t3_highlight_free_lang to free data).
     @param error Location to store an error code, or @c NULL.
-	@return A newly allocated string with the name of the language, or @c NULL
-        when no language was detected.
+
+	If detection succeeds, t3_highlight_free_lang should be called on @p lang when it is no longer necessary.
 
     Auto-detection of the highlighting language is based on vi/Vim modelines, and
     Emacs major mode tags. Furthermore, when the boolean @p first is set, the
@@ -325,8 +326,27 @@ T3_HIGHLIGHT_API t3_bool t3_highlight_utf8check(const char *line, size_t size);
     These regular expressions typically look for interpreters indicated with the
     #! syntax.
 */
-T3_HIGHLIGHT_API char *t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
-	int flags, t3_highlight_error_t *error);
+T3_HIGHLIGHT_API t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
+	int flags, t3_highlight_lang_t *lang, t3_highlight_error_t *error);
+
+/** Detect the language of a file from its name.
+    @param filename The file name to use for auto-detection.
+    @param flags Flags for loading of the map file.
+    @param lang The location to store the @c t3_highlight_lang_t (use t3_highlight_free_lang to free data).
+    @param error Location to store an error code, or @c NULL.
+
+	If detection succeeds, t3_highlight_free_lang should be called on @p lang when it is no longer necessary.
+*/
+T3_HIGHLIGHT_API t3_bool t3_highlight_lang_by_filename(const char *filename, int flags, t3_highlight_lang_t *lang,
+		t3_highlight_error_t *error);
+
+/** Free the data allocated for a single @c t3_highlight_lang_t.
+    @param lang The @c t3_highlight_lang_t to release.
+
+    The @p lang parameter is deliberatly passed by value, to prevent confusion
+    with t3_highlight_free_list.
+*/
+T3_HIGHLIGHT_API void t3_highlight_free_lang(t3_highlight_lang_t lang);
 
 #ifdef __cplusplus
 } /* extern "C" */

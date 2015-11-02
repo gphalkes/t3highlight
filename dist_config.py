@@ -7,7 +7,7 @@ auxsources = [ 'src/.objects/*.bytes', 'src.util/.objects/*.bytes', 'src/highlig
 auxfiles = [ 'doc/API' ]
 extrabuilddirs = [ 'doc' ]
 
-versioninfo = '1:0:0'
+versioninfo = '2:0:0'
 
 def get_replacements(mkdist):
 	return [
