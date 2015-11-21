@@ -6,6 +6,11 @@ Version 0.4.0:
 	- A new function was added to retrieve the language detected from the
 	  file name.
 
+	Bug fixes:
+	- The HTML patterns for the svg, math and style tags did not correctly
+	  accept the generic HTML attribute names.
+	- The style tag was not colored correctly at all.
+
 	This version is both an API and ABI break.
 
 Version 0.3.5:

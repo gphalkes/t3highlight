@@ -195,6 +195,7 @@
 				regex = '(?<![\w:-])xmlns(?::[\w-]+)?(?<![\w:-])'
 				style = 'variable'
 			}
+			%highlight { use = "html-named-attributes" }
 			%highlight { use = "svg-named-attributes" }
 			%highlight { use = "html-attribute" }
 			%highlight {
@@ -221,6 +222,7 @@
 				regex = '(?<![\w:-])xmlns(?::[\w-]+)?(?<![\w:-])'
 				style = 'variable'
 			}
+			%highlight { use = "html-named-attributes" }
 			%highlight { use = "mathml-named-attributes" }
 			%highlight { use = "html-attribute" }
 			%highlight {
@@ -240,11 +242,31 @@
 			}
 			delim-style = 'keyword'
 		}
+
 		%highlight {
 			start = '(?i)<style(?![\w-])'
-			%highlight { use = "css" }
-			end = '(?i)(?=</style([^\w-]|$))'
-			delim-style = "keyword"
+			%highlight {
+				regex = '(?<![\w:-])(?:media|type|scoped)(?![\w:-])'
+				style = 'variable'
+			}
+			%highlight { use = "html-named-attributes" }
+			%highlight { use = "html-attribute" }
+			%highlight {
+				start = '>'
+				%highlight {
+					start = "(?i)</style"
+					%highlight {
+						regex = '[^\s>]+'
+						style = 'error'
+					}
+					end = '>'
+					exit = 3
+					delim-style = 'keyword'
+				}
+				%highlight { use = "css" }
+				delim-style = 'keyword'
+			}
+			delim-style = 'keyword'
 		}
 
 		%highlight {
