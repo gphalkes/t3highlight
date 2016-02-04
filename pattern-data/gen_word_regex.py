@@ -1,4 +1,10 @@
 #!/usr/bin/python
+# A small script to turn a list of words into a regular expression to match those
+# words. The input (via stdin) should consist of the words that should be included.
+# Lines starting with # are ignored, except for lines starting with #%start or
+# #%end. The text following #%start is used as the beginning of the regular expression,
+# while the text following #%end is used as the end. The default for these values
+# is \b, which matches a word boundary. Empty lines are skipped.
 
 import sys
 from cStringIO import StringIO

@@ -50,7 +50,9 @@ static t3_config_t *load_single_map(const char *name, int flags, t3_highlight_er
 		goto return_error;
 	}
 
-	opts.flags = (flags & T3_HIGHLIGHT_VERBOSE_ERROR) ? (T3_CONFIG_VERBOSE_ERROR | T3_CONFIG_ERROR_FILE_NAME) : 0;
+	opts.flags = T3_CONFIG_ERROR_FILE_NAME;
+	if (flags & T3_HIGHLIGHT_VERBOSE_ERROR)
+		opts.flags |= T3_CONFIG_VERBOSE_ERROR;
 	map = t3_config_read_file(file, &local_error, &opts);
 	fclose(file);
 	if (map == NULL) {
@@ -284,9 +286,9 @@ t3_highlight_t *t3_highlight_load(const char *lang_file, int (*map_style)(void *
 		}
 	}
 
-	opts.flags = T3_CONFIG_INCLUDE_DFLT;
+	opts.flags = T3_CONFIG_INCLUDE_DFLT | T3_CONFIG_ERROR_FILE_NAME;
 	if (flags & T3_HIGHLIGHT_VERBOSE_ERROR)
-		opts.flags |= T3_CONFIG_VERBOSE_ERROR | T3_CONFIG_ERROR_FILE_NAME;
+		opts.flags |= T3_CONFIG_VERBOSE_ERROR;
 	opts.include_callback.dflt.path = path;
 	opts.include_callback.dflt.flags = 0;
 

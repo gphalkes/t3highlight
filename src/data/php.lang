@@ -1,0 +1,7 @@
+format = 2
+
+%include = "def/php.lang"
+
+%highlight {
+	use = "php"
+}

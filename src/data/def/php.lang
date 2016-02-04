@@ -1,0 +1,122 @@
+%define {
+	php-string-escape {
+		%highlight {
+			regex = '\\(?:[nrtvef\$"]|[0-7]{1,3}|x[0-9A-Fa-f]{1,2}|u\{[0-9a-f]{1,6}\})'
+			style = "string-escape"
+		}
+	}
+
+	php-keyword {
+		%highlight {
+			regex = '(?i)(?<![\w$])(?:__halt_compiler|a(?:bstract|nd|rray|s)|br' +
+				'eak|c(?:a(?:llable|se|tch)|l(?:ass|one)|on(?:st|tinue))|d(?:e(' +
+				'?:clare|fault)|ie|o)|e(?:cho|lse(?:if)?|mpty|nd(?:declare|for(' +
+				'?:each)?|if|switch|while)|val|x(?:it|tends))|f(?:alse|inal(?:l' +
+				'y)?|or(?:each)?|unction)|g(?:lobal|oto)|i(?:f|mplements|n(?:cl' +
+				'ude(?:_once)?|st(?:anceof|eadof)|terface)|sset)|list|n(?:amesp' +
+				'ace|ew|ull)|or|p(?:r(?:i(?:nt|vate)|otected)|ublic)|re(?:quire' +
+				'(?:_once)?|turn)|s(?:tatic|witch)|t(?:hrow|r(?:ait|ue|y))|u(?:' +
+				'nset|se)|var|while|xor|yield)\b'
+			style = "keyword"
+		}
+	}
+
+	php-reserved-word {
+		%highlight {
+			regex = '(?i)(?<![\w$])(?:bool|f(?:alse|loat)|int|mixed|nu(?:ll|mer' +
+				'ic)|object|resource|string|true)\b'
+			style = "misc"
+		}
+	}
+
+	# FIXME: the string variables are not complete yet. These are not used.
+	php-simple-string-var {
+		%highlight {
+			# FIXME: potentially, this could have nicer coloring for some parts of it.
+			regex = '\$[_a-zA-Z][_a-zA-Z0-9]*(?:->[_a-zA-Z][_a-zA-Z0-9]*|\[(?:\$?[_a-zA-Z][_a-zA-Z0-9]*|[0-9]+)\])?'
+			style = "variable"
+		}
+	}
+	php-complex-string-var {
+		%highlight {
+			# FIXME: this currently just to prevent bad coloring of the complex expansions
+			regex = '\{\$'
+			style = "string"
+		}
+	}
+
+	php {
+		%highlight {
+			start = "<\?php([ \t]|$)"
+
+			# Block comments
+			%highlight {
+				start = '/\*'
+				end = '\*/'
+				style = "comment"
+			}
+
+			# Line comments
+			%highlight {
+				start = '(//|#)'
+				%highlight {
+					regex = '\?>'
+					exit = 2
+				}
+				end = '$'
+				style = "comment"
+			}
+
+			# Keywords
+			%highlight {
+				use = "php-keyword"
+			}
+
+			# Single quoted strings
+			%highlight {
+				start = "'"
+				%highlight {
+					regex = "\\[\']"
+					style = "string-escape"
+				}
+				end = "'"
+				style = "string"
+			}
+
+			# Double quoted strings
+			%highlight {
+				start = '"'
+				%highlight { use = "php-string-escape" }
+				#%highlight { use = "php-simple-string-var" }
+				#%highlight { use = "php-complex-string-var" }
+				end = '"'
+				style = "string"
+			}
+
+			# Here docs
+			%highlight {
+				start = '<<<\s*(?<delim>\w+)'
+				extract = "delim"
+				%highlight { use = "php-string-escape" }
+				#%highlight { use = "php-simple-string-var" }
+				#%highlight { use = "php-complex-string-var" }
+				end = '^(?&delim);$'
+				style = "string"
+			}
+
+			# Integer constants
+			%highlight {
+				regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F]+|\d+|0b[01]+)\b'
+				style = "number"
+			}
+			# Floating point constants
+			%highlight {
+				regex = '(?<![^-+\W])(?:(?:\d+\.\d*|\.\d+)(?:[eE][-+]?\d+)?|\d+[eE][-+]?\d+)?'
+				style = "number"
+			}
+
+			end = "\?>"
+			delim-style = "misc"
+		}
+	}
+}

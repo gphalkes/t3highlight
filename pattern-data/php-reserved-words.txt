@@ -1,0 +1,14 @@
+# PHP 7 reserved words
+#%start (?i)(?<![\w$])
+
+int
+float
+bool
+string
+true
+false
+null
+resource
+object
+mixed
+numeric
