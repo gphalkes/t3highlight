@@ -5,6 +5,8 @@ Version 0.4.0:
 	  from the detected language.
 	- A new function was added to retrieve the language detected from the
 	  file name.
+	- Basic syntax highlighting patterns for PHP. Currently does not include
+	  highlighting of string interpolation.
 
 	Bug fixes:
 	- The HTML patterns for the svg, math and style tags did not correctly
