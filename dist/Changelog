@@ -1,3 +1,6 @@
+Version 0.4.1:
+	Re-release of version 0.4.0 for config script update.
+
 Version 0.4.0:
 	New features:
 	- The interface for detection of languages was changed to return a
