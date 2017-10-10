@@ -17,8 +17,18 @@
 		}
 	}
 
+	cxx-raw-string {
+		%highlight {
+			start = 'R"(?<delim>[^\(]*)\('
+			extract = "delim"
+			end = '\)(?&delim)"'
+			style = "string"
+		}
+	}
+
 	cxx {
 		%highlight { use = "cxx-keywords" }
+		%highlight { use = "cxx-raw-string" }
 		%highlight { use = "c-base" }
 	}
 }
