@@ -357,7 +357,7 @@ t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
 	lang->name = NULL;
 	lang->lang_file = NULL;
 
-	if ((pcre = pcre_compile("-\\*-\\s*(?:mode:\\s*)([^\\s;]);?.*-\\*-", PCRE_CASELESS, &error_message, &error_offset, NULL)) == NULL) {
+	if ((pcre = pcre_compile("-\\*-\\s*(?:mode:\\s*)([^\\s;]+);?.*-\\*-", PCRE_CASELESS, &error_message, &error_offset, NULL)) == NULL) {
 		_t3_highlight_set_error_simple(error, T3_ERR_INTERNAL, flags);
 		return t3_false;
 	}
@@ -405,6 +405,7 @@ t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
 
 pattern_succeeded:
 {
+
 	char *matched_name;
 	t3_bool result;
 
