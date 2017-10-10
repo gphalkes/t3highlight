@@ -28,7 +28,7 @@ format = 1
 }
 %lang {
 	name = "Shell"
-	name-regex = "^(?i)(?:ba)?sh|(?i)shell$"
+	name-regex = "^(?i)(?:ba)?sh|(?i)shell(?:-script)$"
 	file-regex = "(?i)\.sh$"
 	lang-file = "sh.lang"
 	first-line-regex = "^#![\w/]*(?:/env\s+|/)(?:ba)?sh(?!\S)"
