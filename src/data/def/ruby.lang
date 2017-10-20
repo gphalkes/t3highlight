@@ -1,0 +1,289 @@
+%define {
+	ruby-unknown-string-escape {
+		%highlight {
+			regex = '\\.'
+			style = "string"
+		}
+	}
+	ruby-string-escape {
+		%highlight {
+			regex = '\\(?:x[0-9a-fA-F]{2}|[0-7]{1,3}|[\\''"abtnvfres]|' +
+				'u(?:[0-9a-fA-F]{4}|\{[0-9a-fA-F]{1,6}\})|U[0-9a-fA-F]{8}|' +
+				'c(?:[!-~]|\x7f)|C-(?:[!-~]|\x7f)|M-[!-~]|M-\\C-[!-~]|'+
+				'M-\\c[!-~]|c\\M-[!-~])'
+			style = "string-escape"
+		}
+	}
+
+	ruby-nested-parenthesis-uninterp {
+		%highlight {
+			start = '\('
+			%highlight { use = "ruby-unknown-string-escape" }
+			end = '\)'
+			nested = yes
+			style = "string"
+		}
+	}
+	ruby-nested-parenthesis-interp {
+		%highlight {
+			start = '\('
+			%highlight { use = "ruby-string-escape" }
+			%highlight { use = "ruby-unknown-string-escape" }
+			end = '\)'
+			nested = yes
+			style = "string"
+		}
+	}
+
+	ruby-nested-curly-brace-uninterp {
+		%highlight {
+			start = '\{'
+			%highlight { use = "ruby-unknown-string-escape" }
+			end = '\}'
+			nested = yes
+			style = "string"
+		}
+	}
+	ruby-nested-curly-brace-interp {
+		%highlight {
+			start = '\{'
+			%highlight { use = "ruby-string-escape" }
+			%highlight { use = "ruby-unknown-string-escape" }
+			end = '\}'
+			nested = yes
+			style = "string"
+		}
+	}
+
+	ruby-nested-square-bracket-uninterp {
+		%highlight {
+			start = '\['
+			%highlight { use = "ruby-unknown-string-escape" }
+			end = '\]'
+			nested = yes
+			style = "string"
+		}
+	}
+	ruby-nested-square-bracket-interp {
+		%highlight {
+			start = '\['
+			%highlight { use = "ruby-string-escape" }
+			%highlight { use = "ruby-unknown-string-escape" }
+			end = '\]'
+			nested = yes
+			style = "string"
+		}
+	}
+
+	ruby-nested-angle-bracket-uninterp {
+		%highlight {
+			start = '<'
+			%highlight { use = "ruby-unknown-string-escape" }
+			end = '>'
+			nested = yes
+			style = "string"
+		}
+	}
+	ruby-nested-angle-bracket-interp {
+		%highlight {
+			start = '<'
+			%highlight { use = "ruby-string-escape" }
+			%highlight { use = "ruby-unknown-string-escape" }
+			end = '>'
+			nested = yes
+			style = "string"
+		}
+	}
+
+	ruby-comment {
+		%highlight {
+			start = '#'
+			end = '$'
+			style = "comment"
+		}
+	}
+	ruby-begin-end-comment {
+		%highlight {
+			start = '^=begin'
+			end = '^=end'
+			style = "comment"
+		}
+	}
+
+	ruby-base {
+		%highlight { use = "ruby-comment" }
+		%highlight { use = "ruby-begin-end-comment" }
+		%highlight {
+			regex = '\b(?:__(?:ENCODING|LINE|FILE)__|BEGIN|END|alias|and|' +
+				'begin|break|case|class|def|do|el(?:se|sif)|en(?:d|sure)|false|for|' +
+				'if|in(?:clude)?|module|next|nil|not|or|re(?:do|scue|quire|try|turn)|' +
+				'self|super|then|true|un(?:def|less|til)|wh(?:en|ile)|yield)\b|\bdefined\?'
+			style = "keyword"
+		}
+
+		# Here begins the Ruby quoting insanity. Ruby makes life extremely difficult for
+		# highlighters, because almost any character is allowed as a quote character, and
+		# there are also four types of bracketing quotes ( () {} [] and <> ). And as if
+		# that wasn't difficult enough to handle, in some variants the full range of escape
+		# sequences is available, while in others only \\ and \<opening/closing quote
+		# character> are recognised. And of course the bracketing quotes nest.
+
+		# And then we haven't even touched upon the here-docs, which are allowed
+		# practically anywhere, even inside quoted strings. And of course you can use
+		# more than one per line.
+
+		# In the patterns below, we try our best to highlight everything correctly, but
+		# there are some things which are just impossible. Here-docs on line are only partially
+		# supported (see below). Also, we make no distinction in escaping interpretation.
+		%highlight {
+			start = '"'
+			%highlight { use = "ruby-string-escape" }
+			%highlight { use = "ruby-unknown-string-escape" }
+			end = '"'
+			style = "string"
+		}
+		%highlight {
+			start = "'"
+			%highlight { use = "ruby-unknown-string-escape" }
+			end = "'"
+			style = "string"
+		}
+
+		%highlight {
+			start = "%[IQRSWX]?(?<delim>[!-'*-/:;=?@\\^_`|~])"
+			%highlight { use = "ruby-string-escape" }
+			%highlight { use = "ruby-unknown-string-escape" }
+			extract = "delim"
+			end = "(?&delim)"
+			style = "string"
+		}
+		%highlight {
+			start = "%[IQRSWX]?\("
+			%highlight { use = "ruby-string-escape" }
+			%highlight { use = "ruby-unknown-string-escape" }
+			%highlight { use = "ruby-nested-parenthesis-interp" }
+			end = "\)"
+			style = "string"
+		}
+		%highlight {
+			start = "%[IQRSWX]?\{"
+			%highlight { use = "ruby-string-escape" }
+			%highlight { use = "ruby-unknown-string-escape" }
+			%highlight { use = "ruby-nested-curly-brace-interp" }
+			end = "\}"
+			style = "string"
+		}
+		%highlight {
+			start = "%[IQRSWX]?\["
+			%highlight { use = "ruby-string-escape" }
+			%highlight { use = "ruby-unknown-string-escape" }
+			%highlight { use = "ruby-nested-square-bracket-interp" }
+			end = "\]"
+			style = "string"
+		}
+		%highlight {
+			start = "%[IQRSWX]?<"
+			%highlight { use = "ruby-string-escape" }
+			%highlight { use = "ruby-unknown-string-escape" }
+			%highlight { use = "ruby-nested-angle-bracket-interp" }
+			end = ">"
+			style = "string"
+		}
+
+
+		%highlight {
+			start = "%[iqrswx](?<delim>[!-'*-/:;=?@\\^_`|~])"
+			%highlight { use = "ruby-unknown-string-escape" }
+			extract = "delim"
+			end = "(?&delim)"
+			style = "string"
+		}
+		%highlight {
+			start = "%[iqrswx]\("
+			%highlight { use = "ruby-unknown-string-escape" }
+			%highlight { use = "ruby-nested-parenthesis-uninterp" }
+			end = "\)"
+			style = "string"
+		}
+		%highlight {
+			start = "%[iqrswx]\{"
+			%highlight { use = "ruby-unknown-string-escape" }
+			%highlight { use = "ruby-nested-curly-brace-uninterp" }
+			end = "\}"
+			style = "string"
+		}
+		%highlight {
+			start = "%[iqrswx]\["
+			%highlight { use = "ruby-unknown-string-escape" }
+			%highlight { use = "ruby-nested-square-bracket-uninterp" }
+			end = "\]"
+			style = "string"
+		}
+		%highlight {
+			start = "%[iqrswx]<"
+			%highlight { use = "ruby-unknown-string-escape" }
+			%highlight { use = "ruby-nested-angle-bracket-uninterp" }
+			end = ">"
+			style = "string"
+		}
+
+
+		# Integer literals
+		%highlight {
+			regex = '(?<![^-+\W])(?:[1-9][0-9]*(?:_[0-9]+)*|0[oO]?[0-7]+(?:_[0-7]+)*|' +
+				'0[xX][0-9a-fA-F]+(?:_[0-9a-fA-F]+)*|0[bB][01]+(?:_[01]+)*|0+)[lL]?'
+			style = "number"
+		}
+		# Floating point literals
+		%highlight {
+			regex = '(?<![^-+\W])(?:(?:\d+(?:_\d+)*\.\d+(?:_\d+)*|\.\d+(?:_\d+)*)(?:[eE][-+]?\d+(?:_\d+)*)?|\d+(?:_\d+)*[eE][-+]?\d+(?:_\d+)*)[jJ]?'
+			style = "number"
+		}
+	}
+
+	ruby {
+		%highlight { use = "ruby-base" }
+		%highlight {
+			start = '^=\w+'
+			end = '^=cut(?:\s.*)'
+			style = "comment-keyword"
+		}
+
+		%highlight {
+			start = '__END__'
+			style = "misc"
+		}
+
+		# Start a here-doc.
+		%highlight {
+			start = "<<[~-](['""`]?)(?<delim>\w+)\1"
+			extract = "delim"
+			%on-entry {
+				# We still have to finish the line, so we include ruby-base, but
+				# without the here-doc and __END__ support.
+				%highlight { use = "ruby-base" }
+				# We fake support for multiple here-docs here, by jumping out of this state
+				# when we find another here-doc. That way, the new here-doc will be
+				# matched by the outer state again, thus restarting the search for the
+				# here-doc end marker with the marker of the new here-doc. Assuming that
+				# the previous here-doc does not contain the marker for the new here-doc,
+				# this will actually simulate multiple here-docs on a single line.
+				%highlight {
+					regex = "(?=<<[~-](['""`]?)(?<delim>\w+)\1)"
+					exit = 2
+				}
+				# At the end of the line, we need to start parsing the here-doc.
+				# That is what the enclosing state does.
+				end = '$'
+				style = "normal"
+			}
+			# In principle we should only match the \s* if the here-doc started with
+			# ~ or -. However, because of the multi-here-doc faking we do, we don't
+			# actually know if we should look for that. However, it is very unlikely
+			# that (valid) code will contain the termination string in the actual
+			# string with indent.
+			end = "^\s*(?&delim)$"
+			style = "string"
+		}
+	}
+}

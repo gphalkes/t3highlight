@@ -27,6 +27,12 @@ format = 1
 	lang-file = "java.lang"
 }
 %lang {
+	name = "Ruby"
+	name-regex = "^(?i)ruby$"
+	file-regex = "(?i)\.rb$"
+	lang-file = "ruby.lang"
+}
+%lang {
 	name = "Shell"
 	name-regex = "^(?i)(?:ba)?sh|(?i)shell(?:-script)$"
 	file-regex = "(?i)\.sh$"

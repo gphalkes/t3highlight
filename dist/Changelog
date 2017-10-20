@@ -1,6 +1,7 @@
 Version 0.4.3:
     New features:
     - Support for highlighting C++11 raw string literals.
+	- Support for Ruby highlighting.
 
     Bug fixes:
     - Properly handle Emacs mode lines. Only the first character of the

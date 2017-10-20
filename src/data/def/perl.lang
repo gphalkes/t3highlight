@@ -143,7 +143,7 @@
 		# quoted strings, the second string is quoted independently if the first string
 		# uses a bracketing quote. Also, in some variants the full range of escape
 		# sequences is available, while in others only \\ and \<closing quote character>
-		# are recognised.
+		# are recognised. And of course the bracketing quotes nest.
 
 		# A further complication is the use of the # character as delimiter, which may
 		# only be used as delimiter if it directly follows the operator. To make it
