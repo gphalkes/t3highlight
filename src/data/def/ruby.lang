@@ -120,6 +120,10 @@
 				'self|super|then|true|un(?:def|less|til)|wh(?:en|ile)|yield)\b|\bdefined\?'
 			style = "keyword"
 		}
+		%highlight {
+			regex = '\b[A-Z][_a-zA-Z0-9]*|\$(?:-[A-Za-z]|[_a-zA-Z][_a-zA-Z0-9]*)|(?:@@?|(?<!:):)[_a-zA-Z][_a-zA-Z0-9]*'
+			style = 'variable'
+		}
 
 		# Here begins the Ruby quoting insanity. Ruby makes life extremely difficult for
 		# highlighters, because almost any character is allowed as a quote character, and
@@ -231,7 +235,7 @@
 		# Integer literals
 		%highlight {
 			regex = '(?<![^-+\W])(?:[1-9][0-9]*(?:_[0-9]+)*|0[oO]?[0-7]+(?:_[0-7]+)*|' +
-				'0[xX][0-9a-fA-F]+(?:_[0-9a-fA-F]+)*|0[bB][01]+(?:_[01]+)*|0+)[lL]?'
+				'0[xX][0-9a-fA-F]+(?:_[0-9a-fA-F]+)*|0[bB][01]+(?:_[01]+)*|0)[lL]?'
 			style = "number"
 		}
 		# Floating point literals
