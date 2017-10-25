@@ -6,6 +6,9 @@ Version 0.4.3:
     Bug fixes:
     - Properly handle Emacs mode lines. Only the first character of the
       language name was used to detect the highlighting mode.
+	- Fix javascript regular expression literal highlighting to accept
+	  expressions starting with \ or [,. Also allow such literals after
+	  detecting a comma.
 
 Version 0.4.2:
 	Re-release of version 0.4.0 for config script update.

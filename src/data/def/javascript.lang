@@ -8,7 +8,8 @@
 
 	javascript-regex-literal {
 		%highlight {
-			start = '/(?=[^*\\/[])'
+		    # Exclude comment starting instances of / (i.e. /* and //).
+			start = '/(?=[^*/])'
 			%highlight { regex = '\\.' }
 			%highlight {
 				start = '\['
@@ -65,7 +66,7 @@
 		# expression literal. This looks for one of the characters =, ( or :, or
 		# the keywords return and throw.
 		%highlight {
-			start = '[=(:]'
+			start = '[=(:,]'
 			%highlight { use = "javascript-comment" }
 			%highlight { use = "javascript-regex-literal" }
 			end = '(?![\s=(:]|$)'
@@ -74,7 +75,7 @@
 			start = '\breturn|throw\b'
 			%highlight { use = "javascript-comment" }
 			%highlight { use = "javascript-regex-literal" }
-			end = '(?![\s=(:]|$)'
+			end = '(?![\s=(:,]|$)'
 			delim-style = "keyword"
 		}
 
