@@ -4,7 +4,7 @@ package = 'libt3highlight'
 excludesrc = '/(Makefile|TODO.*|SciTE.*|test\.c|run|valgrind|debug)$'
 auxsources = [ 'src/.objects/*.bytes', 'src.util/.objects/*.bytes', 'src/highlight_api.h',
 	'src/highlight_errors.h', 'src/highlight_shared.c' ]
-auxfiles = [ 'doc/API' ]
+auxfiles = [ 'doc/doxygen.conf', 'doc/DoxygenLayout.xml', 'doc/main_doc.h' ]
 extrabuilddirs = [ 'doc' ]
 
 versioninfo = '2:0:0'

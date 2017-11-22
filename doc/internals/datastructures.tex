@@ -103,7 +103,7 @@ introduction of dynamic end patterns, this could not work anymore due to the
 extra dynamic state that needs to be stored. Thus instead of using the
 {\tt state_t} array index as the start-of-line state, an intermediate data
 structure was introduced. This is the flattened state tree (DST), which is
-stored in the t3_highlight_match_t.
+stored in the {\tt t3_highlight_match_t}.
 
 The DST is a vector of {\tt state_mapping_t} objects. Each
 {\tt state_mapping_t} holds an index in the {\tt state_t}s array in the
