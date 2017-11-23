@@ -1,3 +1,7 @@
+Version 0.4.5:
+	Bug fixes:
+	- Fixes the install target in Makefile.in.
+
 Version 0.4.4:
 	- Removes pre-generated Doxygen documentation.
 	- Minor updates to Makefile.in for compatibility with Debian packaging.

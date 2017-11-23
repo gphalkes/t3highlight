@@ -93,6 +93,7 @@ install: all
 	chmod 0644 $(_libdir)/libt3highlight.la
 	$(INSTALL) -d $(_includedir)/t3/highlight/t3highlight
 	$(INSTALL) -m0644 src/highlight.h src/highlight_api.h src/highlight_errors.h $(_includedir)/t3/highlight/t3highlight
+	$(INSTALL) -d $(_docdir)
 	$(INSTALL) -m0644 COPYING README Changelog $(_docdir)
 	$(INSTALL) -d $(_datadir)/libt3highlight<LIBVERSION>/def
 	find src/data -type f | while read X ; do $(INSTALL) -m0644 $${X} $(_datadir)/libt3highlight<LIBVERSION>/$${X#src/data} ; done
