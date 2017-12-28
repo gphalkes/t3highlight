@@ -1,6 +1,7 @@
 Version 0.4.5:
 	Bug fixes:
 	- Fixes the install target in Makefile.in.
+	- Fixes the configure script to correctly pass the PCRE flags.
 
 Version 0.4.4:
 	- Removes pre-generated Doxygen documentation.
