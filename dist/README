@@ -5,10 +5,18 @@ The libt3highlight library provides functions for syntax highlighting different
 types of text files.
 
 libt3highlight is part of the Tilde Terminal Toolkit (T3)
-[http://os.ghalkes.nl/t3/]
+[https://os.ghalkes.nl/t3/]
 
 libt3highlight is licensed under the GNU General Public License version 3. See
 the file COPYING for details.
+
+
+Documentation
+=============
+
+The full documentation for libt3highlight can be generated using doxygen. The
+documentation for the current version can be found at
+https://os.ghalkes.nl/doc/libt3highlight.
 
 
 Prerequisites and installation
@@ -50,7 +58,7 @@ Reporting bugs
 ==============
 
 If you think you have found a bug, please check that you are using the latest
-version of libt3highlight [http://os.ghalkes.nl/t3/libt3highlight.html]. When
+version of libt3highlight [https://os.ghalkes.nl/t3/libt3highlight.html]. When
 reporting bugs, please include a minimal example that demonstrates the problem.
 
 
