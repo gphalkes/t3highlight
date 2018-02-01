@@ -15,18 +15,32 @@
 #define T3_HIGHLIGHT_VECTOR_H
 
 #include <stdlib.h>
+
 #include "highlight_api.h"
 
 typedef struct {
-	void *data;
-	size_t allocated,
-		used;
+  void *data;
+  size_t allocated, used;
 } vector_base_t;
 
-#define VECTOR(type) struct { type *data; size_t allocated, used; }
-#define VECTOR_INIT(name) do { (name).data = NULL; (name).allocated = 0; (name).used = 0; } while (0)
-#define VECTOR_ITERATE(name, func) do { size_t _i; for (_i = 0; _i < (name).used; _i++) func(&(name).data[_i]); } while (0)
-#define VECTOR_RESERVE(name) _t3_highlight_vector_reserve((vector_base_t *) &name, sizeof((name).data[0]))
+#define VECTOR(type)        \
+  struct {                  \
+    type *data;             \
+    size_t allocated, used; \
+  }
+#define VECTOR_INIT(name) \
+  do {                    \
+    (name).data = NULL;   \
+    (name).allocated = 0; \
+    (name).used = 0;      \
+  } while (0)
+#define VECTOR_ITERATE(name, func)                               \
+  do {                                                           \
+    size_t _i;                                                   \
+    for (_i = 0; _i < (name).used; _i++) func(&(name).data[_i]); \
+  } while (0)
+#define VECTOR_RESERVE(name) \
+  _t3_highlight_vector_reserve((vector_base_t *)&name, sizeof((name).data[0]))
 #define VECTOR_LAST(name) (name).data[(name).used - 1]
 #define VECTOR_FREE(name) free((name).data)
 

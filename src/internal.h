@@ -15,6 +15,7 @@
 #define INTERNAL_H
 
 #include <pcre.h>
+
 #include "highlight_api.h"
 #include "vector.h"
 
@@ -38,121 +39,114 @@
 INDEX_TYPE(pattern_idx_t);
 INDEX_TYPE(dst_idx_t);
 
-#define NO_CHANGE ((pattern_idx_t) -1)
+#define NO_CHANGE ((pattern_idx_t)-1)
 /* EXIT_STATE is equal to exit = 1. For higher values of the exit attribute,
    subtract from EXIT_STATE. I.e. -3 equals exit = 2, -4 equals exit = 3, etc. */
-#define EXIT_STATE ((pattern_idx_t) -2)
+#define EXIT_STATE ((pattern_idx_t)-2)
 
 /* WARNING: make sure any flags defined here don't clash with the ones in
    highlight.h */
-#define T3_HIGHLIGHT_ALLOW_EMPTY_START (1<<15)
+#define T3_HIGHLIGHT_ALLOW_EMPTY_START (1 << 15)
 
 typedef struct {
-	pcre *regex;
-	pcre_extra *extra;
+  pcre *regex;
+  pcre_extra *extra;
 } full_pcre_t;
 
 typedef struct {
-	char *end_pattern;
-	pattern_idx_t state;
+  char *end_pattern;
+  pattern_idx_t state;
 } on_entry_info_t;
 
 typedef struct {
-	char *dynamic_name;
-	char *dynamic_pattern;
-	on_entry_info_t *on_entry;
-	int on_entry_cnt;
+  char *dynamic_name;
+  char *dynamic_pattern;
+  on_entry_info_t *on_entry;
+  int on_entry_cnt;
 } pattern_extra_t;
 
 typedef struct {
-	full_pcre_t regex;
-	pattern_extra_t *extra; /* Only set for start patterns. */
-	pattern_idx_t next_state; /* Values: NO_CHANGE, EXIT_STATE or smaller,  or a value >= 0. */
-	int attribute_idx;
+  full_pcre_t regex;
+  pattern_extra_t *extra;   /* Only set for start patterns. */
+  pattern_idx_t next_state; /* Values: NO_CHANGE, EXIT_STATE or smaller,  or a value >= 0. */
+  int attribute_idx;
 } pattern_t;
 
 typedef VECTOR(pattern_t) patterns_t;
 
 typedef struct {
-	patterns_t patterns;
-	int attribute_idx;
+  patterns_t patterns;
+  int attribute_idx;
 } state_t;
 
 typedef VECTOR(state_t) states_t;
 
 struct t3_highlight_t {
-	states_t states;
-	char *lang_file;
-	int flags;
+  states_t states;
+  char *lang_file;
+  int flags;
 };
 
-
 typedef struct {
-	full_pcre_t regex;
-	char *extracted;
-	int extracted_length;
+  full_pcre_t regex;
+  char *extracted;
+  int extracted_length;
 } dynamic_state_t;
 
 typedef struct {
-	dst_idx_t parent;
-	pattern_idx_t highlight_state;
-	dynamic_state_t *dynamic;
+  dst_idx_t parent;
+  pattern_idx_t highlight_state;
+  dynamic_state_t *dynamic;
 } state_mapping_t;
 
 struct t3_highlight_match_t {
-	const t3_highlight_t *highlight;
-	VECTOR(state_mapping_t) mapping;
-	size_t start,
-		match_start,
-		end,
-		last_progress;
-	dst_idx_t state;
-	int begin_attribute,
-		match_attribute,
-		last_progress_state;
-	t3_bool utf8_checked;
+  const t3_highlight_t *highlight;
+  VECTOR(state_mapping_t) mapping;
+  size_t start, match_start, end, last_progress;
+  dst_idx_t state;
+  int begin_attribute, match_attribute, last_progress_state;
+  t3_bool utf8_checked;
 };
 
 typedef struct {
-	const char *name;
-	pattern_idx_t state;
+  const char *name;
+  pattern_idx_t state;
 } use_mapping_t;
 
 /* Structs to make passing a large number of arguments easier. */
 typedef struct {
-	int (*map_style)(void *, const char *);
-	void *map_style_data;
-	t3_highlight_t *highlight;
-	t3_config_t *syntax;
-	int flags;
-	VECTOR(use_mapping_t) use_map;
-	t3_highlight_error_t *error;
+  int (*map_style)(void *, const char *);
+  void *map_style_data;
+  t3_highlight_t *highlight;
+  t3_config_t *syntax;
+  int flags;
+  VECTOR(use_mapping_t) use_map;
+  t3_highlight_error_t *error;
 } highlight_context_t;
 
 typedef struct {
-	t3_highlight_match_t *match;
-	const char *line;
-	size_t size;
-	state_t *state;
-	int ovector[30],
-		best_end,
-		extract_start,
-		extract_end;
-	pattern_t *best;
+  t3_highlight_match_t *match;
+  const char *line;
+  size_t size;
+  state_t *state;
+  int ovector[30], best_end, extract_start, extract_end;
+  pattern_t *best;
 } match_context_t;
 
 typedef struct {
-	size_t i;
-	pattern_idx_t state;
+  size_t i;
+  pattern_idx_t state;
 } state_stack_t;
 
-
 T3_HIGHLIGHT_LOCAL char *_t3_highlight_strdup(const char *str);
-T3_HIGHLIGHT_LOCAL t3_bool _t3_compile_highlight(const char *highlight, full_pcre_t *regex, const t3_config_t *error_context,
-	int flags, t3_highlight_error_t *error);
+T3_HIGHLIGHT_LOCAL t3_bool _t3_compile_highlight(const char *highlight, full_pcre_t *regex,
+                                                 const t3_config_t *error_context, int flags,
+                                                 t3_highlight_error_t *error);
 T3_HIGHLIGHT_LOCAL t3_bool _t3_check_empty_start_cycle(highlight_context_t *context);
 T3_HIGHLIGHT_LOCAL t3_bool _t3_check_use_cycle(highlight_context_t *context);
-T3_HIGHLIGHT_LOCAL void _t3_highlight_set_error(t3_highlight_error_t *error,
-	int code, int line_number, const char *file_name, const char *extra, int flags);
-T3_HIGHLIGHT_LOCAL void _t3_highlight_set_error_simple(t3_highlight_error_t *error, int code, int flags);
+T3_HIGHLIGHT_LOCAL void _t3_highlight_set_error(t3_highlight_error_t *error, int code,
+                                                int line_number, const char *file_name,
+                                                const char *extra, int flags);
+T3_HIGHLIGHT_LOCAL void _t3_highlight_set_error_simple(t3_highlight_error_t *error, int code,
+                                                       int flags);
 #endif

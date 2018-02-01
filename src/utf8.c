@@ -15,48 +15,46 @@
 #include "highlight.h"
 
 t3_bool t3_highlight_utf8check(const char *line, size_t size) {
-	size_t i;
-	for (i = 0; i < size; ) {
-		int bytes;
-		switch (line[i] & 0xf0) {
-			case 0xf0:
-				bytes = 3;
-				break;
-			case 0xe0:
-				bytes = 2;
-				break;
-			case 0xc0:
-			case 0xd0:
-				bytes = 1;
-				break;
-			default:
-				i++;
-				continue;
-		}
-		/* Check that there is no partial codepoint at the end. */
-		if (bytes + i > size)
-			return t3_false;
+  size_t i;
+  for (i = 0; i < size;) {
+    int bytes;
+    switch (line[i] & 0xf0) {
+      case 0xf0:
+        bytes = 3;
+        break;
+      case 0xe0:
+        bytes = 2;
+        break;
+      case 0xc0:
+      case 0xd0:
+        bytes = 1;
+        break;
+      default:
+        i++;
+        continue;
+    }
+    /* Check that there is no partial codepoint at the end. */
+    if (bytes + i > size) return t3_false;
 
-		if (bytes == 3) {
-			/* Check for out-of-range codepoints. */
-			if ((unsigned char) line[i] > 0xf4 || ((unsigned char) line[i] == 0xf4 && (unsigned char) line[i + 1] >= 0x90))
-				return t3_false;
-		} else if (bytes == 2) {
-			/* Check for surrogates. */
-			if ((unsigned char) line[i] == 0xed && (unsigned char) line[i] >= 0xa0)
-				return t3_false;
-		}
+    if (bytes == 3) {
+      /* Check for out-of-range codepoints. */
+      if ((unsigned char)line[i] > 0xf4 ||
+          ((unsigned char)line[i] == 0xf4 && (unsigned char)line[i + 1] >= 0x90))
+        return t3_false;
+    } else if (bytes == 2) {
+      /* Check for surrogates. */
+      if ((unsigned char)line[i] == 0xed && (unsigned char)line[i] >= 0xa0) return t3_false;
+    }
 
-		i++;
-		while (bytes > 0) {
-			/* Check that follow-up bytes start with 10 binary. */
-			if ((line[i] & 0xc0) != 0x80)
-				return t3_false;
-			i++;
-			bytes--;
-		}
-	}
-	return t3_true;
+    i++;
+    while (bytes > 0) {
+      /* Check that follow-up bytes start with 10 binary. */
+      if ((line[i] & 0xc0) != 0x80) return t3_false;
+      i++;
+      bytes--;
+    }
+  }
+  return t3_true;
 }
 /*
 D7FF: ED 9F BF

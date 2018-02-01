@@ -15,6 +15,10 @@
 #define T3HIGHLIGHT_H
 #include <stdlib.h>
 
+#if defined _
+#undef _
+#endif
+
 #ifdef USE_GETTEXT
 #include <libintl.h>
 #define _(x) gettext(x)

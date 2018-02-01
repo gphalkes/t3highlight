@@ -31,8 +31,8 @@ extern "C" {
     The second 8 bits represent the minor version.
     The third 8 bits represent the major version.
 
-	At runtime, the value of T3_HIGHLIGHT_VERSION can be retrieved by calling
-	::t3_highlight_get_version.
+    At runtime, the value of T3_HIGHLIGHT_VERSION can be retrieved by calling
+    ::t3_highlight_get_version.
 
     @internal
     The value 0 is an invalid value which should be replaced by the script
@@ -61,7 +61,7 @@ extern "C" {
 /** @name Flags for ::t3_highlight_load. */
 /*@{*/
 /** Treat input as UTF-8 encoded text, instead of assuming the C locale. */
-#define T3_HIGHLIGHT_UTF8 (1<<0)
+#define T3_HIGHLIGHT_UTF8 (1 << 0)
 /** Assume the text to be highlighted is valid UTF-8.
 
     Be very careful using this flag: using this flag when the input is not
@@ -72,13 +72,12 @@ extern "C" {
     If the input is guaranteed to be valid UTF-8, using this flag will provide
     a performance benefit.
 */
-#define T3_HIGHLIGHT_UTF8_NOCHECK (1<<1)
+#define T3_HIGHLIGHT_UTF8_NOCHECK (1 << 1)
 /** Use the default include path to lookup the file. */
-#define T3_HIGHLIGHT_USE_PATH (1<<2)
+#define T3_HIGHLIGHT_USE_PATH (1 << 2)
 /** Use verbose error reporting. */
-#define T3_HIGHLIGHT_VERBOSE_ERROR (1<<3)
+#define T3_HIGHLIGHT_VERBOSE_ERROR (1 << 3)
 /*@}*/
-
 
 /** @struct t3_highlight_t
     An opaque struct representing a highlighting pattern.
@@ -93,8 +92,8 @@ typedef struct t3_highlight_match_t t3_highlight_match_t;
     A struct representing a display name/language file name tuple.
 */
 typedef struct {
-	char *name; /**< Display name of a language. */
-	char *lang_file; /**< Name of the language file, to be used with ::t3_highlight_load. */
+  char *name;      /**< Display name of a language. */
+  char *lang_file; /**< Name of the language file, to be used with ::t3_highlight_load. */
 } t3_highlight_lang_t;
 
 /** @struct t3_highlight_error_t
@@ -102,12 +101,15 @@ typedef struct {
     other members are dependent on the ::T3_HIGHLIGHT_VERBOSE_ERROR flag.
 */
 typedef struct {
-	int error;
-	int line_number; /**< Line number where the error occured, but only if ::T3_HIGHLIGHT_VERBOSE_ERROR is set. */
-	char *file_name; /**< File name in which the error occured or @c NULL, but only if ::T3_HIGHLIGHT_VERBOSE_ERROR is set.
-	                      Must be Free'd. */
-	char *extra; /**< Further information about the error or @c NULL, but only if ::T3_HIGHLIGHT_VERBOSE_ERROR is set.
-	                  Must be Free'd. */
+  int error;
+  int line_number; /**< Line number where the error occured, but only if
+                      ::T3_HIGHLIGHT_VERBOSE_ERROR is set. */
+  char *file_name; /**< File name in which the error occured or @c NULL, but only if
+                      ::T3_HIGHLIGHT_VERBOSE_ERROR is set.
+                        Must be Free'd. */
+  char *extra;     /**< Further information about the error or @c NULL, but only if
+                      ::T3_HIGHLIGHT_VERBOSE_ERROR is set.
+                        Must be Free'd. */
 } t3_highlight_error_t;
 
 /** List the known languages.
@@ -137,7 +139,9 @@ T3_HIGHLIGHT_API void t3_highlight_free_list(t3_highlight_lang_t *list);
     same value as the 'normal' style.
 */
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load(const char *name,
-	int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
+                                                   int (*map_style)(void *, const char *),
+                                                   void *map_style_data, int flags,
+                                                   t3_highlight_error_t *error);
 /** Load a highlighting pattern, using a source file name.
     @param name The source file name used to determine the appropriate highlighting pattern.
     @param map_style See ::t3_highlight_load.
@@ -151,8 +155,9 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load(const char *name,
     data structure is not modified by any call to the library except
     ::t3_highlight_free, and can be used across threads.
 */
-T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_filename(const char *name,
-	int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
+T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_filename(
+    const char *name, int (*map_style)(void *, const char *), void *map_style_data, int flags,
+    t3_highlight_error_t *error);
 /** Load a highlighting pattern, using a language name.
     @param name The source file name used to determine the appropriate highlighting pattern.
     @param map_style See ::t3_highlight_load.
@@ -164,8 +169,9 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_filename(const char *name,
     name-regex member in the language definition in the lang.map file is used
     to determine which highlighting patterns should be loaded.
 */
-T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_langname(const char *name,
-	int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
+T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_langname(
+    const char *name, int (*map_style)(void *, const char *), void *map_style_data, int flags,
+    t3_highlight_error_t *error);
 /** Load a highlighting pattern, based on auto-detection from the line content.
     @param line The line to use for auto-detection.
     @param line_length The length in bytes of the data in @p line.
@@ -178,8 +184,11 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_langname(const char *name,
     For details on the file loading, see ::t3_highlight_load. For details on the
     detection, see ::t3_highlight_detect.
 */
-T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_detect(const char *line, size_t line_length, t3_bool first,
-		int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
+T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_detect(const char *line, size_t line_length,
+                                                             t3_bool first,
+                                                             int (*map_style)(void *, const char *),
+                                                             void *map_style_data, int flags,
+                                                             t3_highlight_error_t *error);
 
 /** Create a highlighting pattern from a previously created configuration.
     @param syntax The @c t3_config_t to create the highlighting pattern from.
@@ -194,7 +203,9 @@ T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_load_by_detect(const char *line, s
     can be used to create a highlighting pattern.
 */
 T3_HIGHLIGHT_API t3_highlight_t *t3_highlight_new(t3_config_t *syntax,
-	int (*map_style)(void *, const char *), void *map_style_data, int flags, t3_highlight_error_t *error);
+                                                  int (*map_style)(void *, const char *),
+                                                  void *map_style_data, int flags,
+                                                  t3_highlight_error_t *error);
 
 /** Free all memory associated with a highlighting pattern.
     It is acceptable to pass a @c NULL pointer.
@@ -228,8 +239,10 @@ T3_HIGHLIGHT_API const char *t3_highlight_get_langfile(const t3_highlight_t *hig
             size_t begin = t3_highlight_get_start(match),
                 start = t3_highlight_get_match_start(match),
                 end = t3_highlight_get_end(match);
-            // Output bytes from 'begin' up to 'start' using t3_highlight_get_begin_attr(match) as attribute
-            // Output bytes from 'start' up to 'end' using t3_highlight_get_match_attr(match) as attribute
+            // Output bytes from 'begin' up to 'start' using t3_highlight_get_begin_attr(match) as
+            // attribute
+            // Output bytes from 'start' up to 'end' using t3_highlight_get_match_attr(match) as
+            // attribute
         } while (match_result);
     @endcode
 
@@ -238,15 +251,16 @@ T3_HIGHLIGHT_API const char *t3_highlight_get_langfile(const t3_highlight_t *hig
 
     @note when using a ::t3_highlight_t created using the T3_HIGHLIGHT_UTF8 flag,
     the first call to ::t3_highlight_match will check the passed string for
-	UTF-8 validity (see ::t3_highlight_utf8check for details). If the test fails,
+    UTF-8 validity (see ::t3_highlight_utf8check for details). If the test fails,
     ::t3_false is returned and the @c start, @c match_start and @c end members
     of the ::t3_highlight_match_t are set to -1.
 */
-T3_HIGHLIGHT_API t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *str, size_t size);
+T3_HIGHLIGHT_API t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *str,
+                                            size_t size);
 
 /** Allocate and initialize a new ::t3_highlight_match_t structure.
     @param highlight The ::t3_highlight_t structure this ::t3_highlight_match_t
-        structure will be used for.
+    structure will be used for.
 
     The returned structure will can not be shared across threads.
 */
@@ -315,10 +329,12 @@ T3_HIGHLIGHT_API t3_bool t3_highlight_utf8check(const char *line, size_t size);
     @param line_length The length in bytes of the data in @p line.
     @param first Boolean indicating whether the @c first-line-regex patterns should be applied.
     @param flags Flags for loading of the map file.
-    @param lang The location to store the @c t3_highlight_lang_t (use t3_highlight_free_lang to free data).
+    @param lang The location to store the @c t3_highlight_lang_t (use t3_highlight_free_lang to free
+    data).
     @param error Location to store an error code, or @c NULL.
 
-	If detection succeeds, t3_highlight_free_lang should be called on @p lang when it is no longer necessary.
+    If detection succeeds, t3_highlight_free_lang should be called on @p lang when it is no
+    longer necessary.
 
     Auto-detection of the highlighting language is based on vi/Vim modelines, and
     Emacs major mode tags. Furthermore, when the boolean @p first is set, the
@@ -327,18 +343,22 @@ T3_HIGHLIGHT_API t3_bool t3_highlight_utf8check(const char *line, size_t size);
     #! syntax.
 */
 T3_HIGHLIGHT_API t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
-	int flags, t3_highlight_lang_t *lang, t3_highlight_error_t *error);
+                                             int flags, t3_highlight_lang_t *lang,
+                                             t3_highlight_error_t *error);
 
 /** Detect the language of a file from its name.
     @param filename The file name to use for auto-detection.
     @param flags Flags for loading of the map file.
-    @param lang The location to store the @c t3_highlight_lang_t (use t3_highlight_free_lang to free data).
+    @param lang The location to store the @c t3_highlight_lang_t (use t3_highlight_free_lang to free
+    data).
     @param error Location to store an error code, or @c NULL.
 
-	If detection succeeds, t3_highlight_free_lang should be called on @p lang when it is no longer necessary.
+    If detection succeeds, t3_highlight_free_lang should be called on @p lang when it is no
+    longer necessary.
 */
-T3_HIGHLIGHT_API t3_bool t3_highlight_lang_by_filename(const char *filename, int flags, t3_highlight_lang_t *lang,
-		t3_highlight_error_t *error);
+T3_HIGHLIGHT_API t3_bool t3_highlight_lang_by_filename(const char *filename, int flags,
+                                                       t3_highlight_lang_t *lang,
+                                                       t3_highlight_error_t *error);
 
 /** Free the data allocated for a single @c t3_highlight_lang_t.
     @param lang The @c t3_highlight_lang_t to release.

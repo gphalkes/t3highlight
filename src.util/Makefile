@@ -40,5 +40,7 @@ lib:
 links:
 	@[ -L t3config ] || ln -s ../../config/src t3config
 
+clang-format:
+	clang-format -i *.c *.h
 
-.PHONY: links
+.PHONY: links clang-format

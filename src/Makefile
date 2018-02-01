@@ -34,4 +34,7 @@ include ../../t3shared/rules.mk
 
 highlight.c: .objects/syntax.bytes .objects/map.bytes
 
-.PHONY: links
+clang-format:
+	clang-format -i *.c *.h
+
+.PHONY: clang-format

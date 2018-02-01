@@ -14,14 +14,13 @@
 #include "vector.h"
 
 t3_bool _t3_highlight_vector_reserve(vector_base_t *vector, size_t elsize) {
-	if (vector->allocated <= vector->used) {
-		size_t allocate = vector->allocated == 0 ? 8 : vector->allocated * 2;
-		void *data = realloc(vector->data, allocate * elsize);
-		if (data == NULL)
-			return t3_false;
-		vector->data = data;
-		vector->allocated = allocate;
-	}
-	vector->used++;
-	return t3_true;
+  if (vector->allocated <= vector->used) {
+    size_t allocate = vector->allocated == 0 ? 8 : vector->allocated * 2;
+    void *data = realloc(vector->data, allocate * elsize);
+    if (data == NULL) return t3_false;
+    vector->data = data;
+    vector->allocated = allocate;
+  }
+  vector->used++;
+  return t3_true;
 }
