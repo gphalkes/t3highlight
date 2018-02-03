@@ -28,12 +28,15 @@ static dst_idx_t find_state(t3_highlight_match_t *match, pattern_idx_t highlight
   if (highlight_state <= EXIT_STATE) {
     dst_idx_t return_state;
     for (return_state = match->state; highlight_state < EXIT_STATE && return_state > 0;
-         highlight_state++)
+         highlight_state++) {
       return_state = match->mapping.data[return_state].parent;
+    }
     return return_state > 0 ? match->mapping.data[return_state].parent : 0;
   }
 
-  if (highlight_state == NO_CHANGE) return match->state;
+  if (highlight_state == NO_CHANGE) {
+    return match->state;
+  }
 
   /* Check if the state is already mapped. */
   for (i = match->state + 1; i < match->mapping.used; i++) {
@@ -45,11 +48,14 @@ static dst_idx_t find_state(t3_highlight_match_t *match, pattern_idx_t highlight
         (extra == NULL ||
          (extra != NULL && extra->dynamic_name != NULL && match->mapping.data[i].dynamic != NULL &&
           dynamic_length == match->mapping.data[i].dynamic->extracted_length &&
-          memcmp(dynamic_line, match->mapping.data[i].dynamic->extracted, dynamic_length) == 0)))
+          memcmp(dynamic_line, match->mapping.data[i].dynamic->extracted, dynamic_length) == 0))) {
       return i;
+    }
   }
 
-  if (!VECTOR_RESERVE(match->mapping)) return 0;
+  if (!VECTOR_RESERVE(match->mapping)) {
+    return 0;
+  }
   VECTOR_LAST(match->mapping).parent = match->state;
   VECTOR_LAST(match->mapping).highlight_state = highlight_state;
 
@@ -61,8 +67,9 @@ static dst_idx_t find_state(t3_highlight_match_t *match, pattern_idx_t highlight
 
     for (i = 0; i < dynamic_length; i++) {
       if (dynamic_line[i] == 0 ||
-          (dynamic_line[i] == '\\' && i + 1 < dynamic_length && dynamic_line[i + 1] == 'E'))
+          (dynamic_line[i] == '\\' && i + 1 < dynamic_length && dynamic_line[i + 1] == 'E')) {
         replace_count++;
+      }
     }
     /* Build the following pattern:
        (?(DEFINE)(?<%s>\Q%s\E))%s
@@ -152,12 +159,14 @@ static void match_internal(match_context_t *context) {
       regex = &context->state->patterns.data[j].regex;
       /* For items that do not change state, we do not want an empty match
          ever (makes no progress). */
-      if (context->state->patterns.data[j].next_state == NO_CHANGE) options |= PCRE_NOTEMPTY;
-      /* The default behaviour is to not allow start patterns to be empty, such
-         that progress will be guaranteed. */
-      else if (context->state->patterns.data[j].next_state > NO_CHANGE &&
-               !(context->match->highlight->flags & T3_HIGHLIGHT_ALLOW_EMPTY_START))
+      if (context->state->patterns.data[j].next_state == NO_CHANGE) {
         options |= PCRE_NOTEMPTY;
+        /* The default behaviour is to not allow start patterns to be empty, such
+           that progress will be guaranteed. */
+      } else if (context->state->patterns.data[j].next_state > NO_CHANGE &&
+                 !(context->match->highlight->flags & T3_HIGHLIGHT_ALLOW_EMPTY_START)) {
+        options |= PCRE_NOTEMPTY;
+      }
     }
 
     if (pcre_exec(regex->regex, regex->extra, context->line, context->size,
@@ -281,7 +290,9 @@ void t3_highlight_reset(t3_highlight_match_t *match, dst_idx_t state) {
 
 t3_highlight_match_t *t3_highlight_new_match(const t3_highlight_t *highlight) {
   t3_highlight_match_t *result = malloc(sizeof(t3_highlight_match_t));
-  if (result == NULL) return NULL;
+  if (result == NULL) {
+    return NULL;
+  }
 
   VECTOR_INIT(result->mapping);
   if (!VECTOR_RESERVE(result->mapping)) {
@@ -296,7 +307,9 @@ t3_highlight_match_t *t3_highlight_new_match(const t3_highlight_t *highlight) {
 }
 
 static void free_dynamic(state_mapping_t *mapping) {
-  if (mapping->dynamic == NULL) return;
+  if (mapping->dynamic == NULL) {
+    return;
+  }
   free(mapping->dynamic->extracted);
   pcre_free(mapping->dynamic->regex.regex);
   free_pcre_study(mapping->dynamic->regex.extra);
@@ -304,7 +317,9 @@ static void free_dynamic(state_mapping_t *mapping) {
 }
 
 void t3_highlight_free_match(t3_highlight_match_t *match) {
-  if (match == NULL) return;
+  if (match == NULL) {
+    return;
+  }
   VECTOR_ITERATE(match->mapping, free_dynamic);
   VECTOR_FREE(match->mapping);
   free(match);

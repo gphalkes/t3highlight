@@ -81,7 +81,9 @@ size_t parse_escapes(char *string) {
     if (string[read_position] == '\\') {
       read_position++;
 
-      if (read_position == max_read_position) break;
+      if (read_position == max_read_position) {
+        break;
+      }
 
       switch (string[read_position++]) {
         case 'n':
@@ -128,18 +130,22 @@ size_t parse_escapes(char *string) {
                       is_hex_digit(string[read_position + i]);
                i++) {
             value <<= 4;
-            if (is_digit(string[read_position + i]))
+            if (is_digit(string[read_position + i])) {
               value += (int)(string[read_position + i] - '0');
-            else
+            } else {
               value += (int)(to_lower(string[read_position + i]) - 'a') + 10;
-            if (value > UCHAR_MAX) value = UCHAR_MAX + 1;
+            }
+            if (value > UCHAR_MAX) {
+              value = UCHAR_MAX + 1;
+            }
           }
           read_position += i;
 
-          if (i == 0)
+          if (i == 0) {
             write_position += 2;
-          else if (value <= UCHAR_MAX)
+          } else if (value <= UCHAR_MAX) {
             string[write_position++] = (char)value;
+          }
           break;
         }
         case '0':
@@ -155,8 +161,9 @@ size_t parse_escapes(char *string) {
           size_t max_idx = string[read_position - 1] < '4' ? 2 : 1;
           for (i = 0; i < max_idx && read_position + i < max_read_position &&
                       string[read_position + i] >= '0' && string[read_position + i] <= '7';
-               i++)
+               i++) {
             value = value * 8 + (int)(string[read_position + i] - '0');
+          }
 
           read_position += i;
 
@@ -180,18 +187,20 @@ size_t parse_escapes(char *string) {
               goto next;
             }
             value <<= 4;
-            if (is_digit(string[read_position + i]))
+            if (is_digit(string[read_position + i])) {
               value += (int)(string[read_position + i] - '0');
-            else
+            } else {
               value += (int)(to_lower(string[read_position + i]) - 'a') + 10;
+            }
           }
 
-          if (value > 0x10FFFFL || (value & 0xF800L) == 0xD800L)
+          if (value > 0x10FFFFL || (value & 0xF800L) == 0xD800L) {
             write_position += 2 + chars;
-          else
+          } else {
             /* The conversion won't overwrite subsequent characters because
                \uxxxx is already the as long as the max utf-8 length */
             write_position += put_utf8(value, string + write_position);
+          }
 
           read_position += chars;
           break;

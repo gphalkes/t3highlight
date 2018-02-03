@@ -34,22 +34,29 @@ t3_bool t3_highlight_utf8check(const char *line, size_t size) {
         continue;
     }
     /* Check that there is no partial codepoint at the end. */
-    if (bytes + i > size) return t3_false;
+    if (bytes + i > size) {
+      return t3_false;
+    }
 
     if (bytes == 3) {
       /* Check for out-of-range codepoints. */
       if ((unsigned char)line[i] > 0xf4 ||
-          ((unsigned char)line[i] == 0xf4 && (unsigned char)line[i + 1] >= 0x90))
+          ((unsigned char)line[i] == 0xf4 && (unsigned char)line[i + 1] >= 0x90)) {
         return t3_false;
+      }
     } else if (bytes == 2) {
       /* Check for surrogates. */
-      if ((unsigned char)line[i] == 0xed && (unsigned char)line[i] >= 0xa0) return t3_false;
+      if ((unsigned char)line[i] == 0xed && (unsigned char)line[i] >= 0xa0) {
+        return t3_false;
+      }
     }
 
     i++;
     while (bytes > 0) {
       /* Check that follow-up bytes start with 10 binary. */
-      if ((line[i] & 0xc0) != 0x80) return t3_false;
+      if ((line[i] & 0xc0) != 0x80) {
+        return t3_false;
+      }
       i++;
       bytes--;
     }

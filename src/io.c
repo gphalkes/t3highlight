@@ -26,7 +26,9 @@ char *_t3_highlight_strdup(const char *str) {
   char *result;
   size_t len = strlen(str) + 1;
 
-  if ((result = malloc(len)) == NULL) return NULL;
+  if ((result = malloc(len)) == NULL) {
+    return NULL;
+  }
   memcpy(result, str, len);
   return result;
 }
@@ -50,7 +52,9 @@ static t3_config_t *load_single_map(const char *name, int flags, t3_highlight_er
   }
 
   opts.flags = T3_CONFIG_ERROR_FILE_NAME;
-  if (flags & T3_HIGHLIGHT_VERBOSE_ERROR) opts.flags |= T3_CONFIG_VERBOSE_ERROR;
+  if (flags & T3_HIGHLIGHT_VERBOSE_ERROR) {
+    opts.flags |= T3_CONFIG_VERBOSE_ERROR;
+  }
   map = t3_config_read_file(file, &local_error, &opts);
   fclose(file);
   if (map == NULL) {
@@ -110,15 +114,18 @@ static t3_config_t *load_map(int flags, t3_highlight_error_t *error) {
     _t3_highlight_set_error_simple(error, T3_ERR_OUT_OF_MEMORY, flags);
     goto return_error;
   }
-  if (!t3_config_add_plist(full_map, "lang", error == NULL ? NULL : &error->error))
+  if (!t3_config_add_plist(full_map, "lang", error == NULL ? NULL : &error->error)) {
     goto return_error;
+  }
 
   xdg_map = t3_config_xdg_get_path(T3_CONFIG_XDG_DATA_HOME, "libt3highlight", strlen("lang.map"));
   if (xdg_map != NULL) {
     strcat(xdg_map, "/lang.map");
     map = load_single_map(xdg_map, 0, NULL);
     free(xdg_map);
-    if (map != NULL) merge(full_map, map);
+    if (map != NULL) {
+      merge(full_map, map);
+    }
   }
 
   if ((map = load_single_map(DATADIR "/"
@@ -139,7 +146,9 @@ t3_highlight_lang_t *t3_highlight_list(int flags, t3_highlight_error_t *error) {
   t3_highlight_lang_t *retval = NULL;
   int count;
 
-  if ((map = load_map(flags, error)) == NULL) return NULL;
+  if ((map = load_map(flags, error)) == NULL) {
+    return NULL;
+  }
 
   lang = t3_config_get(map, "lang");
   for (count = 0, ptr = t3_config_get(lang, NULL); ptr != NULL;
@@ -171,7 +180,9 @@ return_error:
 void t3_highlight_free_list(t3_highlight_lang_t *list) {
   int i;
 
-  if (list == NULL) return;
+  if (list == NULL) {
+    return;
+  }
 
   for (i = 0; list[i].name != NULL; i++) {
     free((char *)list[i].name);
@@ -193,7 +204,9 @@ static t3_bool match_xname(const char *regex_name, const char *name, int flags,
   pcre *pcre;
   int ovector[30];
 
-  if ((map = load_map(flags, error)) == NULL) return t3_false;
+  if ((map = load_map(flags, error)) == NULL) {
+    return t3_false;
+  }
 
   for (ptr = t3_config_get(t3_config_get(map, "lang"), NULL); ptr != NULL;
        ptr = t3_config_get_next(ptr)) {
@@ -202,11 +215,14 @@ static t3_bool match_xname(const char *regex_name, const char *name, int flags,
     int pcre_result;
     t3_config_t *regex;
 
-    if ((regex = t3_config_get(ptr, regex_name)) == NULL) continue;
+    if ((regex = t3_config_get(ptr, regex_name)) == NULL) {
+      continue;
+    }
 
     if ((pcre = pcre_compile(t3_config_get_string(regex), 0, &error_message, &error_offset,
-                             NULL)) == NULL)
+                             NULL)) == NULL) {
       continue;
+    }
 
     pcre_result = pcre_exec(pcre, NULL, name, strlen(name), 0, 0, ovector,
                             sizeof(ovector) / sizeof(ovector[0]));
@@ -244,7 +260,9 @@ static t3_highlight_t *load_by_xname(const char *regex_name, const char *name,
   t3_highlight_lang_t lang;
   t3_highlight_t *result;
 
-  if (!match_xname(regex_name, name, flags, &lang, error)) return NULL;
+  if (!match_xname(regex_name, name, flags, &lang, error)) {
+    return NULL;
+  }
 
   result = t3_highlight_load(lang.lang_file, map_style, map_style_data,
                              flags | T3_HIGHLIGHT_USE_PATH, error);
@@ -293,7 +311,9 @@ t3_highlight_t *t3_highlight_load(const char *lang_file, int (*map_style)(void *
   }
 
   opts.flags = T3_CONFIG_INCLUDE_DFLT | T3_CONFIG_ERROR_FILE_NAME;
-  if (flags & T3_HIGHLIGHT_VERBOSE_ERROR) opts.flags |= T3_CONFIG_VERBOSE_ERROR;
+  if (flags & T3_HIGHLIGHT_VERBOSE_ERROR) {
+    opts.flags |= T3_CONFIG_VERBOSE_ERROR;
+  }
   opts.include_callback.dflt.path = path;
   opts.include_callback.dflt.flags = 0;
 
@@ -311,8 +331,9 @@ t3_highlight_t *t3_highlight_load(const char *lang_file, int (*map_style)(void *
   file = NULL;
 
   if ((result = t3_highlight_new(config, map_style, map_style_data, flags, error)) == NULL) {
-    if ((flags & T3_HIGHLIGHT_VERBOSE_ERROR) && error->file_name == NULL)
+    if ((flags & T3_HIGHLIGHT_VERBOSE_ERROR) && error->file_name == NULL) {
       error->file_name = _t3_highlight_strdup(lang_file);
+    }
     goto return_error;
   }
 
@@ -355,7 +376,9 @@ t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
   pcre *pcre;
 
   if (line == NULL || lang == NULL) {
-    if (error != NULL) error->error = T3_ERR_BAD_ARG;
+    if (error != NULL) {
+      error->error = T3_ERR_BAD_ARG;
+    }
     return t3_false;
   }
 
@@ -368,8 +391,9 @@ t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
     return t3_false;
   }
   if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector,
-                sizeof(ovector) / sizeof(ovector[0])) > 0)
+                sizeof(ovector) / sizeof(ovector[0])) > 0) {
     goto pattern_succeeded;
+  }
   pcre_free(pcre);
   if ((pcre = pcre_compile("\\s(?:vim?|ex): .*[: ]syntax=([^\\s:]+)", 0, &error_message,
                            &error_offset, NULL)) == NULL) {
@@ -377,22 +401,28 @@ t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
     return t3_false;
   }
   if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector,
-                sizeof(ovector) / sizeof(ovector[0])) > 0)
+                sizeof(ovector) / sizeof(ovector[0])) > 0) {
     goto pattern_succeeded;
+  }
   pcre_free(pcre);
 
   if (first) {
     t3_config_t *map, *language;
     const char *regex;
 
-    if ((map = load_map(flags, error)) == NULL) return t3_false;
+    if ((map = load_map(flags, error)) == NULL) {
+      return t3_false;
+    }
 
     for (language = t3_config_get(t3_config_get(map, "lang"), NULL); language != NULL;
          language = t3_config_get_next(language)) {
-      if ((regex = t3_config_get_string(t3_config_get(language, "first-line-regex"))) == NULL)
+      if ((regex = t3_config_get_string(t3_config_get(language, "first-line-regex"))) == NULL) {
         continue;
+      }
 
-      if ((pcre = pcre_compile(regex, 0, &error_message, &error_offset, NULL)) == NULL) continue;
+      if ((pcre = pcre_compile(regex, 0, &error_message, &error_offset, NULL)) == NULL) {
+        continue;
+      }
 
       if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector,
                     sizeof(ovector) / sizeof(ovector[0])) < 0) {
@@ -408,7 +438,9 @@ t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
     t3_config_delete(map);
   }
 
-  if (error != NULL) error->error = T3_ERR_SUCCESS;
+  if (error != NULL) {
+    error->error = T3_ERR_SUCCESS;
+  }
   return t3_false;
 
 pattern_succeeded : {
@@ -416,7 +448,9 @@ pattern_succeeded : {
   t3_bool result;
 
   pcre_free(pcre);
-  if ((matched_name = malloc(ovector[3] - ovector[2] + 1)) == NULL) return t3_false;
+  if ((matched_name = malloc(ovector[3] - ovector[2] + 1)) == NULL) {
+    return t3_false;
+  }
   memcpy(matched_name, line + ovector[2], ovector[3] - ovector[2]);
   matched_name[ovector[3] - ovector[2]] = 0;
 
@@ -433,7 +467,9 @@ t3_highlight_t *t3_highlight_load_by_detect(const char *line, size_t line_length
   t3_highlight_t *result;
   t3_highlight_lang_t lang;
 
-  if (!t3_highlight_detect(line, line_length, first, flags, &lang, error)) return NULL;
+  if (!t3_highlight_detect(line, line_length, first, flags, &lang, error)) {
+    return NULL;
+  }
 
   result = t3_highlight_load(lang.lang_file, map_style, map_style_data, flags, error);
   t3_highlight_free_lang(lang);

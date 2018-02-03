@@ -51,9 +51,10 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
   /* Validate the syntax using the schema. */
   if ((schema = t3_config_read_schema_buffer(syntax_schema, sizeof(syntax_schema), &local_error,
                                              NULL)) == NULL) {
-    if (error != NULL)
+    if (error != NULL) {
       error->error =
           local_error.error != T3_ERR_OUT_OF_MEMORY ? T3_ERR_INTERNAL : local_error.error;
+    }
     return NULL;
   }
 
@@ -75,8 +76,9 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
   /* Check whether to allow empty start patterns. */
   if (t3_config_get_int(t3_config_get(syntax, "format")) > 1 &&
       (t3_config_get(syntax, "allow-empty-start") == NULL ||
-       t3_config_get_bool(t3_config_get(syntax, "allow-empty-start"))))
+       t3_config_get_bool(t3_config_get(syntax, "allow-empty-start")))) {
     flags |= T3_HIGHLIGHT_ALLOW_EMPTY_START;
+  }
 
   if (map_style == NULL) {
     _t3_highlight_set_error_simple(error, T3_ERR_BAD_ARG, flags);
@@ -111,12 +113,15 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
   }
   free(context.use_map.data);
 
-  if (!_t3_check_use_cycle(&context)) goto return_error;
+  if (!_t3_check_use_cycle(&context)) {
+    goto return_error;
+  }
 
   /* If we allow empty start patterns, we need to analyze whether they don't result
      in infinite loops. */
-  if ((flags & T3_HIGHLIGHT_ALLOW_EMPTY_START) && !_t3_check_empty_start_cycle(&context))
+  if ((flags & T3_HIGHLIGHT_ALLOW_EMPTY_START) && !_t3_check_empty_start_cycle(&context)) {
     goto return_error;
+  }
 
   result->flags = flags;
   result->lang_file = NULL;
@@ -194,7 +199,9 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
     free_pcre_study(new_pattern.regex.extra);
 
     /* If the compilation failed, abort the whole thing. */
-    if (!result) goto return_error;
+    if (!result) {
+      goto return_error;
+    }
 
     new_pattern.regex.regex = NULL;
     new_pattern.regex.extra = NULL;
@@ -203,8 +210,9 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
     pattern->extra->dynamic_pattern = t3_config_take_string(regex);
   } else {
     if (!_t3_compile_highlight(t3_config_get_string(regex), &new_pattern.regex, regex,
-                               context->flags, context->error))
+                               context->flags, context->error)) {
       goto return_error;
+    }
   }
 
   new_pattern.attribute_idx = pattern->attribute_idx;
@@ -241,7 +249,9 @@ static t3_bool set_extra(highlight_context_t *context, pattern_t *pattern,
   const char *dynamic = t3_config_get_string(t3_config_get(highlights, "extract"));
   t3_config_t *on_entry = t3_config_get(highlights, "on-entry");
 
-  if (dynamic == NULL && on_entry == NULL) return t3_true;
+  if (dynamic == NULL && on_entry == NULL) {
+    return t3_true;
+  }
 
   if ((pattern->extra = malloc(sizeof(pattern_extra_t))) == NULL) {
     _t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
@@ -260,8 +270,9 @@ static t3_bool set_extra(highlight_context_t *context, pattern_t *pattern,
       _t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
       goto return_error;
     }
-    for (i = 0; i < pattern->extra->on_entry_cnt; i++)
+    for (i = 0; i < pattern->extra->on_entry_cnt; i++) {
       pattern->extra->on_entry[i].end_pattern = NULL;
+    }
   }
 
   if (dynamic != NULL) {
@@ -293,7 +304,9 @@ static t3_bool set_on_entry(highlight_context_t *context, pattern_t *pattern,
 
   t3_config_t *on_entry = t3_config_get(highlights, "on-entry");
 
-  if (on_entry == NULL) return t3_true;
+  if (on_entry == NULL) {
+    return t3_true;
+  }
 
   parent_pattern = *pattern;
   parent_extra = *pattern->extra;
@@ -304,13 +317,15 @@ static t3_bool set_on_entry(highlight_context_t *context, pattern_t *pattern,
     pattern->extra->on_entry[idx].state = context->highlight->states.used;
     parent_pattern.next_state = pattern->extra->on_entry[idx].state;
 
-    if ((style = t3_config_get(on_entry, "style")) != NULL)
+    if ((style = t3_config_get(on_entry, "style")) != NULL) {
       parent_pattern.attribute_idx = style_attr_idx =
           context->map_style(context->map_style_data, t3_config_get_string(style));
+    }
 
-    if ((style = t3_config_get(on_entry, "delim-style")) != NULL)
+    if ((style = t3_config_get(on_entry, "delim-style")) != NULL) {
       parent_pattern.attribute_idx =
           context->map_style(context->map_style_data, t3_config_get_string(style));
+    }
 
     if (!VECTOR_RESERVE(context->highlight->states)) {
       _t3_highlight_set_error_simple(context->error, T3_ERR_OUT_OF_MEMORY, context->flags);
@@ -319,16 +334,21 @@ static t3_bool set_on_entry(highlight_context_t *context, pattern_t *pattern,
     VECTOR_LAST(context->highlight->states) = null_state;
     VECTOR_LAST(context->highlight->states).attribute_idx = style_attr_idx;
     if ((sub_highlights = t3_config_get(on_entry, "highlight")) != NULL) {
-      if (!init_state(context, sub_highlights, pattern->extra->on_entry[idx].state))
+      if (!init_state(context, sub_highlights, pattern->extra->on_entry[idx].state)) {
         goto return_error;
+      }
     }
     /* If the highlight specifies an end regex, create an extra pattern for that and paste that
        to in the list of sub-highlights. Depending on whether end is specified before or after
        the highlight list, it will be pre- or appended. */
     if ((regex = t3_config_get(on_entry, "end")) != NULL) {
       pattern_idx_t return_state = NO_CHANGE - t3_config_get_int(t3_config_get(on_entry, "exit"));
-      if (return_state == NO_CHANGE) return_state = EXIT_STATE;
-      if (!add_delim_highlight(context, regex, return_state, &parent_pattern)) goto return_error;
+      if (return_state == NO_CHANGE) {
+        return_state = EXIT_STATE;
+      }
+      if (!add_delim_highlight(context, regex, return_state, &parent_pattern)) {
+        goto return_error;
+      }
       pattern->extra->on_entry[idx].end_pattern = parent_pattern.extra->dynamic_pattern;
       parent_pattern.extra->dynamic_pattern = NULL;
     }
@@ -359,7 +379,9 @@ static t3_bool map_use(highlight_context_t *context, const t3_config_t *use,
      compiled before, we don't have to do it again, but we can simply
      refer to the previous definition. */
   for (i = 0; i < context->use_map.used; i++) {
-    if (strcmp(t3_config_get_string(use), context->use_map.data[i].name) == 0) break;
+    if (strcmp(t3_config_get_string(use), context->use_map.data[i].name) == 0) {
+      break;
+    }
   }
 
   if (i == context->use_map.used) {
@@ -379,8 +401,9 @@ static t3_bool map_use(highlight_context_t *context, const t3_config_t *use,
     }
     VECTOR_LAST(context->highlight->states) = null_state;
 
-    if (!init_state(context, t3_config_get(definition, "highlight"), *mapped_state))
+    if (!init_state(context, t3_config_get(definition, "highlight"), *mapped_state)) {
       return t3_false;
+    }
   } else {
     *mapped_state = context->use_map.data[i].state;
   }
@@ -408,8 +431,9 @@ static t3_bool init_state(highlight_context_t *context, const t3_config_t *highl
     pattern.extra = NULL;
     if ((regex = t3_config_get(highlights, "regex")) != NULL) {
       if (!_t3_compile_highlight(t3_config_get_string(regex), &pattern.regex, regex, context->flags,
-                                 context->error))
+                                 context->error)) {
         goto return_error;
+      }
 
       pattern.attribute_idx = style_attr_idx;
       pattern.next_state = NO_CHANGE - t3_config_get_int(t3_config_get(highlights, "exit"));
@@ -422,10 +446,13 @@ static t3_bool init_state(highlight_context_t *context, const t3_config_t *highl
               : context->map_style(context->map_style_data, t3_config_get_string(style));
 
       if (!_t3_compile_highlight(t3_config_get_string(regex), &pattern.regex, regex, context->flags,
-                                 context->error))
+                                 context->error)) {
         goto return_error;
+      }
 
-      if (!set_extra(context, &pattern, highlights)) goto return_error;
+      if (!set_extra(context, &pattern, highlights)) {
+        goto return_error;
+      }
 
       /* Create new state to which start will switch. */
       pattern.next_state = context->highlight->states.used;
@@ -438,13 +465,17 @@ static t3_bool init_state(highlight_context_t *context, const t3_config_t *highl
 
       /* Add sub-highlights to the new state, if they are specified. */
       if ((sub_highlights = t3_config_get(highlights, "highlight")) != NULL) {
-        if (!init_state(context, sub_highlights, pattern.next_state)) goto return_error;
+        if (!init_state(context, sub_highlights, pattern.next_state)) {
+          goto return_error;
+        }
       }
 
       /* Set the on_entry patterns, if any. Note that this calls add_delim_highlight for
          the end patterns, which frobs the extra->dynamic_pattern member. Thus this must be
          called before the add_delim_highlight call for this patterns own end pattern. */
-      if (!set_on_entry(context, &pattern, highlights)) goto return_error;
+      if (!set_on_entry(context, &pattern, highlights)) {
+        goto return_error;
+      }
 
       /* If the highlight specifies an end regex, create an extra pattern for that and paste that
          to in the list of sub-highlights. Depending on whether end is specified before or after
@@ -452,17 +483,24 @@ static t3_bool init_state(highlight_context_t *context, const t3_config_t *highl
       if ((regex = t3_config_get(highlights, "end")) != NULL) {
         pattern_idx_t return_state =
             NO_CHANGE - t3_config_get_int(t3_config_get(highlights, "exit"));
-        if (return_state == NO_CHANGE) return_state = EXIT_STATE;
-        if (!add_delim_highlight(context, regex, return_state, &pattern)) goto return_error;
+        if (return_state == NO_CHANGE) {
+          return_state = EXIT_STATE;
+        }
+        if (!add_delim_highlight(context, regex, return_state, &pattern)) {
+          goto return_error;
+        }
       }
 
       if (t3_config_get_bool(t3_config_get(highlights, "nested")) &&
           !add_delim_highlight(context, t3_config_get(highlights, "start"), pattern.next_state,
-                               &pattern))
+                               &pattern)) {
         goto return_error;
+      }
     } else if ((use = t3_config_get(highlights, "use")) != NULL) {
       /* regex = NULL (set above) signifies that this is a link to another state. */
-      if (!map_use(context, use, &pattern.next_state)) goto return_error;
+      if (!map_use(context, use, &pattern.next_state)) {
+        goto return_error;
+      }
     } else {
       _t3_highlight_set_error_simple(context->error, T3_ERR_INTERNAL, context->flags);
       goto return_error;
@@ -481,8 +519,9 @@ return_error:
     free(pattern.extra->dynamic_pattern);
     if (pattern.extra->on_entry != NULL) {
       int i;
-      for (i = 0; i < pattern.extra->on_entry_cnt; i++)
+      for (i = 0; i < pattern.extra->on_entry_cnt; i++) {
         free(pattern.extra->on_entry[i].end_pattern);
+      }
       free(pattern.extra->on_entry);
     }
     free(pattern.extra);
@@ -500,8 +539,9 @@ static void free_highlight(pattern_t *highlight) {
     free(highlight->extra->dynamic_pattern);
     if (highlight->extra->on_entry != NULL) {
       int i;
-      for (i = 0; i < highlight->extra->on_entry_cnt; i++)
+      for (i = 0; i < highlight->extra->on_entry_cnt; i++) {
         free(highlight->extra->on_entry[i].end_pattern);
+      }
       free(highlight->extra->on_entry);
     }
     free(highlight->extra);
@@ -514,7 +554,9 @@ static void free_state(state_t *state) {
 }
 
 void t3_highlight_free(t3_highlight_t *highlight) {
-  if (highlight == NULL) return;
+  if (highlight == NULL) {
+    return;
+  }
   VECTOR_ITERATE(highlight->states, free_state);
   VECTOR_FREE(highlight->states);
   free(highlight->lang_file);
@@ -540,7 +582,9 @@ void _t3_highlight_set_error_simple(t3_highlight_error_t *error, int code, int f
 const char *t3_highlight_strerror(int error) {
   switch (error) {
     default:
-      if (error >= -80) return t3_config_strerror(error);
+      if (error >= -80) {
+        return t3_config_strerror(error);
+      }
       return t3_highlight_strerror_base(error);
     case T3_ERR_INVALID_FORMAT:
       return _("invalid file format");

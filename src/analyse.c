@@ -49,7 +49,9 @@ static t3_bool check_empty_start_cycle_from_state(highlight_context_t *context,
     for (; CURRENT.i < states->data[CURRENT.state].patterns.used; CURRENT.i++) {
       pattern_t *highlight = &states->data[CURRENT.state].patterns.data[CURRENT.i];
 
-      if (highlight->next_state <= NO_CHANGE) continue;
+      if (highlight->next_state <= NO_CHANGE) {
+        continue;
+      }
 
       if (highlight->regex.regex == NULL) {
         /* This is a use pattern. For those we can simply push them on the
@@ -66,12 +68,15 @@ static t3_bool check_empty_start_cycle_from_state(highlight_context_t *context,
       /* This should be pretty much impossible to happen, so we just continue
          as if this pattern matches at least one byte. */
       if (pcre_fullinfo(highlight->regex.regex, highlight->regex.extra, PCRE_INFO_MINLENGTH,
-                        &min_length) != 0)
+                        &min_length) != 0) {
         continue;
+      }
 
       /* If this pattern can not match the empty string, we don't have to
          consider it any further. */
-      if (min_length > 0) continue;
+      if (min_length > 0) {
+        continue;
+      }
 
       /* If we push a state onto the stack that is already on it, we've
          found a cycle. */
@@ -115,7 +120,9 @@ return_error:
 t3_bool _t3_check_empty_start_cycle(highlight_context_t *context) {
   size_t i;
   for (i = 0; i < context->highlight->states.used; i++) {
-    if (!check_empty_start_cycle_from_state(context, i)) return t3_false;
+    if (!check_empty_start_cycle_from_state(context, i)) {
+      return t3_false;
+    }
   }
   return t3_true;
 }
@@ -149,8 +156,12 @@ t3_bool _t3_check_use_cycle(highlight_context_t *context) {
         pattern_t *highlight =
             &context->highlight->states.data[CURRENT.state].patterns.data[CURRENT.i];
 
-        if (highlight->regex.regex != NULL) continue;
-        if (highlight->next_state <= NO_CHANGE) continue;
+        if (highlight->regex.regex != NULL) {
+          continue;
+        }
+        if (highlight->next_state <= NO_CHANGE) {
+          continue;
+        }
 
         /* If we push a state onto the stack that is already on it, we've
            found a cycle. */
