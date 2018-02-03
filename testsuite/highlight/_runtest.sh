@@ -10,7 +10,7 @@ if [ "${PWD##*/}" != work ] ; then
 	exit 1
 fi
 
-rm *
+rm -f *
 
 unset TESTNR
 while [ $# -gt 1 ] ; do
