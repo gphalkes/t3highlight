@@ -19,18 +19,19 @@ TARGETS := t3highlight
 #================================================#
 include ../../makesys/rules.mk
 #================================================#
-LDFLAGS.t3highlight := $(call L, ../src/.libs ../include/t3config/.libs)
+include ../../t3shared/rules-base.mk
+LDFLAGS.t3highlight := $(T3LDFLAGS.t3config) $(T3LDFLAGS.t3highlight)
 LDLIBS.t3highlight := -lt3highlight -lt3config
 CFLAGS.t3highlight := -I.objects -DDATADIR='"$(CURDIR)/data"'
 
-CFLAGS += -I. -I../include -I.objects
+CFLAGS += -I. -I.objects
 #~ CFLAGS += -DUSE_GETTEXT -DLOCALEDIR=\"locales\"
 
 .objects/t3highlight.o: | lib
 
 .objects/%.bytes: %.schema
 	$(GENOBJDIR)
-	$(_VERBOSE_GEN) ../include/t3config/data2bytes -s -- $< > $@
+	$(_VERBOSE_GEN) ../../t3config/src/data2bytes -s -- $< > $@
 
 .objects/t3highlight.o: .objects/style.bytes
 

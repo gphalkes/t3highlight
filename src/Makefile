@@ -14,7 +14,7 @@
 SOURCES.libt3highlight.la := highlight.c vector.c highlight_shared.c io.c utf8.c match.c analyse.c
 
 LDLIBS.libt3highlight.la += -lt3config
-LDFLAGS.libt3highlight.la += -L../include/t3config/.libs
+LDFLAGS.libt3highlight.la += $(T3LDFLAGS.t3config)
 LDFLAGS.libt3highlight.la += `pkg-config --libs libpcre`
 CFLAGS.highlight += -I.objects -DDATADIR='"$(CURDIR)/data"'
 CFLAGS.io += -I.objects -DDATADIR='"$(CURDIR)/data"'
@@ -27,10 +27,11 @@ include ../../makesys/rules.mk
 #================================================#
 T3NAME := highlight
 include ../../t3shared/rules.mk
+include ../../t3shared/rules-base.mk
 
 .objects/%.bytes: %.schema
 	$(GENOBJDIR)
-	$(_VERBOSE_GEN) ../include/t3config/data2bytes -s -- $< > $@
+	$(_VERBOSE_GEN) ../../t3config/src/data2bytes -s -- $< > $@
 
 highlight.c: .objects/syntax.bytes .objects/map.bytes
 
