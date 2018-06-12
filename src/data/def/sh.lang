@@ -206,6 +206,7 @@
 			%highlight { use = "sh-carry-over-line" }
 			end = '[<>]\(|(?=\))'
 		}
+		%highlight { use = "sh-carry-over-line" }
 	}
 
 	sh-word {
