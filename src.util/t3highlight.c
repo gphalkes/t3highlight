@@ -263,14 +263,14 @@ static void list_styles(void) {
     list_dir_styles(tmp);
     free(tmp);
   }
-  list_dir_styles(DT_DIR);
+  list_dir_styles(DATADIR);
 }
 
 static t3_config_t *open_style(const char *name) {
   t3_config_t *style_config;
   t3_config_schema_t *schema;
   t3_config_error_t config_error;
-  const char *path[] = {NULL, DT_DIR, NULL};
+  const char *path[] = {NULL, DATADIR, NULL};
   const char *home_env;
   char *tmp = NULL;
   FILE *style_file;
