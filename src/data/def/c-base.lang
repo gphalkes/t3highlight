@@ -134,8 +134,9 @@
 		}
 		# Generic preprocessor directive
 		%highlight {
-			regex = '^\s*#\s*\w*'
-			style = "misc"
+			start = '^\s*#\s*\w*'
+			end = '(?<!\\)$'
+			delim-style = "misc"
 		}
 
 		# Integer constants
