@@ -12,7 +12,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <errno.h>
-#include <pcre.h>
+#include <pcre2.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -138,13 +138,13 @@ static void match_internal(match_context_t *context) {
   size_t j;
 
   for (j = 0; j < context->state->patterns.used; j++) {
-    full_pcre_t *regex;
-    int options = PCRE_NO_UTF8_CHECK;
+    pcre2_code_8 *regex;
+    int options = PCRE2_NO_UTF_CHECK;
 
     /* If the regex member == NULL, this highlight is either a pointer to
        another state which we should search here ("use"), or it is an end
        pattern with a dynamic back reference. */
-    if (context->state->patterns.data[j].regex.regex == NULL) {
+    if (context->state->patterns.data[j].regex == NULL) {
       if (context->state->patterns.data[j].next_state >= 0) {
         state_t *save_state;
         save_state = context->state;
@@ -154,37 +154,38 @@ static void match_internal(match_context_t *context) {
         context->state = save_state;
         continue;
       }
-      regex = &context->match->mapping.data[context->match->state].dynamic->regex;
+      regex = context->match->mapping.data[context->match->state].dynamic->regex;
     } else {
-      regex = &context->state->patterns.data[j].regex;
+      regex = context->state->patterns.data[j].regex;
       /* For items that do not change state, we do not want an empty match
          ever (makes no progress). */
       if (context->state->patterns.data[j].next_state == NO_CHANGE) {
-        options |= PCRE_NOTEMPTY;
+        options |= PCRE2_NOTEMPTY;
         /* The default behaviour is to not allow start patterns to be empty, such
            that progress will be guaranteed. */
       } else if (context->state->patterns.data[j].next_state > NO_CHANGE &&
                  !(context->match->highlight->flags & T3_HIGHLIGHT_ALLOW_EMPTY_START)) {
-        options |= PCRE_NOTEMPTY;
+        options |= PCRE2_NOTEMPTY;
       }
     }
 
-    // FIXME: pcre_exec uses int arguments; need to handle the overflow gracefully.
-    if (pcre_exec(regex->regex, regex->extra, context->line, context->size,
-                  context->match->match_start, options, context->ovector,
-                  sizeof(context->ovector) / sizeof(context->ovector[0])) >= 0 &&
-        context->ovector[1] > context->best_end) {
+    if (pcre2_match(regex, (PCRE2_SPTR8)context->line, context->size, context->match->match_start,
+                    options, context->match_data, NULL) >= 0 &&
+        (context->best == NULL ||
+         pcre2_get_ovector_pointer_8(context->match_data)[1] > context->best_end)) {
+      const PCRE2_SIZE *ovector = pcre2_get_ovector_pointer_8(context->match_data);
       context->best = &context->state->patterns.data[j];
-      context->best_end = context->ovector[1];
+      context->best_end = ovector[1];
       if (context->best->extra != NULL && context->best->extra->dynamic_name != NULL) {
-        int string_number =
-            pcre_get_stringnumber(context->best->regex.regex, context->best->extra->dynamic_name);
-        if (string_number == PCRE_ERROR_NOSUBSTRING || string_number > 10) {
+        int string_number = pcre2_substring_number_from_name_8(
+            context->best->regex, (PCRE2_SPTR8)context->best->extra->dynamic_name);
+        if (string_number <= 0 || string_number > 10 ||
+            pcre2_get_ovector_count_8(context->match_data) < (uint32_t)string_number) {
           context->extract_start = 0;
           context->extract_end = 0;
         } else {
-          context->extract_start = context->ovector[string_number * 2];
-          context->extract_end = context->ovector[string_number * 2 + 1];
+          context->extract_start = ovector[string_number * 2];
+          context->extract_end = ovector[string_number * 2 + 1];
         }
       }
     }
@@ -216,6 +217,7 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
       match->begin_attribute = 0;
       match->match_attribute = 0;
       match->start = match->match_start = match->end = -1;
+      pcre2_match_data_free_8(context.match_data);
       return t3_false;
     }
     match->utf8_checked = t3_true;
@@ -226,7 +228,8 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
   context.size = size;
   context.state = &match->highlight->states.data[match->mapping.data[match->state].highlight_state];
   context.best = NULL;
-  context.best_end = -1;
+  context.best_end = 0;
+  context.match_data = match->match_data;
 
   match->start = match->end;
   match->begin_attribute = context.state->attribute_idx;
@@ -250,7 +253,7 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
                      context.best->extra != NULL ? context.best->extra->dynamic_pattern : NULL);
 
       /* Check if we have come full circle. If so, continue to the next byte and start over. */
-      if (match->last_progress == (size_t)context.best_end &&
+      if (context.best != NULL && match->last_progress == context.best_end &&
           ((context.best->next_state > NO_CHANGE && match->last_progress_state == next_state) ||
            match->state == next_state)) {
         context.best = NULL;
@@ -304,6 +307,13 @@ t3_highlight_match_t *t3_highlight_new_match(const t3_highlight_t *highlight) {
 
   result->highlight = highlight;
   memset(&VECTOR_LAST(result->mapping), 0, sizeof(state_mapping_t));
+  result->match_data = pcre2_match_data_create_8(15, NULL);
+  if (result->match_data == NULL) {
+    VECTOR_FREE(result->mapping);
+    free(result);
+    return NULL;
+  }
+
   t3_highlight_reset(result, 0);
   return result;
 }
@@ -313,8 +323,7 @@ static void free_dynamic(state_mapping_t *mapping) {
     return;
   }
   free(mapping->dynamic->extracted);
-  pcre_free(mapping->dynamic->regex.regex);
-  free_pcre_study(mapping->dynamic->regex.extra);
+  pcre2_code_free_8(mapping->dynamic->regex);
   free(mapping->dynamic);
 }
 
@@ -324,6 +333,7 @@ void t3_highlight_free_match(t3_highlight_match_t *match) {
   }
   VECTOR_ITERATE(match->mapping, free_dynamic);
   VECTOR_FREE(match->mapping);
+  pcre2_match_data_free_8(match->match_data);
   free(match);
 }
 

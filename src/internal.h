@@ -14,16 +14,10 @@
 #ifndef INTERNAL_H
 #define INTERNAL_H
 
-#include <pcre.h>
+#include <pcre2.h>
 
 #include "highlight_api.h"
 #include "vector.h"
-
-#if defined(PCRE_MAJOR) && defined(PCRE_MINOR) && PCRE_MAJOR >= 8 && PCRE_MINOR >= 20
-#define free_pcre_study pcre_free_study
-#else
-#define free_pcre_study pcre_free
-#endif
 
 /* For debugging purposes, we define distinct enums to represent various
    index types. This makes it possible to distinguish from the type, which
@@ -49,11 +43,6 @@ INDEX_TYPE(dst_idx_t);
 #define T3_HIGHLIGHT_ALLOW_EMPTY_START (1 << 15)
 
 typedef struct {
-  pcre *regex;
-  pcre_extra *extra;
-} full_pcre_t;
-
-typedef struct {
   char *end_pattern;
   pattern_idx_t state;
 } on_entry_info_t;
@@ -66,7 +55,7 @@ typedef struct {
 } pattern_extra_t;
 
 typedef struct {
-  full_pcre_t regex;
+  pcre2_code_8 *regex;
   pattern_extra_t *extra;   /* Only set for start patterns. */
   pattern_idx_t next_state; /* Values: NO_CHANGE, EXIT_STATE or smaller,  or a value >= 0. */
   int attribute_idx;
@@ -88,7 +77,7 @@ struct t3_highlight_t {
 };
 
 typedef struct {
-  full_pcre_t regex;
+  pcre2_code_8 *regex;
   char *extracted;
   int extracted_length;
 } dynamic_state_t;
@@ -106,6 +95,7 @@ struct t3_highlight_match_t {
   dst_idx_t state;
   int begin_attribute, match_attribute, last_progress_state;
   t3_bool utf8_checked;
+  pcre2_match_data_8 *match_data;
 };
 
 typedef struct {
@@ -129,7 +119,8 @@ typedef struct {
   const char *line;
   size_t size;
   state_t *state;
-  int ovector[30], best_end, extract_start, extract_end;
+  pcre2_match_data_8 *match_data;
+  PCRE2_SIZE best_end, extract_start, extract_end;
   pattern_t *best;
 } match_context_t;
 
@@ -139,7 +130,7 @@ typedef struct {
 } state_stack_t;
 
 T3_HIGHLIGHT_LOCAL char *_t3_highlight_strdup(const char *str);
-T3_HIGHLIGHT_LOCAL t3_bool _t3_compile_highlight(const char *highlight, full_pcre_t *regex,
+T3_HIGHLIGHT_LOCAL t3_bool _t3_compile_highlight(const char *highlight, pcre2_code_8 **regex,
                                                  const t3_config_t *error_context, int flags,
                                                  t3_highlight_error_t *error);
 T3_HIGHLIGHT_LOCAL t3_bool _t3_check_empty_start_cycle(highlight_context_t *context);

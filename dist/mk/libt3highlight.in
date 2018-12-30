@@ -69,7 +69,7 @@ dist-clean: clean
 .c.lo:
 	$(SILENTCCLT) $(LIBTOOL) $(SILENCELT) --mode=compile --tag=CC $(CC) -shared $(CFLAGS) $(CONFIGFLAGS) \
 		$(LIBPCREFLAGS) $(GETTEXTFLAGS) -DLOCALEDIR=\"$(LOCALEDIR)\" -Isrc -DT3_HIGHLIGHT_BUILD_DSO \
-		-DDATADIR=\"$(datadir)/libt3highlight<LIBVERSION>\" -c -o $@ $<
+		-DDATADIR=\"$(datadir)/libt3highlight<LIBVERSION>\" -DPCRE2_CODE_UNIT_WIDTH=8 -c -o $@ $<
 
 src/libt3highlight.la: $(OBJECTS)
 	$(SILENTLDLT) $(LIBTOOL) $(SILENCELT) --mode=link --tag=CC $(CC) -shared -version-info <VERSIONINFO> \

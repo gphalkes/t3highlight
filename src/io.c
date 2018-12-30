@@ -12,7 +12,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <errno.h>
-#include <pcre.h>
+#include <pcre2.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -201,17 +201,21 @@ void t3_highlight_free_list(t3_highlight_lang_t *list) {
 static t3_bool match_xname(const char *regex_name, const char *name, int flags,
                            t3_highlight_lang_t *lang, t3_highlight_error_t *error) {
   t3_config_t *map, *ptr;
-  pcre *pcre;
-  int ovector[30];
+  pcre2_code_8 *pcre;
+  pcre2_match_data_8 *match_data = pcre2_match_data_create_8(15, NULL);
+  if (match_data == NULL) {
+    return t3_false;
+  }
 
   if ((map = load_map(flags, error)) == NULL) {
+    pcre2_match_data_free_8(match_data);
     return t3_false;
   }
 
   for (ptr = t3_config_get(t3_config_get(map, "lang"), NULL); ptr != NULL;
        ptr = t3_config_get_next(ptr)) {
-    const char *error_message;
-    int error_offset;
+    int local_error;
+    PCRE2_SIZE error_offset;
     int pcre_result;
     t3_config_t *regex;
 
@@ -219,21 +223,23 @@ static t3_bool match_xname(const char *regex_name, const char *name, int flags,
       continue;
     }
 
-    if ((pcre = pcre_compile(t3_config_get_string(regex), 0, &error_message, &error_offset,
-                             NULL)) == NULL) {
+    if ((pcre = pcre2_compile_8((PCRE2_SPTR8)t3_config_get_string(regex), PCRE2_ZERO_TERMINATED, 0,
+                                &local_error, &error_offset, NULL)) == NULL) {
       continue;
     }
 
-    pcre_result = pcre_exec(pcre, NULL, name, strlen(name), 0, 0, ovector,
-                            sizeof(ovector) / sizeof(ovector[0]));
-    pcre_free(pcre);
+    pcre_result =
+        pcre2_match_8(pcre, (PCRE2_SPTR8)name, PCRE2_ZERO_TERMINATED, 0, 0, match_data, NULL);
+    pcre2_code_free_8(pcre);
     if (pcre_result >= 0) {
       lang->name = t3_config_take_string(t3_config_get(ptr, "name"));
       lang->lang_file = t3_config_take_string(t3_config_get(ptr, "lang-file"));
       t3_config_delete(map);
+      pcre2_match_data_free_8(match_data);
       return t3_true;
     }
   }
+  pcre2_match_data_free_8(match_data);
   t3_config_delete(map);
   if (error != NULL) {
     error->error = T3_ERR_NO_SYNTAX;
@@ -370,10 +376,10 @@ const char *t3_highlight_get_langfile(const t3_highlight_t *highlight) {
 
 t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first, int flags,
                             t3_highlight_lang_t *lang, t3_highlight_error_t *error) {
-  const char *error_message;
-  int error_offset;
-  int ovector[30];
-  pcre *pcre;
+  int local_error;
+  PCRE2_SIZE error_offset;
+  pcre2_code_8 *pcre;
+  pcre2_match_data_8 *match_data;
 
   if (line == NULL || lang == NULL) {
     if (error != NULL) {
@@ -382,29 +388,37 @@ t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
     return t3_false;
   }
 
+  match_data = pcre2_match_data_create_8(2, NULL);
+  if (match_data == NULL) {
+    _t3_highlight_set_error_simple(error, T3_ERR_OUT_OF_MEMORY, flags);
+    return t3_false;
+  }
+
   lang->name = NULL;
   lang->lang_file = NULL;
 
-  if ((pcre = pcre_compile("-\\*-\\s*(?:mode:\\s*)([^\\s;]+);?.*-\\*-", PCRE_CASELESS,
-                           &error_message, &error_offset, NULL)) == NULL) {
+  if ((pcre = pcre2_compile_8((PCRE2_SPTR8) "-\\*-\\s*(?:mode:\\s*)([^\\s;]+);?.*-\\*-",
+                              PCRE2_ZERO_TERMINATED, PCRE2_CASELESS, &local_error, &error_offset,
+                              NULL)) == NULL) {
     _t3_highlight_set_error_simple(error, T3_ERR_INTERNAL, flags);
+    pcre2_match_data_free_8(match_data);
     return t3_false;
   }
-  if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector,
-                sizeof(ovector) / sizeof(ovector[0])) > 0) {
+  if (pcre2_match(pcre, (PCRE2_SPTR8)line, line_length, 0, 0, match_data, NULL) > 0) {
     goto pattern_succeeded;
   }
-  pcre_free(pcre);
-  if ((pcre = pcre_compile("\\s(?:vim?|ex): .*[: ]syntax=([^\\s:]+)", 0, &error_message,
-                           &error_offset, NULL)) == NULL) {
+  pcre2_code_free_8(pcre);
+  if ((pcre = pcre2_compile_8((PCRE2_SPTR8) "\\s(?:vim?|ex): .*[: ]syntax=([^\\s:]+)",
+                              PCRE2_ZERO_TERMINATED, 0, &local_error, &error_offset, NULL)) ==
+      NULL) {
     _t3_highlight_set_error_simple(error, T3_ERR_INTERNAL, flags);
+    pcre2_match_data_free_8(match_data);
     return t3_false;
   }
-  if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector,
-                sizeof(ovector) / sizeof(ovector[0])) > 0) {
+  if (pcre2_match(pcre, (PCRE2_SPTR8)line, line_length, 0, 0, match_data, NULL) > 0) {
     goto pattern_succeeded;
   }
-  pcre_free(pcre);
+  pcre2_code_free_8(pcre);
 
   if (first) {
     t3_config_t *map, *language;
@@ -420,19 +434,20 @@ t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
         continue;
       }
 
-      if ((pcre = pcre_compile(regex, 0, &error_message, &error_offset, NULL)) == NULL) {
+      if ((pcre = pcre2_compile_8((PCRE2_SPTR8)regex, PCRE2_ZERO_TERMINATED, 0, &local_error,
+                                  &error_offset, NULL)) == NULL) {
         continue;
       }
 
-      if (pcre_exec(pcre, NULL, line, line_length, 0, 0, ovector,
-                    sizeof(ovector) / sizeof(ovector[0])) < 0) {
-        pcre_free(pcre);
+      if (pcre2_match(pcre, (PCRE2_SPTR8)line, line_length, 0, 0, match_data, NULL) < 0) {
+        pcre2_code_free_8(pcre);
         continue;
       }
-      pcre_free(pcre);
+      pcre2_code_free_8(pcre);
       lang->name = t3_config_take_string(t3_config_get(language, "name"));
       lang->lang_file = t3_config_take_string(t3_config_get(language, "lang-file"));
       t3_config_delete(map);
+      pcre2_match_data_free_8(match_data);
       return t3_true;
     }
     t3_config_delete(map);
@@ -441,14 +456,17 @@ t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
   if (error != NULL) {
     error->error = T3_ERR_SUCCESS;
   }
+  pcre2_match_data_free_8(match_data);
   return t3_false;
 
 pattern_succeeded : {
+  PCRE2_SIZE *ovector = pcre2_get_ovector_pointer_8(match_data);
   char *matched_name;
   t3_bool result;
 
-  pcre_free(pcre);
+  pcre2_code_free_8(pcre);
   if ((matched_name = malloc(ovector[3] - ovector[2] + 1)) == NULL) {
+    pcre2_match_data_free_8(match_data);
     return t3_false;
   }
   memcpy(matched_name, line + ovector[2], ovector[3] - ovector[2]);
@@ -456,6 +474,7 @@ pattern_succeeded : {
 
   result = match_xname("name-regex", matched_name, flags, lang, error);
   free(matched_name);
+  pcre2_match_data_free_8(match_data);
   return result;
 }
 }

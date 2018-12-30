@@ -12,7 +12,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <errno.h>
-#include <pcre.h>
+#include <pcre2.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -22,7 +22,7 @@
 
 static t3_bool check_empty_start_cycle_from_state(highlight_context_t *context,
                                                   pattern_idx_t state) {
-  int min_length;
+  uint32_t min_length;
   size_t j;
   states_t *states = &context->highlight->states;
 
@@ -53,7 +53,7 @@ static t3_bool check_empty_start_cycle_from_state(highlight_context_t *context,
         continue;
       }
 
-      if (highlight->regex.regex == NULL) {
+      if (highlight->regex == NULL) {
         /* This is a use pattern. For those we can simply push them on the
            stack, and they will be handled correctly. */
         if (!VECTOR_RESERVE(state_stack)) {
@@ -67,8 +67,7 @@ static t3_bool check_empty_start_cycle_from_state(highlight_context_t *context,
 
       /* This should be pretty much impossible to happen, so we just continue
          as if this pattern matches at least one byte. */
-      if (pcre_fullinfo(highlight->regex.regex, highlight->regex.extra, PCRE_INFO_MINLENGTH,
-                        &min_length) != 0) {
+      if (pcre2_pattern_info_8(highlight->regex, PCRE2_INFO_MINLENGTH, &min_length) != 0) {
         continue;
       }
 
@@ -156,7 +155,7 @@ t3_bool _t3_check_use_cycle(highlight_context_t *context) {
         pattern_t *highlight =
             &context->highlight->states.data[CURRENT.state].patterns.data[CURRENT.i];
 
-        if (highlight->regex.regex != NULL) {
+        if (highlight->regex != NULL) {
           continue;
         }
         if (highlight->next_state <= NO_CHANGE) {

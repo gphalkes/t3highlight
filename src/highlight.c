@@ -12,7 +12,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <errno.h>
-#include <pcre.h>
+#include <pcre2.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -137,26 +137,26 @@ return_error:
   return NULL;
 }
 
-t3_bool _t3_compile_highlight(const char *highlight, full_pcre_t *regex,
+t3_bool _t3_compile_highlight(const char *highlight, pcre2_code_8 **regex,
                               const t3_config_t *error_context, int flags,
                               t3_highlight_error_t *error) {
-  const char *error_message;
-  int error_offset, local_error;
-  const char *study_error;
+  int local_error;
+  PCRE2_SIZE error_offset;
 
-  if ((regex->regex =
-           pcre_compile2(highlight, (flags & T3_HIGHLIGHT_UTF8 ? PCRE_UTF8 : 0) | PCRE_ANCHORED,
-                         &local_error, &error_message, &error_offset, NULL)) == NULL) {
-    if (local_error == 21) {
+  if ((*regex = pcre2_compile_8((PCRE2_SPTR8)highlight, PCRE2_ZERO_TERMINATED,
+                                (flags & T3_HIGHLIGHT_UTF8 ? PCRE2_UTF : 0) | PCRE2_ANCHORED,
+                                &local_error, &error_offset, NULL)) == NULL) {
+    if (local_error == PCRE2_ERROR_NOMEMORY) {
       _t3_highlight_set_error(error, T3_ERR_OUT_OF_MEMORY, 0, NULL, NULL, flags);
     } else {
+      char error_message[256];
+      pcre2_get_error_message_8(local_error, (PCRE2_UCHAR8 *)error_message, sizeof(error_message));
       _t3_highlight_set_error(error, T3_ERR_INVALID_REGEX, t3_config_get_line_number(error_context),
                               t3_config_get_file_name(error_context), error_message, flags);
     }
     return t3_false;
   }
-  regex->extra = NULL;
-  regex->extra = pcre_study(regex->regex, 0, &study_error);
+  pcre2_jit_compile_8(*regex, PCRE2_JIT_COMPLETE);
   return t3_true;
 }
 
@@ -173,8 +173,7 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
 
   new_pattern.next_state = next_state;
   new_pattern.extra = NULL;
-  new_pattern.regex.regex = NULL;
-  new_pattern.regex.extra = NULL;
+  new_pattern.regex = NULL;
 
   if (pattern->extra != NULL && pattern->extra->dynamic_name != NULL && next_state <= EXIT_STATE) {
     char *regex_with_define;
@@ -189,22 +188,19 @@ static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *re
     }
     sprintf(regex_with_define, "(?(DEFINE)(?<%s>))%s", pattern->extra->dynamic_name,
             t3_config_get_string(regex));
-    new_pattern.regex.extra = NULL;
     result = _t3_compile_highlight(regex_with_define, &new_pattern.regex, regex, context->flags,
                                    context->error);
 
     /* Throw away the results of the compilation, because we don't actually need it. */
     free(regex_with_define);
-    pcre_free(new_pattern.regex.regex);
-    free_pcre_study(new_pattern.regex.extra);
+    pcre2_code_free_8(new_pattern.regex);
 
     /* If the compilation failed, abort the whole thing. */
     if (!result) {
       goto return_error;
     }
 
-    new_pattern.regex.regex = NULL;
-    new_pattern.regex.extra = NULL;
+    new_pattern.regex = NULL;
     /* Save the regular expression, because we need it to build the actual regex once the
        start pattern is matched. */
     pattern->extra->dynamic_pattern = t3_config_take_string(regex);
@@ -426,8 +422,7 @@ static t3_bool init_state(highlight_context_t *context, const t3_config_t *highl
                          ? context->highlight->states.data[idx].attribute_idx
                          : context->map_style(context->map_style_data, t3_config_get_string(style));
 
-    pattern.regex.regex = NULL;
-    pattern.regex.extra = NULL;
+    pattern.regex = NULL;
     pattern.extra = NULL;
     if ((regex = t3_config_get(highlights, "regex")) != NULL) {
       if (!_t3_compile_highlight(t3_config_get_string(regex), &pattern.regex, regex, context->flags,
@@ -526,14 +521,12 @@ return_error:
     }
     free(pattern.extra);
   }
-  pcre_free(pattern.regex.regex);
-  free_pcre_study(pattern.regex.extra);
+  pcre2_code_free_8(pattern.regex);
   return t3_false;
 }
 
 static void free_highlight(pattern_t *highlight) {
-  pcre_free(highlight->regex.regex);
-  free_pcre_study(highlight->regex.extra);
+  pcre2_code_free_8(highlight->regex);
   if (highlight->extra != NULL) {
     free(highlight->extra->dynamic_name);
     free(highlight->extra->dynamic_pattern);
