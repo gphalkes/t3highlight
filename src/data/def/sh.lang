@@ -206,7 +206,11 @@
 			%highlight { use = "sh-carry-over-line" }
 			end = '[<>]\(|(?=\))'
 		}
-		%highlight { use = "sh-carry-over-line" }
+		%highlight {
+			# Prevent continued lines to end the highlight
+			start = '\\$'
+			end = '^'
+		}
 	}
 
 	sh-word {

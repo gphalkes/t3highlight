@@ -169,6 +169,7 @@ static void match_internal(match_context_t *context) {
       }
     }
 
+    // FIXME: pcre_exec uses int arguments; need to handle the overflow gracefully.
     if (pcre_exec(regex->regex, regex->extra, context->line, context->size,
                   context->match->match_start, options, context->ovector,
                   sizeof(context->ovector) / sizeof(context->ovector[0])) >= 0 &&
@@ -250,7 +251,8 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
 
       /* Check if we have come full circle. If so, continue to the next byte and start over. */
       if (match->last_progress == (size_t)context.best_end &&
-          context.best->next_state > NO_CHANGE && match->last_progress_state == next_state) {
+          ((context.best->next_state > NO_CHANGE && match->last_progress_state == next_state) ||
+           match->state == next_state)) {
         context.best = NULL;
         continue;
       }
