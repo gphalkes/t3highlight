@@ -1,6 +1,6 @@
 Version 0.4.6:
 	New features:
-	 - Migrated to using PCRE2. This allows using the PCRE2 JIT, which provides a
+	- Migrated to using PCRE2. This allows using the PCRE2 JIT, which provides a
 	  significant performance improvement.
 
 	Bug fixes:
