@@ -20,32 +20,18 @@ INSTALLDIRS="bindir libdir docdir includedir datadir"
 config() {
 	clean_c
 	cat > .config.c <<EOF
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 int main(int argc, char *argv[]) {
-	const char *err;
-	int err_offset;
-	pcre *pcre = pcre_compile("pattern", PCRE_UTF8, &err, &err_offset, NULL);
+	int *err;
+	PCRE2_SIZE err_offset;
+	pcre2_code_8 *pcre = pcre2_compile("pattern", PCRE2_ZERO_TERMINATED, PCRE2_UTF, &err, &err_offset, NULL);
 	return 0;
 }
 EOF
 
-	pkgconfig libpcre LIBPCRE test_link PKGCONFIG_REQUIRES_PRIVATE || {
-		check_message "Checking for pcre-config..."
-		echo "Running: pcre-config --cflags" >> config.log
-		if pcre-config --cflags >> config.log 2>&1 ; then
-			check_message_result "yes"
-			if test_link "libpcre compile" "TESTFLAGS=`pcre-config --cflags`" "TESTLIBS=`pcre-config --libs`" ; then
-				LIBPCRE_FLAGS="`pcre-config --cflags`"
-				LIBPCRE_LIBS="`pcre-config --libs`"
-				PKGCONFIG_LIBS_PRIVATE="${PKGCONFIG_LIBS_PRIVATE} ${LIBPCRE_LIBS}"
-				true
-			fi
-		else
-			check_message_result "no"
-			false
-		fi
-	} || \
-		error "!! Can not find libpcre. libpcre is required to compile libt3highlight."
+	pkgconfig libpcre2-8 LIBPCRE test_link PKGCONFIG_REQUIRES_PRIVATE || \
+		error "!! Can not find libpcre2. libpcre2 is required to compile libt3highlight."
 
 	clean_c
 	cat > .config.c <<EOF
