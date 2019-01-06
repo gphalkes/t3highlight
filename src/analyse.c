@@ -12,7 +12,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <errno.h>
+#ifdef PCRE_COMPAT
+#include "pcre_compat.h"
+#else
 #include <pcre2.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 

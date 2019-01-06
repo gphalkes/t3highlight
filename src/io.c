@@ -12,7 +12,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <errno.h>
+#ifdef PCRE_COMPAT
+#include "pcre_compat.h"
+#else
 #include <pcre2.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -404,7 +408,7 @@ t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
     pcre2_match_data_free_8(match_data);
     return t3_false;
   }
-  if (pcre2_match(pcre, (PCRE2_SPTR8)line, line_length, 0, 0, match_data, NULL) > 0) {
+  if (pcre2_match_8(pcre, (PCRE2_SPTR8)line, line_length, 0, 0, match_data, NULL) > 0) {
     goto pattern_succeeded;
   }
   pcre2_code_free_8(pcre);
@@ -415,7 +419,7 @@ t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
     pcre2_match_data_free_8(match_data);
     return t3_false;
   }
-  if (pcre2_match(pcre, (PCRE2_SPTR8)line, line_length, 0, 0, match_data, NULL) > 0) {
+  if (pcre2_match_8(pcre, (PCRE2_SPTR8)line, line_length, 0, 0, match_data, NULL) > 0) {
     goto pattern_succeeded;
   }
   pcre2_code_free_8(pcre);
@@ -439,7 +443,7 @@ t3_bool t3_highlight_detect(const char *line, size_t line_length, t3_bool first,
         continue;
       }
 
-      if (pcre2_match(pcre, (PCRE2_SPTR8)line, line_length, 0, 0, match_data, NULL) < 0) {
+      if (pcre2_match_8(pcre, (PCRE2_SPTR8)line, line_length, 0, 0, match_data, NULL) < 0) {
         pcre2_code_free_8(pcre);
         continue;
       }

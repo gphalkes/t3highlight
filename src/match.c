@@ -12,7 +12,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <errno.h>
+#ifdef PCRE_COMPAT
+#include "pcre_compat.h"
+#else
 #include <pcre2.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 
@@ -169,8 +173,8 @@ static void match_internal(match_context_t *context) {
       }
     }
 
-    if (pcre2_match(regex, (PCRE2_SPTR8)context->line, context->size, context->match->match_start,
-                    options, context->match_data, NULL) >= 0 &&
+    if (pcre2_match_8(regex, (PCRE2_SPTR8)context->line, context->size, context->match->match_start,
+                      options, context->match_data, NULL) >= 0 &&
         (context->best == NULL ||
          pcre2_get_ovector_pointer_8(context->match_data)[1] > context->best_end)) {
       const PCRE2_SIZE *ovector = pcre2_get_ovector_pointer_8(context->match_data);
@@ -241,7 +245,7 @@ t3_bool t3_highlight_match(t3_highlight_match_t *match, const char *line, size_t
     match->last_progress_state = match->state;
   }
 
-  for (match->match_start = match->end; match->match_start <= size;
+  for (match->match_start = match->end; match->match_start <= (PCRE2_SIZE)size;
        match->match_start +=
        (match->highlight->flags & T3_HIGHLIGHT_UTF8) ? step_utf8(line[match->match_start]) : 1) {
     match_internal(&context);

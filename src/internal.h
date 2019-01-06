@@ -14,7 +14,11 @@
 #ifndef INTERNAL_H
 #define INTERNAL_H
 
+#ifdef PCRE_COMPAT
+#include "pcre_compat.h"
+#else
 #include <pcre2.h>
+#endif
 
 #include "highlight_api.h"
 #include "vector.h"
@@ -91,7 +95,7 @@ typedef struct {
 struct t3_highlight_match_t {
   const t3_highlight_t *highlight;
   VECTOR(state_mapping_t) mapping;
-  size_t start, match_start, end, last_progress;
+  PCRE2_SIZE start, match_start, end, last_progress;
   dst_idx_t state;
   int begin_attribute, match_attribute, last_progress_state;
   t3_bool utf8_checked;

@@ -11,11 +11,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SOURCES.libt3highlight.la := highlight.c vector.c highlight_shared.c io.c utf8.c match.c analyse.c
+PCRE_COMPAT ?= 0
+
+SOURCES.libt3highlight.la := highlight.c vector.c highlight_shared.c io.c utf8.c match.c analyse.c \
+  pcre_compat.c
 
 LDLIBS.libt3highlight.la += -lt3config
 LDFLAGS.libt3highlight.la += $(T3LDFLAGS.t3config)
+ifeq ($(PCRE_COMPAT), 0)
 LDFLAGS.libt3highlight.la += `pkg-config --libs libpcre2-8`
+else
+LDFLAGS.libt3highlight.la += `pkg-config --libs libpcre`
+endif
 CFLAGS.highlight += -I.objects -DDATADIR='"$(CURDIR)/data"'
 CFLAGS.io += -I.objects -DDATADIR='"$(CURDIR)/data"'
 
@@ -30,6 +37,9 @@ include ../../t3shared/rules.mk
 include ../../t3shared/rules-base.mk
 
 CFLAGS += -DPCRE2_CODE_UNIT_WIDTH=8
+ifneq ($(PCRE_COMPAT), 0)
+CFLAGS += -DPCRE_COMPAT
+endif
 
 .objects/%.bytes: %.schema
 	$(GENOBJDIR)
