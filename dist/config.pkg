@@ -23,14 +23,28 @@ config() {
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 int main(int argc, char *argv[]) {
-	int *err;
+	int err;
 	PCRE2_SIZE err_offset;
 	pcre2_code_8 *pcre = pcre2_compile("pattern", PCRE2_ZERO_TERMINATED, PCRE2_UTF, &err, &err_offset, NULL);
 	return 0;
 }
 EOF
 
-	pkgconfig libpcre2-8 LIBPCRE test_link PKGCONFIG_REQUIRES_PRIVATE || \
+	pkgconfig libpcre2-8 LIBPCRE test_link PKGCONFIG_REQUIRES_PRIVATE || {
+		clean_c
+		cat > .config.c <<EOF
+#include <pcre.h>
+int main(int argc, char *argv[]) {
+	int err;
+	int err_offset;
+	char *error_message;
+	pcre *pcre = pcre_compile2("pattern", PCRE_UTF8, &err, &error_message, &err_offset, NULL);
+	return 0;
+}
+EOF
+	pkgconfig libpcre LIBPCRE test_link PKGCONFIG_REQUIRES_PRIVATE && \
+		CONFIGFLAGS="${CONFIGFLAGS} -DPCRE_COMPAT"
+  } || \
 		error "!! Can not find libpcre2. libpcre2 is required to compile libt3highlight."
 
 	clean_c
