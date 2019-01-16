@@ -42,9 +42,9 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 EOF
-	pkgconfig libpcre LIBPCRE test_link PKGCONFIG_REQUIRES_PRIVATE && \
-		CONFIGFLAGS="${CONFIGFLAGS} -DPCRE_COMPAT"
-  } || \
+		pkgconfig libpcre LIBPCRE test_link PKGCONFIG_REQUIRES_PRIVATE && \
+			CONFIGFLAGS="${CONFIGFLAGS} -DPCRE_COMPAT"
+	} || \
 		error "!! Can not find libpcre2. libpcre2 is required to compile libt3highlight."
 
 	clean_c
