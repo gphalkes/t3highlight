@@ -69,8 +69,10 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
     _t3_highlight_set_error(
         error, (flags & T3_HIGHLIGHT_VERBOSE_ERROR) ? local_error.error : T3_ERR_INVALID_FORMAT,
         local_error.line_number, local_error.file_name, local_error.extra, flags);
-    free(local_error.file_name);
-    free(local_error.extra);
+    if (flags & T3_HIGHLIGHT_VERBOSE_ERROR) {
+      free(local_error.file_name);
+      free(local_error.extra);
+    }
     goto return_error;
   }
 

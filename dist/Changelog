@@ -1,3 +1,8 @@
+Version 0.4.8:
+	Bug fixes:
+	- Fixed incorrect free on uninitialized pointers when validation of
+	  highlighting data fails.
+
 Version 0.4.7:
 	Introduce a PCRE2 compatibility layer using PCRE, to allow compilation on
 	platforms which don't provide PCRE2.
