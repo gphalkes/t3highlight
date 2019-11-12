@@ -94,6 +94,20 @@
 		}
 	}
 
+  perl-var {
+		%highlight {
+			regex = "(?:\$#?|@|%|\*)(?:[a-zA-Z_]\w*(?:(?:(?:::)+|(?:::)*'+)[a-zA-Z_]\w*)*|" +
+				"(?:(?:(?:::)+|(?:::)*'+)[a-zA-Z_]\w*)+|[^\s\w^{]|\^_\w+|\^[^\s])"
+			style = "variable"
+		}
+		%highlight {
+			start = "(?:\$#?|@|%|\*)\{"
+      %highlight { use = "perl-var" }
+			end = "\}"
+			style = "variable"
+		}
+  }
+
 	perl-base {
 		%highlight { use = "perl-comment" }
 		%highlight {
@@ -122,16 +136,7 @@
 			style = "keyword"
 		}
 
-		%highlight {
-			regex = "(?:\$#?|@|%|\*)(?:[a-zA-Z_]\w*(?:(?:(?:::)+|(?:::)*'+)[a-zA-Z_]\w*)*|' +
-				'(?:(?:(?:::)+|(?:::)*'+)[a-zA-Z_]\w*)+|[^\s\w^{]|\^_\w+|\^[^\s])"
-			style = "variable"
-		}
-		%highlight {
-			start = "(?:\$#?|@|%|\*)\{"
-			end = "\}"
-			style = "variable"
-		}
+    %highlight { use = "perl-var" }
 
 		%highlight {
 			regex = '(?<![^-+\W])(?:0[xX][0-9a-fA-F][0-9a-fA-F_]*|0b[01][01_]*|\d[\d_]*)\b'

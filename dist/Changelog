@@ -1,3 +1,8 @@
+Version 0.4.9:
+	Bug fixes:
+	- Fix Perl highlighting patterns to handle nested variable expansion (e.g.
+	  ${$foo}).
+
 Version 0.4.8:
 	Bug fixes:
 	- Fixed incorrect free on uninitialized pointers when validation of
