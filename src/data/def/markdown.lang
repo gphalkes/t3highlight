@@ -1,0 +1,124 @@
+%include = "def/html.lang"
+
+# NOTE: this does not support headings by underline, as by the time we can
+# recognize that something is a heading (i.e. when the === or --- is detected),
+# there is no way to highlight the text on the previous line anymore.
+
+%define {
+  block-quote {
+    %highlight {
+      start = "^>(?:\s*>)*\s*"
+      %on-entry {
+        # Match things that normally match only at the beginning of a line.
+        # However, these must only be matched immediately after the block quote
+        # markers.
+
+        # Headings
+        %highlight {
+          start = "#"
+          end = "$"
+          exit = 2
+          style = "misc"
+        }
+        # List
+        %highlight {
+          regex = "(?:[*+-]|\d+\.)\s"
+          style = "keyword"
+          exit = 2
+        }
+        # Horizontal rules
+        %highlight {
+          regex = "([-*_])(?:\s*\1){2,}\s*$"
+          style = "misc"
+        }
+        # End on anything that doesn't match the above
+        end = "(?=.)|$"
+      }
+      %highlight { use = "markdown" }
+      style = "comment"
+      end = "$"
+    }
+  }
+
+
+  markdown {
+    # Headings
+    %highlight {
+      start = "^#"
+      end = "$"
+      style = "misc"
+    }
+    %highlight { use = "block-quote" }
+    # Escaped emphasis characters
+    %highlight {
+      regex = "\\[*_]"
+    }
+    %highlight {
+      regex = "<"
+    }
+    # Emphasis
+    %highlight {
+      regex = "\*[^\s*](:?[^*]*[^\s*])?\*"
+      style = "number"
+    }
+    # Emphasis
+    %highlight {
+      regex = "_[^\s_](:?[^_]*[^\s_])?_"
+      style = "number"
+    }
+    # Double emphasis
+    %highlight {
+      regex = "\*\*[^\s*](:?[^*]*[^\s*])?\*\*"
+      style = "misc"
+    }
+    # Double emphasis
+    %highlight {
+      regex = "__[^\s_](:?[^_]*[^\s_])?__"
+      style = "variable"
+    }
+    # List
+    %highlight {
+      regex = "^\s{0,3}(?:[*+-]|\d+\.)\s"
+      style = "keyword"
+    }
+    # Code
+    %highlight {
+      start = "(?<delim>`+)"
+      extract = "delim"
+      end = "(?&delim)"
+      style = "comment-keyword"
+    }
+    # Horizontal rules
+    %highlight {
+      regex = "^\s*([-*_])(?:\s*\1){2,}\s*$"
+      style = "misc"
+    }
+    # External links
+    %highlight {
+      regex = "!?\[[^]]+\]\([^)]+\)"
+      style = "string"
+    }
+    # Internal links
+    %highlight {
+      regex = "!?\[[^]]+\] ?\[[^]]*\]"
+      style = "string"
+    }
+    # Internal link definition
+    %highlight {
+      regex = "\[[^]]+\]:"
+      style = "string"
+    }
+    # Automatic links
+    %highlight {
+      regex = "<(?:[a-z]+://[a-z.]+(?::\d+)?(?:/\S+)?|[^\s@]+@[^\s@]+)>"
+      style = "string"
+    }
+    # Unmatched _ or *
+    %highlight {
+      regex = "[_*]{1,2}"
+      style = "error"
+    }
+
+    %highlight { use = 'html' }
+  }
+}

@@ -140,6 +140,12 @@ format = 1
 	file-regex = "\.php$"
 	lang-file = "php.lang"
 }
+%lang {
+  name = "Markdown"
+  name-regex = "^(?i)markdown$"
+  file-regex = "\.md$"
+  lang-file = "markdown.lang"
+}
 # This definition should be last, because it matches for any file in /etc
 %lang {
 	name = "Configuration file"

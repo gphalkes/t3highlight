@@ -1,4 +1,7 @@
 Version 0.4.9:
+	New features:
+	- Added syntax highlighting for Markdown documents.
+
 	Bug fixes:
 	- Fix Perl highlighting patterns to handle nested variable expansion (e.g.
 	  ${$foo}).

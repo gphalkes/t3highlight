@@ -1,0 +1,5 @@
+format = 1
+
+%include = "def/markdown.lang"
+
+%highlight { use = "markdown" }
