@@ -1,0 +1,40 @@
+API changes
+===========
+
+An extra flag for t3_highlight_load, to indicate that it should use the scoping
+information. Requires that map_style returns a predefined value to indicate
+that the style was not matched. Most likely this value will be 0. Causes the
+map_style function to be called for <style>@<scope> first, follwed by <style>
+if 0 is returned for <style>@<scope>.
+
+Rationale: this is backward compatible, and relatively efficient.
+
+Syntax file changes
+===================
+
+At the level of define, a scope can be declared. An open question is whether it
+makes sense to allow definition at a lower level as well (i.e. definition or
+even highlight). Allowing it at the level of highlight allows to set it for a
+particular use. However, it seems less than desirable to do this, because then
+the mapping will be different depending on the context in which it is included.
+
+The drawback of defining a scope member of define is that it blocks the use of
+scope as a definition. However, we need to change the version number anyway,
+so for version 3 syntax files it is not a problem. The only problem is that
+version 2 files can not be validated with the version 3 syntax as it is an
+allowed definition in a version 2 file.
+
+It is possible to circumvent this, by either checking with two schemas or by
+manually verifying the type of the scope key.
+
+Implementation
+==============
+
+t3_highlight_context_t should hold the current scope. This can be set just
+before calling init_state in map_use.
+
+Open Questions
+==============
+
+How can programs get the list of available style scopes? Should they be able
+to?

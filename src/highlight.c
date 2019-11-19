@@ -51,7 +51,7 @@ static int do_map_style(highlight_context_t *context, const char *style) {
   int style_at_scope_result;
 
   if ((context->flags & T3_HIGHLIGHT_USE_SCOPE) && context->scope != NULL) {
-    style_at_scope_len = strlen(style) + strlen(context->scope) + 1;
+    style_at_scope_len = strlen(style) + 1 + strlen(context->scope) + 1;
     style_at_scope = malloc(style_at_scope_len);
     if (style_at_scope != NULL) {
       /* FIXME: this is inefficient. If we keep track of the size of style separately, we can do the
