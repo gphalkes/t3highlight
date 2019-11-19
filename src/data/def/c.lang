@@ -1,6 +1,8 @@
 %include = "def/c-base.lang"
 
 %define {
+	style-scope = "c"
+
 	c-keywords {
 		%highlight {
 			regex = '\b(?:auto|break|case|char|const|continue|default|do|double|else|' +

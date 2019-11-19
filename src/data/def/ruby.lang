@@ -1,4 +1,6 @@
 %define {
+	style-scope = "ruby"
+
 	ruby-unknown-string-escape {
 		%highlight {
 			regex = '\\.'

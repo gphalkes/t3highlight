@@ -45,7 +45,7 @@ endif
 	$(GENOBJDIR)
 	$(_VERBOSE_GEN) ../../t3config/src/data2bytes -s -- $< > $@
 
-highlight.c: .objects/syntax.bytes .objects/map.bytes
+highlight.c: .objects/syntax.bytes .objects/syntax_v3.bytes .objects/map.bytes
 
 clang-format:
 	clang-format -i *.c *.h

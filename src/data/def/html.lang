@@ -7,6 +7,8 @@
 %include = "def/css.lang"
 
 %define {
+	style-scope = "html"
+
 	html-bare-escape {
 		%highlight {
 			regex = '&(?:A(?:Elig|acute|circ|grave|lpha|ring|tilde|uml)|Beta|C(?:' +

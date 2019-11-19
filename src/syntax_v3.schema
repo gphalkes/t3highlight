@@ -1,0 +1,132 @@
+# Copyright (C) 2011-2012,2019 G.P. Halkes
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3, as
+# published by the Free Software Foundation.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Schema for syntax-highlighting definition files for libt3highlight
+
+types {
+	highlight {
+		type = "section"
+		allowed-keys {
+			regex {
+				type = "string"
+			}
+			start {
+				type = "string"
+			}
+			end {
+				type = "string"
+			}
+			extract {
+				type = "string"
+			}
+			style {
+				type = "string"
+			}
+			highlight {
+				type = "list"
+				item-type = "highlight"
+			}
+			delim-style {
+				type = "string"
+			}
+			use {
+				type = "string"
+			}
+			nested {
+				type = "bool"
+			}
+			exit {
+				type = "int"
+				%constraint = "{exit value must be between 1 and 1000 inclusive} % >= 1 & % <= 1000"
+			}
+			on-entry {
+				type = "list"
+				item-type = "on-entry"
+			}
+		}
+		%constraint = "{highlight must include exactly one of 'regex', 'start' or 'use'} #(regex, start, use) = 1"
+		%constraint = "{'end' can only occur together with 'start'} start | !end"
+		%constraint = "{'highlight' can only occur together with 'start'} start | !highlight"
+		%constraint = "{'style' is only valid when either 'start' or 'regex' is used} start | regex | !style"
+		%constraint = "{'delim-style' can oly occur together with 'start'} start | !delim-style"
+		%constraint = "{'nested' can only occur together with 'start'} start | !nested"
+		%constraint = "{'extract' can oly occur together with 'start' and 'end'} (start & end) | !extract"
+		%constraint = "{'on-entry' can only occur together with 'start'} start | !on-entry"
+		%constraint = "{'exit' can only occur togther with 'regex' or 'end'} regex | end | !exit"
+	}
+
+	on-entry {
+		type = "section"
+		allowed-keys {
+			end {
+				type = "string"
+			}
+			style {
+				type = "string"
+			}
+			highlight {
+				type = "list"
+				item-type = "highlight"
+			}
+			delim-style {
+				type = "string"
+			}
+			use {
+				type = "string"
+			}
+			exit {
+				type = "int"
+				%constraint = "{exit value must be between 1 and 1000 inclusive} % >= 1 & % <= 1000"
+			}
+		}
+	}
+
+	definition {
+		type = "section"
+		allowed-keys {
+			highlight {
+				type = "list"
+				item-type = "highlight"
+			}
+		}
+		%constraint = "{a definition must have a 'highlight'} highlight"
+	}
+	define {
+		type = "section"
+		allowed-keys {
+			style-scope {
+				type = "string"
+			}
+		}
+		item-type = "definition"
+	}
+}
+
+allowed-keys {
+	format {
+		type = "int"
+		%constraint = "{format version unsupported} % = 3"
+	}
+	allow-empty-start {
+		type = "bool"
+	}
+	highlight {
+		type = "list"
+		item-type = "highlight"
+	}
+	define {
+		type = "list"
+		item-type = "define"
+	}
+}
+%constraint = "{'format' and 'highlight' are required} highlight & format"

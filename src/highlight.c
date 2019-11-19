@@ -37,9 +37,38 @@ static const char syntax_schema[] = {
 #include "syntax.bytes"
 };
 
+static const char syntax_v3_schema[] = {
+#include "syntax_v3.bytes"
+};
+
 static t3_bool init_state(highlight_context_t *context, const t3_config_t *highlights,
                           pattern_idx_t idx);
 static void free_state(state_t *state);
+
+static int do_map_style(highlight_context_t *context, const char *style) {
+  size_t style_at_scope_len;
+  char *style_at_scope;
+  int style_at_scope_result;
+
+  if ((context->flags & T3_HIGHLIGHT_USE_SCOPE) && context->scope != NULL) {
+    style_at_scope_len = strlen(style) + strlen(context->scope) + 1;
+    style_at_scope = malloc(style_at_scope_len);
+    if (style_at_scope != NULL) {
+      /* FIXME: this is inefficient. If we keep track of the size of style separately, we can do the
+         concatenation without having to scan for the end of the string twice. */
+      strcpy(style_at_scope, style);
+      strcat(style_at_scope, "@");
+      strcat(style_at_scope, context->scope);
+
+      style_at_scope_result = context->map_style(context->map_style_data, style_at_scope);
+      free(style_at_scope);
+      if (style_at_scope_result != 0) {
+        return style_at_scope_result;
+      }
+    }
+  }
+  return context->map_style(context->map_style_data, style);
+}
 
 t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, const char *),
                                  void *map_style_data, int flags, t3_highlight_error_t *error) {
@@ -49,15 +78,30 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
   t3_config_error_t local_error;
   highlight_context_t context;
 
+  int format;
+  const char *schema_text;
+  size_t schema_size;
+
   /* Sanatize flags */
-  flags &= T3_HIGHLIGHT_UTF8_NOCHECK | T3_HIGHLIGHT_USE_PATH | T3_HIGHLIGHT_VERBOSE_ERROR;
+  flags &= T3_HIGHLIGHT_UTF8_NOCHECK | T3_HIGHLIGHT_USE_PATH | T3_HIGHLIGHT_VERBOSE_ERROR |
+           T3_HIGHLIGHT_USE_SCOPE;
+
+  format = t3_config_get_int(t3_config_get(syntax, "format"));
+  if (format < 3) {
+    schema_text = syntax_schema;
+    schema_size = sizeof(syntax_schema);
+  } else {
+    schema_text = syntax_v3_schema;
+    schema_size = sizeof(syntax_v3_schema);
+  }
 
   /* Validate the syntax using the schema. */
-  if ((schema = t3_config_read_schema_buffer(syntax_schema, sizeof(syntax_schema), &local_error,
-                                             NULL)) == NULL) {
+  if ((schema = t3_config_read_schema_buffer(schema_text, schema_size, &local_error, NULL)) ==
+      NULL) {
     if (error != NULL) {
       error->error =
           local_error.error != T3_ERR_OUT_OF_MEMORY ? T3_ERR_INTERNAL : local_error.error;
+      error->extra = NULL;
     }
     return NULL;
   }
@@ -111,6 +155,7 @@ t3_highlight_t *t3_highlight_new(t3_config_t *syntax, int (*map_style)(void *, c
   context.syntax = syntax;
   context.flags = flags;
   context.error = error;
+  context.scope = NULL;
 
   VECTOR_INIT(context.use_map);
   if (!init_state(&context, highlights, 0)) {
@@ -164,10 +209,6 @@ t3_bool _t3_compile_highlight(const char *highlight, pcre2_code_8 **regex,
   }
   pcre2_jit_compile_8(*regex, PCRE2_JIT_COMPLETE);
   return t3_true;
-}
-
-static t3_bool match_name(const t3_config_t *config, const void *data) {
-  return t3_config_get(config, (const char *)data) != NULL;
 }
 
 static t3_bool add_delim_highlight(highlight_context_t *context, t3_config_t *regex,
@@ -321,12 +362,11 @@ static t3_bool set_on_entry(highlight_context_t *context, pattern_t *pattern,
 
     if ((style = t3_config_get(on_entry, "style")) != NULL) {
       parent_pattern.attribute_idx = style_attr_idx =
-          context->map_style(context->map_style_data, t3_config_get_string(style));
+          do_map_style(context, t3_config_get_string(style));
     }
 
     if ((style = t3_config_get(on_entry, "delim-style")) != NULL) {
-      parent_pattern.attribute_idx =
-          context->map_style(context->map_style_data, t3_config_get_string(style));
+      parent_pattern.attribute_idx = do_map_style(context, t3_config_get_string(style));
     }
 
     if (!VECTOR_RESERVE(context->highlight->states)) {
@@ -364,16 +404,23 @@ return_error:
 static t3_bool map_use(highlight_context_t *context, const t3_config_t *use,
                        pattern_idx_t *mapped_state) {
   size_t i;
+  t3_config_t *define;
+  t3_config_t *definition = NULL;
+  const char *retrieved_scope;
+  const char *saved_scope;
+  const char *use_str = t3_config_get_string(use);
 
-  t3_config_t *definition =
-      t3_config_get(t3_config_find(t3_config_get(context->syntax, "define"), match_name,
-                                   t3_config_get_string(use), NULL),
-                    t3_config_get_string(use));
+  for (define = t3_config_get(t3_config_get(context->syntax, "define"), NULL); define != NULL;
+       define = t3_config_get_next(define)) {
+    definition = t3_config_get(define, use_str);
+    if (definition != NULL) {
+      break;
+    }
+  }
 
   if (definition == NULL) {
     _t3_highlight_set_error(context->error, T3_ERR_UNDEFINED_USE, t3_config_get_line_number(use),
-                            t3_config_get_file_name(use), t3_config_get_string(use),
-                            context->flags);
+                            t3_config_get_file_name(use), use_str, context->flags);
     goto return_error;
   }
 
@@ -403,9 +450,15 @@ static t3_bool map_use(highlight_context_t *context, const t3_config_t *use,
     }
     VECTOR_LAST(context->highlight->states) = null_state;
 
+    saved_scope = context->scope;
+    retrieved_scope = t3_config_get_string(t3_config_get(define, "style-scope"));
+    if (retrieved_scope != NULL) {
+      context->scope = retrieved_scope[0] == 0 ? NULL : retrieved_scope;
+    }
     if (!init_state(context, t3_config_get(definition, "highlight"), *mapped_state)) {
       return t3_false;
     }
+    context->scope = saved_scope;
   } else {
     *mapped_state = context->use_map.data[i].state;
   }
@@ -426,7 +479,7 @@ static t3_bool init_state(highlight_context_t *context, const t3_config_t *highl
        highlights = t3_config_get_next(highlights)) {
     style_attr_idx = (style = t3_config_get(highlights, "style")) == NULL
                          ? context->highlight->states.data[idx].attribute_idx
-                         : context->map_style(context->map_style_data, t3_config_get_string(style));
+                         : do_map_style(context, t3_config_get_string(style));
 
     pattern.regex = NULL;
     pattern.extra = NULL;
@@ -441,10 +494,9 @@ static t3_bool init_state(highlight_context_t *context, const t3_config_t *highl
     } else if ((regex = t3_config_get(highlights, "start")) != NULL) {
       t3_config_t *sub_highlights;
 
-      pattern.attribute_idx =
-          (style = t3_config_get(highlights, "delim-style")) == NULL
-              ? style_attr_idx
-              : context->map_style(context->map_style_data, t3_config_get_string(style));
+      pattern.attribute_idx = (style = t3_config_get(highlights, "delim-style")) == NULL
+                                  ? style_attr_idx
+                                  : do_map_style(context, t3_config_get_string(style));
 
       if (!_t3_compile_highlight(t3_config_get_string(regex), &pattern.regex, regex, context->flags,
                                  context->error)) {

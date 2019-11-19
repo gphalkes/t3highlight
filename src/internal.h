@@ -116,6 +116,7 @@ typedef struct {
   int flags;
   VECTOR(use_mapping_t) use_map;
   t3_highlight_error_t *error;
+  const char *scope;
 } highlight_context_t;
 
 typedef struct {

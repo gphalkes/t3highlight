@@ -36,6 +36,9 @@
 			style = 'comment'
 		}
 	}
+}
+%define {
+	style-scope = "xml"
 
 	xml {
 		%highlight { use = "xml-comment" }

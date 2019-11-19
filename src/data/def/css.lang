@@ -1,4 +1,6 @@
 %define {
+	style-scope = "css"
+
 	css-comment {
 		%highlight {
 			start = '/\*'
@@ -44,7 +46,6 @@
 			style = "string"
 		}
 	}
-
 	css-value {
 		%highlight {
 			start = ':'
@@ -65,10 +66,10 @@
 			end = ';|(?=})'
 			exit = 2
 		}
+		%highlight { use = "css-comment" }
 	}
 
 	css {
-
 		%highlight {
 			regex = '(?i)(?<![_a-z\d\240-\377-])(?:import|page|media|charset)(?![_a-z\d\240-\377-])'
 			style = "keyword"
@@ -91,7 +92,6 @@
 		}
 
 		%highlight { use = "css-elements" }
-
 
 		%highlight {
 			start = '{'
@@ -123,7 +123,10 @@
 				%highlight { use = "css-value" }
 				delim-style = "error"
 			}
+			%highlight { use = "css-comment" }
 			end = '}'
 		}
+
+		%highlight { use = "css-comment" }
 	}
 }

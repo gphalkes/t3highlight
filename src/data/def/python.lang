@@ -1,4 +1,6 @@
 %define {
+	style-scope = "python"
+
 	python-unknown-string-escape {
 		%highlight {
 			regex = '\\.'

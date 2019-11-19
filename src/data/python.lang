@@ -1,4 +1,4 @@
-format = 1
+format = 3
 
 %include = "def/python.lang"
 

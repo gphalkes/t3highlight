@@ -65,9 +65,9 @@ extern "C" {
 /** Assume the text to be highlighted is valid UTF-8.
 
     Be very careful using this flag: using this flag when the input is not
-    valid UTF-8, it may crash your program! For a definition of what is
-    considered valid UTF-8, see the PCRE documentation. At the time of writing
-    it refers to RFC 3629.
+    valid UTF-8 may crash your program! For a definition of what is considered
+    valid UTF-8, see the PCRE documentation. At the time of writing it refers
+    to RFC 3629.
 
     If the input is guaranteed to be valid UTF-8, using this flag will provide
     a performance benefit.
@@ -77,6 +77,13 @@ extern "C" {
 #define T3_HIGHLIGHT_USE_PATH (1 << 2)
 /** Use verbose error reporting. */
 #define T3_HIGHLIGHT_VERBOSE_ERROR (1 << 3)
+/** Use scopes for mapping styles.
+
+    When scopes are in use, the @c map_style callback to ::t3_highlight_load will first be called
+    with @c style\@scope. If that returns 0, @c map_style will be called with @c style. Otherwise,
+    the result of the first call will be used as the mapped style.
+*/
+#define T3_HIGHLIGHT_USE_SCOPE (1 << 4)
 /*@}*/
 
 /** @struct t3_highlight_t

@@ -1,6 +1,8 @@
 %include = "def/xml.lang"
 
 %define {
+	style-scope = "svg"
+
 	svg-named-attributes {
 		%highlight {
 			regex = '(?<![\w:-])(?:a(?:cc(?:ent-height|umulate)|dditive|l(?:' +

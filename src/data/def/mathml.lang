@@ -1,6 +1,8 @@
 %include = "def/xml.lang"
 
 %define {
+	style-scope = "mathml"
+
 	mathml-named-attributes {
 		%highlight {
 			regex = '(?<![\w:-])(?:a(?:c(?:cent(?:under)?|tiontype)|l(?:ign(?:m' +

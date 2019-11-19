@@ -1,3 +1,14 @@
+Version 0.5.0:
+	New features:
+	- Introduced optional style scopes. This allows having separate rendering of
+	  styles for different code types, in particular for embedding one code type
+	  into another. A good example where this can be useful is for CSS, which is
+	  often embedded into HTML. Using different rendering of the styles allows
+	  visual distinction between the distinct code types in the same file.
+
+	Bug fixes:
+	- Allow comments in CSS documents in all the relevant places.
+
 Version 0.4.9:
 	New features:
 	- Added syntax highlighting for Markdown documents.

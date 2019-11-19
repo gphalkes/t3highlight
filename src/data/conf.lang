@@ -1,23 +1,31 @@
-format = 1
+format = 3
 
 %include = "def/generic.lang"
 
-# The #-style comments are frequently used
-%highlight { use = "hash-comment" }
+%define {
+  style-scope = "conf"
 
-# Ini style comments
-%highlight {
-	start = "^\s*;"
-	end = "$"
-	style = "comment"
+  conf {
+    # The #-style comments are frequently used
+    %highlight { use = "hash-comment" }
+
+    # Ini style comments
+    %highlight {
+    	start = "^\s*;"
+    	end = "$"
+    	style = "comment"
+    }
+
+    # Ini style headings
+    %highlight {
+    	regex = "^\s*\[[^]]+\]"
+    	style = "keyword"
+    }
+
+    # Generic C-style strings
+    %highlight { use = "dqs-wce" }
+    %highlight { use = "sqs-wce" }
+  }
 }
 
-# Ini style headings
-%highlight {
-	regex = "^\s*\[[^]]+\]"
-	style = "keyword"
-}
-
-# Generic C-style strings
-%highlight { use = "dqs-wce" }
-%highlight { use = "sqs-wce" }
+%highlight { use = "conf" }

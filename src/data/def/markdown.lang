@@ -5,7 +5,9 @@
 # there is no way to highlight the text on the previous line anymore.
 
 %define {
-  block-quote {
+	style-scope = "markdown"
+
+  markdown-block-quote {
     %highlight {
       start = "^>(?:\s*>)*\s*"
       %on-entry {
@@ -48,7 +50,7 @@
       end = "$"
       style = "misc"
     }
-    %highlight { use = "block-quote" }
+    %highlight { use = "markdown-block-quote" }
     # Escaped emphasis characters
     %highlight {
       regex = "\\[*_]"

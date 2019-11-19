@@ -1,4 +1,6 @@
 %define {
+	style-scope = "make"
+
 	make-functions {
 		%highlight {
 			regex = '(?<=\$[{(])(?:patsubst|subst|strip|findstring|filter(?:-out)|' +

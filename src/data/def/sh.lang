@@ -1,4 +1,6 @@
 %define {
+	style-scope = "shell"
+
 	sh-string {
 		%highlight {
 			start = "'"

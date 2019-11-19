@@ -1,6 +1,8 @@
 %include = "def/c-base.lang"
 
 %define {
+	style-scope = "c++"
+
 	cxx-keywords {
 		%highlight {
 			regex = '\b(?:and_eq|and|alignas|alignof|asm|auto|bitand|bitor|bool|' +

@@ -1,4 +1,6 @@
 %define {
+	style-scope = "javascript"
+
 	javascript-string-escape {
 		%highlight {
 			regex = '\\(?:[''"\\bfnrtv]|x[\da-fA-F]{2}|u[\da-fA-F]{4})'

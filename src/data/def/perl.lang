@@ -1,4 +1,6 @@
 %define {
+	style-scope = "perl"
+
 	perl-comment {
 		%highlight {
 			start = '#'
