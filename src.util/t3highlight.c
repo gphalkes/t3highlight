@@ -113,13 +113,13 @@ static PARSE_FUNCTION(parse_args)
     OPTION('l', "language", REQUIRED_ARG)
       if (option_language != NULL || option_language_file != NULL) {
         fatal(_("Only one language option allowed\n"));
-}
+      }
       option_language = optArg;
     END_OPTION
     LONG_OPTION("language-file", REQUIRED_ARG)
       if (option_language != NULL || option_language_file != NULL) {
         fatal(_("Only one language option allowed\n"));
-}
+      }
       option_language_file = optArg;
     END_OPTION
     OPTION('L', "list", NO_ARG)
@@ -133,13 +133,13 @@ static PARSE_FUNCTION(parse_args)
                 t3_highlight_strerror(error.error));
         } else {
           fatal(_("Error loading highlight listing: %s\n"), t3_highlight_strerror(error.error));
-}
+        }
       }
 
       printf(_("Available languages:\n"));
       for (i = 0; list[i].name != NULL; i++) {
         printf("  %s\n", list[i].name);
-}
+      }
 
       t3_highlight_free_list(list);
 
@@ -151,19 +151,19 @@ static PARSE_FUNCTION(parse_args)
     OPTION('s', "style", REQUIRED_ARG)
       if (option_style != NULL) {
         fatal("Error: only one style option allowed\n");
-}
+      }
       if ((option_style = malloc(strlen(optArg) + 7)) == NULL) {
         fatal("Out of memory");
-}
+      }
       strcpy(option_style, optArg);
       if (strchr(option_style, '/') == NULL) {
         strcat(option_style, ".style");
-}
+      }
     END_OPTION
     OPTION('h', "help", NO_ARG)
       printf("Usage: t3highlight [<options>] [<file>]\n"
         "  -d<type>,--document-type=<type> Output using document type <type>\n"
-          "  -D,--list-document-types        List the document types for the current style\n"
+        "  -D,--list-document-types        List the document types for the current style\n"
         "  -l<lang>,--language=<lang>      Highlight using language <lang>\n"
         "  --language-file=<file>          Load highlighting description file <file>\n"
         "  -L,--list                       List available languages and styles\n"
@@ -183,12 +183,12 @@ static PARSE_FUNCTION(parse_args)
       char *value;
       if ((value = strchr(optArg, '=')) == NULL) {
         fatal("-t/--tag argument must be <name>=<value>\n");
-}
+      }
       *value = 0;
       value++;
       if (!set_tag(optArg, value)) {
         fatal(_("Duplicate tag specified\n"));
-}
+      }
     END_OPTION
     DOUBLE_DASH
       NO_MORE_OPTIONS;
@@ -198,7 +198,7 @@ static PARSE_FUNCTION(parse_args)
   NO_OPTION
     if (option_input != NULL) {
       fatal(_("Error: only one input file allowed\n"));
-}
+    }
     option_input = optcurrent;
   END_OPTIONS
 

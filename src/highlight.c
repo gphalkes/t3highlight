@@ -51,14 +51,15 @@ static int do_map_style(highlight_context_t *context, const char *style) {
   int style_at_scope_result;
 
   if ((context->flags & T3_HIGHLIGHT_USE_SCOPE) && context->scope != NULL) {
-    style_at_scope_len = strlen(style) + 1 + strlen(context->scope) + 1;
+    size_t style_len = strlen(style);
+    size_t scope_len = strlen(context->scope);
+    style_at_scope_len = style_len + 1 + scope_len + 1;
     style_at_scope = malloc(style_at_scope_len);
     if (style_at_scope != NULL) {
-      /* FIXME: this is inefficient. If we keep track of the size of style separately, we can do the
-         concatenation without having to scan for the end of the string twice. */
-      strcpy(style_at_scope, style);
-      strcat(style_at_scope, "@");
-      strcat(style_at_scope, context->scope);
+      memcpy(style_at_scope, style, style_len);
+      memcpy(style_at_scope + style_len, "@", 1);
+      memcpy(style_at_scope + style_len + 1, context->scope, scope_len);
+      style_at_scope[style_at_scope_len - 1] = 0;
 
       style_at_scope_result = context->map_style(context->map_style_data, style_at_scope);
       free(style_at_scope);
