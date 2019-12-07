@@ -82,15 +82,16 @@
 		}
 
 		%highlight {
-			regex = '\b(?:break|case|catch|continue|debugger|default|delete|do|else|finally|' +
-				'for|function|if|in(:?stanceof)?|new|switch|this|throw|try|typeof|' +
-				'var|void|while|with|null|true|false)\b'
+			regex = '\b(?:await|break|c(?:a(?:se|tch)|lass|on(?:st|tinue))|d(?:' +
+				'e(?:bugger|fault|lete)|o)|e(?:lse|x(?:port|tends))|f(?:inally|' +
+				'or|unction)|i(?:f|mport|n(?:stanceof)?)|let|new|return|s(?:tat' +
+				'ic|uper|witch)|t(?:h(?:is|row)|ry|ypeof)|v(?:ar|oid)|w(?:hile|' +
+				'ith)|yield)\b'
 			style = "keyword"
 		}
 		# Use of the FutureReservedWords should yield an error
 		%highlight {
-			regex = '\b(?:class|const|enum|export|extends|import|super|implements|interface|' +
-				'let|package|private|protected|public|static|yield)\b'
+			regex = '\b(?:enum|implements|interfacepackage|private|protected|public)\b'
 			style = "error"
 		}
 

@@ -1,0 +1,42 @@
+# Javascript keywords. Derived from
+# https://ecma-international.org/ecma-262/#sec-keywords.
+
+#%start \b
+#%end \b
+
+await
+break
+case
+catch
+class
+const
+continue
+debugger
+default
+delete
+do
+else
+export
+extends
+finally
+for
+function
+if
+import
+in
+instanceof
+let
+new
+return
+static
+super
+switch
+this
+throw
+typeof
+try
+var
+void
+while
+with
+yield
