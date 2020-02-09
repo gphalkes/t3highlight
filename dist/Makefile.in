@@ -91,8 +91,8 @@ install: all
 	$(INSTALL) -d $(_libdir)
 	$(LIBTOOL) --mode=install $(INSTALL) -s -m0644 src/libt3highlight.la $(_libdir)
 	chmod 0644 $(_libdir)/libt3highlight.la
-	$(INSTALL) -d $(_includedir)/t3/highlight/t3highlight
-	$(INSTALL) -m0644 src/highlight.h src/highlight_api.h src/highlight_errors.h $(_includedir)/t3/highlight/t3highlight
+	$(INSTALL) -d $(_includedir)/t3highlight
+	$(INSTALL) -m0644 src/highlight.h src/highlight_api.h src/highlight_errors.h $(_includedir)/t3highlight
 	$(INSTALL) -d $(_docdir)
 	$(INSTALL) -m0644 COPYING README Changelog $(_docdir)
 	$(INSTALL) -d $(_datadir)/libt3highlight<LIBVERSION>/def
@@ -107,7 +107,7 @@ install: all
 
 uninstall:
 	$(LIBTOOL) --mode=uninstall rm $(_libdir)/libt3highlight.la
-	rm -rf $(_includedir)/t3/highlight
+	rm -rf $(_includedir)/t3highlight
 	rm -rf $(_docdir)
 	rm -rf $(_datadir)/libt3highlight<LIBVERSION>
 	rm -f $(_pkgconfigdir)/libt3highlight.pc

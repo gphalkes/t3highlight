@@ -39,9 +39,6 @@ LIBTOOL=libtool
 # Installation prefix
 prefix=/usr/local
 
-# Install program to use (should be BSD install compatible)
-INSTALL=install
-
 # Miscelaneous install paths
 libdir=$(prefix)/lib
 datadir=$(prefix)/share
@@ -54,15 +51,8 @@ OBJECTS=<OBJECTS>
 
 all: src.util/t3highlight
 
-.PHONY: all clean dist-clean install uninstall
+.PHONY: all
 .SUFFIXES: .c .o .lo .la .mo .po
-.IGNORE: uninstall
-
-clean:
-	rm -rf src/*.lo src/generated/*.lo src/.libs src/generated/.libs src/libt3highlight.la
-
-dist-clean: clean
-	rm -rf Makefile config.log libt3highlight.pc
 
 .c.o:
 	$(SILENTCC) $(CC) $(CFLAGS) $(CONFIGFLAGS) $(GETTEXTFLAGS) -DLOCALEDIR=\"$(LOCALEDIR)\" -Isrc.util -Isrc \

@@ -62,7 +62,7 @@ EOF
 	PKGCONFIG_DESC="Syntax highlighting library"
 	PKGCONFIG_VERSION="<VERSION>"
 	PKGCONFIG_URL="http://os.ghalkes.nl/t3/libt3highlight.html"
-	PKGCONFIG_CFLAGS="-I\${includedir}/t3/highlight"
+	PKGCONFIG_CFLAGS="-I\${includedir}"
 	PKGCONFIG_LIBS="-lt3highlight"
 
 	gen_pkgconfig libt3highlight
