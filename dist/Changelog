@@ -1,3 +1,7 @@
+Version :
+  Bug fixes:
+  - Allow for numbers in shell variable names.
+
 Version 0.5.0:
 	New features:
 	- Introduced optional style scopes. This allows having separate rendering of

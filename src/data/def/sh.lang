@@ -29,7 +29,7 @@
 
 	sh-variable {
 		%highlight {
-			regex = '\$(?:[-@*#?$!0-9]|[_a-zA-Z][_a-zA-Z]*)'
+			regex = '\$(?:[-@*#?$!0-9]|[_a-zA-Z][_a-zA-Z0-9]*)'
 			style = "variable"
 		}
 		%highlight {
