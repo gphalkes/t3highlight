@@ -93,6 +93,11 @@
 
 		%highlight { use = "css-elements" }
 
+    # Prevent ID and class selectors from being recognized as something else.
+    %highlight {
+      regex = "[#.]-?[_a-z\240-\377-][_a-z\d\240-\377-]*"
+    }
+
 		%highlight {
 			start = '{'
 			%highlight {

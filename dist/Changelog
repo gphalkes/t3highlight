@@ -1,6 +1,8 @@
 Version :
-  Bug fixes:
-  - Allow for numbers in shell variable names.
+	Bug fixes:
+	- Allow for numbers in shell variable names.
+	- In CSS documents, prevent recognition of element names in ID and class
+	  selectors.
 
 Version 0.5.0:
 	New features:
