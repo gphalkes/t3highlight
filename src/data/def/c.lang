@@ -6,7 +6,7 @@
 	c-keywords {
 		%highlight {
 			regex = '\b(?:auto|break|case|char|const|continue|default|do|double|else|' +
-				'enum|extern|float|for|goto|if|inline|int|long|register|restrict|' +
+				'enum|extern|FILE|float|for|goto|if|inline|int|long|register|restrict|' +
 				'return|short|signed|size_t|sizeof|static|struct|switch|typedef|union|' +
 				'unsigned|void|volatile|while|_(?:Align(?:as|of)|Atomic|Bool|Complex|' +
 				'Generic|Imaginary|Noreturn|Static_assert|Thread_local))\b'
